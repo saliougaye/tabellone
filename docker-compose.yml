@@ -1,0 +1,9 @@
+# Redis for local development. No volume on purpose: in v1 Redis is pure cache and can be
+# flushed at any time (ARCHITECTURE 7.4). Losing it must never lose data.
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: tabellone-redis
+    ports:
+      - '6379:6379'
+    command: ['redis-server', '--save', '', '--appendonly', 'no']

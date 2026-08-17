@@ -1,0 +1,25 @@
+{
+  "name": "tabellone",
+  "private": true,
+  "packageManager": "pnpm@10.25.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @tabellone/web dev",
+    "build": "pnpm --filter @tabellone/web build",
+    "start": "pnpm --filter @tabellone/web start",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "typecheck": "pnpm -r typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "redis": "docker compose up -d"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.8",
+    "jsdom": "27.0.1",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  }
+}
