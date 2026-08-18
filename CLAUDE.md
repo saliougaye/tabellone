@@ -4,17 +4,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository state
 
-UI implemented, backend not. `packages/core` still has every module (`catalog`, `fetcher`,
-`parser`, `store`) as documented signatures that throw `NotImplementedError`, and the
-route handlers still answer **501**, deliberately — a stubbed 200 with an empty board
-would be indistinguishable from a quiet night. `apps/web` now has the real UI built from
-the design sheets: presentational components (`src/components`), live pages that poll the
-real API and honestly render the failed-read state, favourites/recents in `localStorage`,
-and a **temporary** dev-only scenario gallery at `/dev/scenari` fed by typed fixtures in
-`src/fixtures` (both marked TEMPORARY — delete when the backend lands; fixtures never
-cross the API boundary). The station catalogue has 3 real stations with
-`rfiPlaceId: "PLACEHOLDER"` — slugs are already final (ADR-007), place ids are not.
-Everything below about caching, fetching and parsing is still the design contract to
+UI implemented; `catalog` and `store` are real, `fetcher`/`parser` are not. `packages/core`
+(the domain package — despite the diagram below still saying `packages/board`, the actual
+directory on disk is `packages/core`) has `catalog.ts` reading the real
+`src/catalog/stations.json` and `store.ts` doing the full refresh-on-read orchestration
+against a real Redis client (`redis-board-store.ts`, `ioredis`). `fetcher`/`parser` are
+still documented signatures that throw `NotImplementedError` — writing `parser` needs the
+~20 committed HTML fixtures the testing strategy calls for, and hasn't happened yet.
+Route handlers are wired to the real chain: `GET /api/stations` serves the real catalogue
+with a content-hash ETag; `GET /api/board/:slug` runs the real cache/lock/rate-limit path
+and today always ends by catching `fetchBoard`'s `NotImplementedError` and answering
+**503** (the same "RFI unreachable, nothing cached" slot the contract already reserved) —
+honest, not a stub 200, and this route does not need to change again once `fetcher` and
+`parser` land. Local Redis: `pnpm redis` (docker compose, no volume, flush-safe).
+`apps/web` has the real UI built from the design sheets: presentational components
+(`src/components`), live pages that poll the real API and honestly render the failed-read
+state, favourites/recents in `localStorage`, and a **temporary** dev-only scenario gallery
+at `/dev/scenari` fed by typed fixtures in `src/fixtures` (both marked TEMPORARY — delete
+when the backend lands; fixtures never cross the API boundary). The station catalogue has
+3 real stations with `rfiPlaceId: "PLACEHOLDER"` — slugs are already final (ADR-007), place
+ids are not. Everything below about fetching and parsing is still the design contract to
 build against.
 
 `ARCHITECTURE.md` is the authoritative spec (10 ADRs in `adrs/`). Read it before any
@@ -57,7 +66,7 @@ the RFI infrastructure-manager board at `iechub.rfi.it/ArriviPartenze`, scraped 
 
 ```
 apps/web (Next.js: SSR + route handlers + UI)
-    └── packages/board (domain)
+    └── packages/core (domain)
             catalog → fetcher → parser → store
                                             └── Redis (cache only)
                                             └── iechub RFI (external)
@@ -66,9 +75,10 @@ apps/web (Next.js: SSR + route handlers + UI)
 - `catalog` — static JSON in the repo, `slug → rfiPlaceId`. Not in Redis, imported at build time.
 - `fetcher` — the only code that speaks HTTP to RFI. `fetchBoard(placeId, mode)`.
 - `parser` — HTML → `BoardRow[]`. **Pure function, zero I/O** (ADR-003).
-- `store` — the only module that knows the Redis key schema, TTLs, and the lock.
+- `store` — the only module that knows the Redis key schema, TTLs, and the lock
+  (`redis-board-store.ts` is the concrete Redis client behind it).
 
-**Hard rule:** `packages/board` never imports from Next — no `next/headers`, no
+**Hard rule:** `packages/core` never imports from Next — no `next/headers`, no
 `NextRequest`, no `after()`. Runtime hooks are passed in as parameters. This is what keeps
 extraction into a standalone service cheap (ADR-002).
 
@@ -124,8 +134,10 @@ GET /api/stations                     catalogue, long ETag
 GET /api/board/:slug?mode=departures  StationBoard JSON (polling + SSR)
 ```
 
-`/api/board/:slug` returns `StationBoard` under every condition; only "RFI unreachable and
-no cache" yields 503. There is no streaming endpoint.
+`/api/board/:slug` returns `StationBoard` under every condition where the station and mode
+are valid; only "RFI unreachable and no cache" yields 503. Missing/invalid `?mode=` is 400,
+unknown `:slug` is 404 — neither was in the original state table, both are `{ error: string
+}` like every other non-200 response here. There is no streaming endpoint.
 
 ## Testing strategy
 

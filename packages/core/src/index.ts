@@ -4,14 +4,15 @@
  * touching the app, and what is *not* re-exported is private by construction.
  */
 export { findStationBySlug, listStations, resolveAlias } from './catalog'
-export { NotImplementedError } from './errors'
+export { BoardUnavailableError, NotImplementedError } from './errors'
 export { type FetchBoardResult, fetchBoard } from './fetcher'
 export { parseBoard, parseNotices } from './parser'
-export { keys, RFI_MAX_REQUESTS_PER_SECOND, readBoard, type StoreDeps, TTL } from './store'
+export { createRedisBoardStore } from './redis-board-store'
+export { RFI_MAX_REQUESTS_PER_SECOND, readBoard, type StoreDeps, TTL } from './store'
 export type {
-  BoardCache,
   BoardMode,
   BoardRow,
+  BoardStore,
   Clock,
   Operator,
   Platform,

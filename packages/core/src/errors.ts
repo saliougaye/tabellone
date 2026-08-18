@@ -11,3 +11,14 @@ export class NotImplementedError extends Error {
     this.name = 'NotImplementedError'
   }
 }
+
+/**
+ * The one case `readBoard` rejects on: RFI unreachable (or not implemented yet) and nothing
+ * cached to fall back to. Maps 1:1 to the API's single non-200, 503 (ARCHITECTURE 6).
+ */
+export class BoardUnavailableError extends Error {
+  constructor(placeId: string, mode: string) {
+    super(`no board available for ${placeId} (${mode}): RFI unreachable and nothing cached`)
+    this.name = 'BoardUnavailableError'
+  }
+}

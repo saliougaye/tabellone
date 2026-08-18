@@ -94,23 +94,26 @@ export type Station = {
 }
 
 /**
- * Everything this package needs from a cache, and nothing more.
- *
- * The concrete client is injected by the caller: `packages/core` has no runtime dependency
- * on Redis, on Next, or on a deployment target (ADR-002, ADR-005). An in-memory
- * implementation is enough to test the lock and the stale-while-revalidate window.
+ * Everything `store.ts` needs, shaped around what it actually does rather than around raw
+ * Redis verbs. The concrete client — and the literal key schema — lives behind
+ * `createRedisBoardStore` (ADR-002, ADR-005): `packages/core` still has no *runtime*
+ * dependency on Next or on a deployment target, but it is the one place allowed to know
+ * both Redis and the schema, so the two stay merged instead of split across a generic cache
+ * param and a separately-exported `keys` table.
  */
-export interface BoardCache {
-  get(key: string): Promise<string | null>
-  set(key: string, value: string, ttlSeconds: number): Promise<void>
-  /** `SET key 1 NX EX ttl`. `true` when the lock was taken, `false` when it was already held. */
-  acquireLock(key: string, ttlSeconds: number): Promise<boolean>
-  release(key: string): Promise<void>
-  /** `LPUSH` + `LTRIM`: append to a capped list, e.g. `health:rfi` keeping the last 100. */
-  pushCapped(key: string, value: string, keep: number): Promise<void>
-  addToSet(key: string, member: string): Promise<void>
-  /** `INCR` + `EXPIRE`: returns the counter for the current window. Token bucket towards RFI. */
-  incrementWindow(key: string, windowSeconds: number): Promise<number>
+export interface BoardStore {
+  getBoard(placeId: string, mode: BoardMode): Promise<StationBoard | null>
+  /** Written with the Redis key TTL (`TTL.key`, 90 s) — beyond that it is gone by itself. */
+  saveBoard(placeId: string, mode: BoardMode, board: StationBoard): Promise<void>
+  /** `SET lock:{placeId}:{mode} 1 NX EX 15`. `true` when taken, `false` when already held. */
+  acquireBoardLock(placeId: string, mode: BoardMode): Promise<boolean>
+  releaseBoardLock(placeId: string, mode: BoardMode): Promise<void>
+  /** Appends to `health:rfi`, capped at the last 100 outcomes (ARCHITECTURE 8). */
+  logHealthOutcome(outcome: { status: number; latencyMs: number }): Promise<void>
+  /** Feeds `unknown:*` so an unrecognised RFI value becomes noisy, not silent (ADR-008). */
+  recordUnknown(kind: 'vettore' | 'categoria' | 'status', value: string): Promise<void>
+  /** Token bucket towards RFI. `false` means the 5 req/s global ceiling is spent. */
+  checkRateLimit(): Promise<boolean>
 }
 
 /** Injected clock. Time arithmetic happens server-side, and tests must be able to lie about now. */
