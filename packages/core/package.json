@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "ioredis": "^6.0.0",
-    "luxon": "3.7.2"
+    "luxon": "3.7.2",
+    "node-html-parser": "^9.0.1"
   },
   "devDependencies": {
     "@types/luxon": "3.7.1",

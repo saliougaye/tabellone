@@ -6,7 +6,7 @@
 export { findStationBySlug, listStations, resolveAlias } from './catalog'
 export { BoardUnavailableError, NotImplementedError } from './errors'
 export { type FetchBoardResult, fetchBoard } from './fetcher'
-export { parseBoard, parseNotices } from './parser'
+export { parseBoard, parseNotices, parseUnknownValues, type UnknownValue } from './parser'
 export { createRedisBoardStore } from './redis-board-store'
 export { RFI_MAX_REQUESTS_PER_SECOND, readBoard, type StoreDeps, TTL } from './store'
 export type {

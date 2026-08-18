@@ -14,13 +14,13 @@
  *
  * Around every refresh attempt, in order: the global rate ceiling, the single-flight lock
  * (if already held, someone else is refreshing — fall back same as a failed fetch), the
- * fetch, a `health:rfi` entry, then the parse. `fetcher`/`parser` are still stubs, so every
- * attempt fails today and every request takes the "nothing cached" path — this file does not
- * need to change again once they are real.
+ * fetch, a `health:rfi` entry, then the parse, then a pass of `parseUnknownValues` into
+ * `BoardStore.recordUnknown` (ADR-008) — `parser.ts` itself stays pure, so this is the one
+ * place that gets to write the unrecognised-value alert into Redis.
  */
 import { BoardUnavailableError } from './errors'
 import type { FetchBoardResult } from './fetcher'
-import { parseBoard, parseNotices } from './parser'
+import { parseBoard, parseNotices, parseUnknownValues } from './parser'
 import type { BoardMode, BoardRow, BoardStore, Clock, Station, StationBoard } from './types'
 
 /** TTLs in seconds, straight from ARCHITECTURE 7.1/7.2. One place, no magic numbers elsewhere. */
@@ -123,6 +123,10 @@ async function tryRefresh(
       notices = parseNotices(fetched.html)
     } catch {
       return null
+    }
+
+    for (const unknown of parseUnknownValues(fetched.html)) {
+      await deps.store.recordUnknown(unknown.kind, unknown.value)
     }
 
     const board: StationBoard = {

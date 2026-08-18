@@ -4,7 +4,7 @@
  * freshness dot, mode toggle and the route strip of the rich row.
  */
 import type { BoardMode, Operator, Platform, ViaStop } from '@tabellone/core'
-import { formatTime, freshnessLabel, operatorMark, stopSigla } from '@/lib/presentation'
+import { freshnessLabel, operatorMark, stopSigla } from '@/lib/presentation'
 import { strings } from '@/strings'
 
 export function OperatorMark({
@@ -233,12 +233,12 @@ export function StopsDetail({ viaStops, mode }: { viaStops: ViaStop[]; mode: Boa
       <span className="text-text-tertiary type-label">{strings.stopsAt}</span>
       {viaStops.map((stop) => (
         <span key={`${stop.name}-${stop.time}`} className="text-text-secondary type-tertiary">
-          {stop.name} {formatTime(stop.time)}
+          {stop.name} {stop.time}
         </span>
       ))}
       {last && mode === 'departures' && (
         <span className="ml-auto text-text-tertiary type-tertiary">
-          {strings.terminusArrival} {formatTime(last.time)}
+          {strings.terminusArrival} {last.time}
         </span>
       )}
     </div>

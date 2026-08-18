@@ -8,7 +8,7 @@
  */
 import type { BoardMode, BoardRow, TrainCategory } from '@tabellone/core'
 import { useState } from 'react'
-import { displayedTime, formatTime, serviceLabel, statusPresentation } from '@/lib/presentation'
+import { displayedTime, serviceLabel, statusPresentation } from '@/lib/presentation'
 import { strings } from '@/strings'
 import { OperatorMark, PlatformBox, RouteStrip, StopsDetail } from './parts'
 
@@ -283,7 +283,9 @@ export function HeroCard({
 
 function lastTime(row: BoardRow): string {
   const last = row.viaStops.at(-1)
-  return last ? formatTime(last.time) : strings.platformUnassigned
+  // last.time is a bare "HH:MM" as RFI printed it in the popup — no serviceDate to anchor it
+  // to (types.ts), so it isn't an ISO instant and must not go through formatTime.
+  return last ? last.time : strings.platformUnassigned
 }
 
 /** Mobile list row: two bands, expandable "Ferma a" detail. */

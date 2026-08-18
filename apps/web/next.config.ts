@@ -1,5 +1,5 @@
-import type { NextConfig } from 'next'
 import { withSerwist } from '@serwist/turbopack'
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   // `@tabellone/core` ships as TypeScript source (`exports` points at `src/index.ts`);

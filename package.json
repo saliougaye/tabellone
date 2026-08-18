@@ -23,6 +23,9 @@
     "vitest": "4.1.10"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "@swc/core"]
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@swc/core"
+    ]
   }
 }
