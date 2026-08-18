@@ -29,22 +29,36 @@ step, not part of the build):
 
 Swap for real branding later; not a blocker for install/build.
 
-### 2. Manifest (`apps/web/public/manifest.json`)
+### 2. Manifest (`apps/web/src/app/manifest.ts`)
 
-```json
-{
-  "name": "<strings.appName>",
-  "short_name": "<strings.appName>",
-  "description": "Arrivi e partenze in tempo reale per le stazioni italiane",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "<--surface light value>",
-  "theme_color": "<--surface light value>",
-  "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
-  ]
+Next's file-convention manifest, not static JSON — verified empirically
+(spun up the dev server): a `manifest.ts`/`.js` under `app/` is served at
+`/manifest.webmanifest` (**not** `/manifest.json` — that path 404s through
+to the `[slug]` catch-all instead) with `content-type:
+application/manifest+json`, and Next auto-injects `<link rel="manifest"
+href="/manifest.webmanifest">` into every page's `<head>` — no manual
+`metadata.manifest` field needed. Using `.ts` also means it can import
+`strings.appName` directly instead of duplicating the name in a static file.
+
+```ts
+import type { MetadataRoute } from 'next'
+import { strings } from '@/strings'
+
+export default function manifest(): MetadataRoute.Manifest {
+  return {
+    name: strings.appName,
+    short_name: strings.appName,
+    description: 'Arrivi e partenze in tempo reale per le stazioni italiane',
+    start_url: '/',
+    display: 'standalone',
+    background_color: '<--surface light value>',
+    theme_color: '<--surface light value>',
+    icons: [
+      { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+      { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    ],
+  }
 }
 ```
 
@@ -103,13 +117,13 @@ entirely.
 
 ### 4. Layout wiring (`apps/web/src/app/layout.tsx`)
 
-- `metadata.manifest = '/manifest.json'`.
+- No manual manifest link — `app/manifest.ts` gets one injected automatically
+  (verified above).
 - Next 16 splits viewport from metadata — add a `viewport` export with
-  `themeColor` set to the same `--surface` value.
-- `apple-touch-icon` link — either via `metadata.icons.apple` or an explicit
-  `<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">` in
-  `<head>`, whichever the installed Next version's metadata API supports
-  cleanly (confirm during implementation, both are equivalent output).
+  `themeColor` as a light/dark pair (`prefers-color-scheme` media queries),
+  matching the light/dark `--surface` values `theme.css` already defines.
+- `metadata.icons.apple = '/icons/apple-touch-icon.png'`, plus
+  `metadata.icons.icon` for the two standard sizes.
 
 ## Out of scope
 
@@ -123,9 +137,9 @@ entirely.
 
 - `pnpm build` succeeds; `pnpm typecheck` and `pnpm lint` pass with `sw.ts`
   excluded from the TS program.
-- `pnpm dev`: manifest served at `/manifest.json`, `<link rel="manifest">`
-  present in rendered HTML, `/serwist/sw.js` responds (dev SW is
-  network-only per `defaultCache`'s dev branch, still installable).
+- `pnpm dev`: manifest served at `/manifest.webmanifest`, `<link
+  rel="manifest">` present in rendered HTML, `/serwist/sw.js` responds (dev
+  SW is network-only per `defaultCache`'s dev branch, still installable).
 - `pnpm build && pnpm start`: SW registers (Application panel in
   devtools), app installable, `/api/*` requests never appear in the SW's
   cache storage even after multiple loads, reload while offline renders
