@@ -1,34 +1,98 @@
 /**
- * Small board parts, straight from design sheets 01–02: operator mark (solid tile with a
- * monochrome sigla — never a fetched logo), platform box (the three states of ANCHOR C),
- * freshness dot, mode toggle and the route strip of the rich row.
+ * Small board parts, straight from design sheets 01–02: service mark (logo slot + operator
+ * tile), platform box (the three states of ANCHOR C), freshness dot, mode toggle and the
+ * route strip of the rich row.
  */
-import type { BoardMode, Operator, Platform, ViaStop } from '@tabellone/core'
-import { freshnessLabel, operatorMark, stopSigla } from '@/lib/presentation'
+import type { BoardMode, BoardRow, Platform, ViaStop } from '@tabellone/core'
+import type { CSSProperties } from 'react'
+import {
+  categoryStyle,
+  freshnessLabel,
+  operatorMark,
+  serviceLabel,
+  serviceMarkLabel,
+  stopSigla,
+} from '@/lib/presentation'
 import { strings } from '@/strings'
+import { brandLogoInk, brandLogos } from './brand-logos'
 
-export function OperatorMark({
-  operator,
-  cancelled = false,
-}: {
-  operator: Operator
-  cancelled?: boolean
-}) {
-  const mark = operatorMark[operator] ?? operatorMark.OTHER
+/**
+ * What the traveller identifies the train by, in two halves: the brand's logo (or, with no
+ * asset for it, the service name as text) in the capped slot of `theme.css` §7, then the
+ * operator tile. Two halves because they answer two questions — *which service* and
+ * *who runs it* — and a "Regionale" is a different train depending on the second.
+ *
+ * The slot is capped, not fixed, so a mark sits next to its tile instead of being padded
+ * out to a common width — marks here range from 1.30:1 to 3.02:1, and a common width put
+ * a 59px hole beside the squarest of them. The cost is that the tile no longer lands at
+ * the same x down the column; the gain is that the two halves read as one mark.
+ */
+export function ServiceMark({ row, cancelled = false }: { row: BoardRow; cancelled?: boolean }) {
+  const mark = operatorMark[row.operator] ?? operatorMark.OTHER
+  const Logo = row.brand ? brandLogos[row.brand] : undefined
+  const ink = (row.brand && brandLogoInk[row.brand]) || { primary: 'var(--identity-mono)' }
+  const text = categoryStyle[row.category] ?? categoryStyle.OTHER
+  // A two-tone mark declares its second fill as var(--logo-ink-2, currentColor), so
+  // leaving the property unset on a cancelled row mutes both halves at once.
+  const logoStyle = {
+    color: cancelled ? 'var(--text-tertiary)' : ink.primary,
+    ...(cancelled || !ink.secondary ? {} : { '--logo-ink-2': ink.secondary }),
+  } as CSSProperties
+
   return (
+    // One image, one name: the slot and the tile are announced together, so neither the
+    // logo nor the sigla is read out on its own.
     <span
-      className="inline-flex flex-none items-center justify-center overflow-hidden whitespace-nowrap rounded-badge text-mark-ink"
-      style={{
-        width: 'var(--mark-width)',
-        height: 'var(--mark-height)',
-        // States always beat identity: a cancelled row carries --state-cancelled.
-        background: cancelled ? 'var(--state-cancelled)' : mark.colorVar,
-        fontSize: 'var(--mark-size)',
-        fontWeight: 'var(--mark-weight)',
-        letterSpacing: 'var(--mark-tracking)',
-      }}
+      role="img"
+      aria-label={serviceMarkLabel(row)}
+      className="inline-flex min-w-0 flex-none items-center gap-(--mark-gap)"
     >
-      {mark.sigla}
+      {/* The slot caps the mark rather than padding it out to a fixed width. §7 sized it
+          fixed so "layout does not depend on an image arriving" — but nothing arrives here,
+          the assets are inline SVG, so the only thing a fixed width still bought was tile
+          alignment down the column, and it cost a 59px hole beside a near-square mark like
+          Trenord's (29px wide at 22px tall against an 88px box). */}
+      <span
+        className="inline-flex min-w-0 flex-none items-center justify-start overflow-hidden"
+        style={{ maxWidth: 'var(--logo-width)', height: 'var(--logo-height)' }}
+      >
+        {Logo ? (
+          // States always beat identity — but by muting the slot, not by repainting it
+          // --state-cancelled. The tile beside it already carries that colour, and on a
+          // Trenitalia row --state-cancelled and --identity-trenitalia are the same red to
+          // the eye, so a red logo next to a red tile would read as branding, not as a
+          // cancellation. Muted is the same treatment the text fallback gets below.
+          // max-* on both axes, against the intrinsic size each mark declares: the SVG
+          // then scales down under whichever limit bites first and keeps its ratio. Forcing
+          // height and clamping width instead would squash a wide wordmark.
+          <Logo className="max-h-full max-w-full" style={logoStyle} />
+        ) : (
+          <span
+            className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
+            style={{
+              fontSize: 'var(--logo-fallback-size)',
+              fontWeight: cancelled ? 'var(--logo-fallback-weight)' : text.weightVar,
+              letterSpacing: 'var(--logo-fallback-tracking)',
+              color: cancelled ? 'var(--text-tertiary)' : text.colorVar,
+            }}
+          >
+            {serviceLabel(row)}
+          </span>
+        )}
+      </span>
+      <span
+        className="inline-flex flex-none items-center justify-center overflow-hidden whitespace-nowrap rounded-badge text-mark-ink"
+        style={{
+          width: 'var(--mark-width)',
+          height: 'var(--mark-height)',
+          background: cancelled ? 'var(--state-cancelled)' : mark.colorVar,
+          fontSize: 'var(--mark-size)',
+          fontWeight: 'var(--mark-weight)',
+          letterSpacing: 'var(--mark-tracking)',
+        }}
+      >
+        {mark.sigla}
+      </span>
     </span>
   )
 }

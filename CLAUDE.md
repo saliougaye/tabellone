@@ -49,9 +49,17 @@ reference, not a build input. Source of truth, re-download from here if missing:
   a clickable flow.
 - The mockups are `.dc.html` — Claude Design's own template format, not runnable app code.
   Read them for layout and token usage; do not copy them into `apps/web` verbatim.
-- Note the operator mark is a **filled tile with a 2–3 letter monochrome sigla**, never a
-  fetched logo image. This matches the invariant that RFI's base64 logo data URIs never
-  reach our payload.
+- The service mark is two halves: the **logo slot** (`tokens.css` §7, capped at 88×22,
+  mobile 64×18 — a ceiling, not a fixed measure: the sheet sized it fixed against an image
+  arriving late, and nothing arrives here) and the **operator tile** (filled, 2–3 letter
+  monochrome sigla). The tile answers *who runs it*, the slot answers *which service*.
+  Brand logos are **ours, committed, inlined as SVG paths drawing in `currentColor`** —
+  never fetched, never RFI's; a two-tone mark takes its second fill from `--logo-ink-2`.
+  RFI's own `logoCliente`/`logoCategoria` images are a 34-byte 1×1 spacer GIF with the real
+  mark in a stylesheet sprite, so the "no base64 data URIs in our payload" invariant costs
+  nothing to hold. A brand with no asset falls back to the service name as text in the same
+  slot, capped identically. Provenance, the tracing method and what is still missing:
+  `apps/web/src/components/board/README.md`.
 - The two `uploads/*.png` files are truncated: the sync tool caps file reads at 256 KiB.
   Download them from the web UI if they are ever needed.
 

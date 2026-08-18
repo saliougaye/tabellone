@@ -49,6 +49,12 @@ export const strings = {
   statusImminentDeparture: 'In partenza',
   statusImminentArrival: 'In arrivo',
 
+  /* operators — spelled out only for the mark's accessible name; the board itself
+     shows the sigla on the tile */
+  operatorTrenitalia: 'Trenitalia',
+  operatorItalo: 'Italo',
+  operatorTrenord: 'Trenord',
+
   /* categories */
   categoryHighSpeed: 'Alta velocità',
   categoryIntercity: 'Intercity',
@@ -81,4 +87,7 @@ export const strings = {
     'L’elenco delle stazioni non è raggiungibile in questo momento. Le stazioni salvate restano disponibili.',
   openBoard: 'Apre il tabellone',
   back: 'Indietro',
+  /* mobile bottom sheet on the board: the station name opens it instead of navigating */
+  changeStation: 'Cambia stazione',
+  closeSheet: 'Chiudi',
 } as const

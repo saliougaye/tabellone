@@ -15,6 +15,27 @@ export type RawHtml = string
 /** Railway undertaking actually running the train. Unrecognised → `OTHER` (ADR-008). */
 export type Operator = 'TRENITALIA' | 'ITALO' | 'TRENORD' | 'OTHER'
 
+/**
+ * Commercial brand the traveller recognises. **Our** controlled vocabulary — the values
+ * `VETTORE_TABLE` produces, not raw RFI text, so it may cross the API boundary like every
+ * other enum here. Unrecognised vettore → `null`, never a guessed brand (ADR-008).
+ *
+ * Spelled as a union rather than `string` on purpose: the UI ships one logo asset per
+ * brand, and a brand added to the parser without a presentation entry has to be a
+ * typecheck error, not a silently empty logo slot.
+ */
+export type Brand =
+  | 'Trenitalia'
+  | 'Frecciarossa'
+  | 'Frecciargento'
+  | 'Frecciabianca'
+  | 'Intercity'
+  | 'Intercity Notte'
+  | 'Leonardo Express'
+  | 'Italo'
+  | 'Trenord'
+  | 'Malpensa Express'
+
 export type TrainCategory =
   | 'HIGH_SPEED'
   | 'INTERCITY'
@@ -42,7 +63,7 @@ export type ViaStop = {
 export type BoardRow = {
   operator: Operator
   /** What the traveller recognises: "Frecciarossa", "Malpensa Express". `null` if unknown. */
-  brand: string | null
+  brand: Brand | null
   category: TrainCategory
   /** Alphanumeric: `9612`, `CB710`. Never parsed as a number. */
   trainNumber: string

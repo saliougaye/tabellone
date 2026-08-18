@@ -33,6 +33,43 @@ export function serviceLabel(row: Pick<BoardRow, 'brand' | 'category'>): string 
   return row.brand ?? categoryLabel[row.category] ?? strings.categoryOther
 }
 
+/**
+ * Weight and colour of the service name where it is set as text — the logo slot's fallback
+ * for every brand we ship no asset for. Category rather than brand because that is what
+ * the hierarchy is built on: high speed reads heaviest, regional recedes, and BUS keeps a
+ * colour of its own (it is an ordinary category, but the one that is not a train).
+ */
+export const categoryStyle: Record<TrainCategory, { weightVar: string; colorVar: string }> = {
+  HIGH_SPEED: { weightVar: 'var(--weight-max)', colorVar: 'var(--text-primary)' },
+  INTERCITY: { weightVar: 'var(--weight-strong)', colorVar: 'var(--text-primary)' },
+  REGIONAL: { weightVar: 'var(--weight-regular)', colorVar: 'var(--identity-mono)' },
+  REGIONAL_FAST: { weightVar: 'var(--weight-regular)', colorVar: 'var(--identity-mono)' },
+  SUBURBAN: { weightVar: 'var(--weight-regular)', colorVar: 'var(--identity-mono)' },
+  BUS: { weightVar: 'var(--weight-strong)', colorVar: 'var(--bus-text)' },
+  OTHER: { weightVar: 'var(--weight-regular)', colorVar: 'var(--identity-mono)' },
+}
+
+/** Operator in full, for the mark's accessible name. Unknown stays unnamed — never guessed. */
+const operatorName: Record<Operator, string | null> = {
+  TRENITALIA: strings.operatorTrenitalia,
+  ITALO: strings.operatorItalo,
+  TRENORD: strings.operatorTrenord,
+  OTHER: null,
+}
+
+/**
+ * The mark's accessible name. Logo slot and operator tile are one image to a screen
+ * reader, so they carry one label between them, and it names both halves: the service
+ * ("Regionale") and who runs it — which is the whole point of the tile, since a regional
+ * train may be Trenitalia's or Trenord's. Skipped only when the two would repeat.
+ */
+export function serviceMarkLabel(row: Pick<BoardRow, 'brand' | 'category' | 'operator'>): string {
+  const service = serviceLabel(row)
+  const operator = operatorName[row.operator]
+  if (!operator || service === operator) return service
+  return `${service} · ${operator}`
+}
+
 export type StatusPresentation = {
   label: string
   colorVar: string

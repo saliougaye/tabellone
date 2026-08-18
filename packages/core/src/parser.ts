@@ -41,6 +41,7 @@ import { type HTMLElement, parse as parseHtml } from 'node-html-parser'
 import type {
   BoardMode,
   BoardRow,
+  Brand,
   Operator,
   Platform,
   RawHtml,
@@ -55,7 +56,7 @@ import type {
  * VOLTURNO` (a real Campania regional operator) and `TRENITALIA TPER` (a real Trenitalia/TPER
  * joint venture, Emilia-Romagna) — both are undertakings the fallback below is exactly for
  * (ADR-008 §Fallback), not values worth guessing an operator/brand split for on one sighting. */
-const VETTORE_TABLE: Record<string, { operator: Operator; brand: string }> = {
+const VETTORE_TABLE: Record<string, { operator: Operator; brand: Brand }> = {
   TRENITALIA: { operator: 'TRENITALIA', brand: 'Trenitalia' },
   FRECCIAROSSA: { operator: 'TRENITALIA', brand: 'Frecciarossa' },
   FRECCIARGENTO: { operator: 'TRENITALIA', brand: 'Frecciargento' },
@@ -133,6 +134,13 @@ function extractRows(
   const pageDate = parsePageDate(root)
 
   for (const tr of trs) {
+    const trainNumber = tr.getAttribute('id')?.trim() ?? ''
+    const headsign = tr.querySelector('[headers="HStazione"]')?.text.trim() ?? ''
+    const time = tr.querySelector('[headers="HOrario"]')?.text.trim() ?? ''
+    if (isFillerRow({ trainNumber, headsign, time })) {
+      continue
+    }
+
     const vettoreAlt = tr.querySelector('[headers="HVettore"] img')?.getAttribute('alt')?.trim()
     const vettore = vettoreAlt ? VETTORE_TABLE[vettoreAlt] : undefined
     if (vettoreAlt && !vettore) {
@@ -149,9 +157,6 @@ function extractRows(
       unknowns.push({ kind: 'categoria', value: categoriaAlt })
     }
 
-    const trainNumber = tr.getAttribute('id')?.trim() ?? ''
-    const headsign = tr.querySelector('[headers="HStazione"]')?.text.trim() ?? ''
-    const time = tr.querySelector('[headers="HOrario"]')?.text.trim() ?? ''
     const delayText = tr.querySelector('[headers="HRitardo"]')?.text.trim() ?? ''
     const platformText = tr.querySelector('[headers="HBinario"]')?.text.trim() ?? ''
     const blinking = tr.querySelector('[headers="HInArrivo"] img')?.getAttribute('alt') === 'Si'
@@ -192,6 +197,15 @@ function extractRows(
   }
 
   return { rows, unknowns }
+}
+
+/** RFI pads a short board out to a fixed row count with blank `<tr name="treno">` rows: no `id`
+ * on the `<tr>`, and `RTreno`/`RStazione`/`ROrario` all empty (verified on a live Abano Terme
+ * departures capture — one real train, fourteen fillers). They carry no train, so they are not
+ * rows; rendered, they read as a `00:00` departure to nowhere. An empty board is still a normal
+ * state (ARCHITECTURE 2.2) — it just means every row was a filler. */
+function isFillerRow(row: { trainNumber: string; headsign: string; time: string }): boolean {
+  return row.trainNumber === '' && row.headsign === '' && row.time === ''
 }
 
 /** `<label id="UltimoaggiData">...aggiornato il  18/08/2026 ... alle ore  14:30:19` →

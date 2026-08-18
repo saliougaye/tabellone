@@ -86,6 +86,8 @@
   --animate-halo-pulse: var(--anim-halo-pulse);
   --animate-aging: var(--anim-aging);
   --animate-data-beat: var(--anim-data-beat);
+  --animate-skeleton: var(--anim-skeleton);
+  --animate-marquee: var(--anim-marquee);
 
   /* label tracking for ad-hoc use; the full label style is `type-label` */
   --tracking-label: var(--track-label);

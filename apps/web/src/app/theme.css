@@ -240,13 +240,16 @@
   --corner-field: 6px;
 
   /* ── 7 · OPERATOR LOGO SLOT ──────────────────────────────────────────────
-     The box always exists and always measures the same: layout does not
-     depend on an image arriving. Without an image, a monochrome 2–3 letter
-     sigla in regular case on --identity-mono (not the spaced-caps style: that
-     belongs to labels), with white-space: nowrap and text-overflow: ellipsis
-     — a long sigla degrades predictably inside 22px of height. The image, if
-     present, sits inside with object-fit: contain and never widens the slot.
-     Operator colour never enters the logo. */
+     --logo-width is a ceiling, not a fixed measure. The source sheet made it
+     fixed so layout could not depend on an image arriving; nothing arrives in
+     this implementation — the marks are inline SVG paths, resolved before
+     first paint — so the box is sized to its content and capped instead. A
+     fixed box only bought tile alignment down the column, and it cost a 59px
+     hole next to a near-square mark (Trenord is 29px wide at 22px tall).
+     Without a mark, the service name in regular case on --identity-mono (not
+     the spaced-caps style: that belongs to labels), nowrap with
+     text-overflow: ellipsis — a long name degrades predictably inside 22px of
+     height. Operator colour never enters the logo. */
   --logo-width: 88px;
   --logo-height: 22px;
   --logo-fallback-size: var(--type-secondary-size);
@@ -354,6 +357,30 @@
     background-color var(--duration-value) var(--curve-linear),
     border-color var(--duration-value) var(--curve-linear);
   --anim-data-beat: tab-data-beat 2400ms var(--curve-breath) infinite;
+
+  /* outside the six: placeholder breathing while a board is being fetched. Not a state
+     of the data — it says "no value yet", so it never borrows a --state-* colour. */
+  --skeleton-opacity-low: 0.35;
+  --skeleton-opacity-high: 0.75;
+  --anim-skeleton: tab-skeleton 1600ms var(--curve-breath) infinite;
+
+  /* outside the six: a line of text wider than its container scrolls back and forth
+     rather than being clipped — the station name at --type-title does not fit 375px, and
+     a truncated station name is a wrong station name. Only the shape and the curve live
+     here: distance and duration depend on the measured overflow, so the component sets
+     --marquee-distance and animation-duration inline (a var inside this declaration would
+     be substituted here on :root, not on the animated element).
+     Reduced: the component drops the animation and lets the line wrap instead — no
+     keyframe can bring back hidden text. */
+  --anim-marquee: tab-marquee 9000ms var(--curve-standard) infinite;
+
+  /* outside the six: THE MOBILE BOTTOM SHEET IS NOT ANIMATED FROM HERE.
+     The station-switch sheet is a drag-tracked surface, not a played animation: it follows
+     the thumb, rubber-bands past its top edge, and on release decides by velocity whether
+     it returns or leaves. That is `vaul`, which writes transform and the iOS sheet curve
+     (cubic-bezier(0.32, 0.72, 0, 1)) inline, so no token here could reach it. The only
+     thing this file still owns for the sheet is the reduced-motion override at the end,
+     which needs !important for exactly that reason. */
 
   /* ── 4 · OPERATOR IDENTITY · usage rule ──────────────────────────────────
      Colour identifies the operator, it does not decorate. One use per row.
@@ -527,6 +554,47 @@
   /* sigla on the solid tile: 5.6:1 · 8.9:1 min */
   --mark-ink: light-dark(oklch(0.99 0.002 265), oklch(0.17 0.006 265));
   --nav-affordance: light-dark(oklch(0.53 0.008 265), oklch(0.62 0.008 265));
+
+  /* BRAND LOGOS · the colour a mark in the logo slot is drawn in. The brand's own hue,
+     one asset per brand carrying currentColor, each pair re-tuned in lightness for its
+     theme — a fixed brand colour that reads on white does not read on --surface-raised
+     dark. Ratios below are against --surface-raised, and the bar is 3:1: a logo is a
+     graphical object (WCAG 1.4.11), not text. Never the operator tile's colour. */
+  --brand-frecciarossa: light-dark(oklch(0.605 0.244 26), oklch(0.68 0.2 26)); /* 4.4:1 · 5.5:1 */
+  --brand-frecciargento: light-dark(
+    oklch(0.55 0.012 255),
+    oklch(0.74 0.01 255)
+  ); /* 4.9:1 · 7.5:1 */
+  --brand-frecciabianca: light-dark(
+    oklch(0.52 0.006 255),
+    oklch(0.82 0.004 255)
+  ); /* 5.5:1 · 9.9:1 */
+  /* Italo's crimson is the case the rule above exists for: the brand value itself reads
+     7.0:1 on white but collapses to 2.5:1 on --surface-raised dark, under the bar, so the
+     dark half is lightened rather than reused. */
+  --brand-italo: light-dark(oklch(0.488 0.192 19), oklch(0.66 0.17 19)); /* 7.0:1 · 5.1:1 */
+  /* Trenord is the two-tone case: -accent reaches the mark as --logo-ink-2. Both halves
+     keep their brand lightness on light and are lifted together to L=0.70 on dark, so the
+     pair stays balanced rather than one half drifting brighter than the other. */
+  --brand-trenord: light-dark(oklch(0.53 0.124 150), oklch(0.7 0.124 150)); /* 5.0:1 · 6.8:1 */
+  --brand-trenord-accent: light-dark(oklch(0.511 0.192 31), oklch(0.7 0.15 31)); /* 6.3:1 · 6.1:1 */
+  --brand-trenitalia: light-dark(oklch(0.472 0.08 195), oklch(0.7 0.08 195)); /* 6.5:1 · 6.7:1 */
+  --brand-trenitalia-accent: light-dark(
+    oklch(0.559 0.214 26),
+    oklch(0.7 0.16 26)
+  ); /* 5.2:1 · 6.0:1 */
+  /* Intercity's blue is the one brand value that would have sat closest to the 3:1 floor on
+     white (3.6:1), so the light half is darkened a step rather than taken as-is. */
+  --brand-intercity: light-dark(oklch(0.55 0.133 241), oklch(0.7 0.133 241)); /* 4.8:1 · 6.6:1 */
+  --brand-leonardo: light-dark(oklch(0.586 0.228 23), oklch(0.7 0.16 23)); /* 4.7:1 · 6.0:1 */
+  /* Regionale's two greens are both far too light as brand values (the lime reads 1.8:1 on
+     white), so each half is darkened for light and lifted for dark while keeping the lime
+     the lighter of the pair — that relationship is what the mark reads by. */
+  --brand-regionale: light-dark(oklch(0.5 0.17 141), oklch(0.68 0.17 141)); /* 5.6:1 · 6.4:1 */
+  --brand-regionale-accent: light-dark(
+    oklch(0.62 0.17 128),
+    oklch(0.78 0.17 128)
+  ); /* 3.5:1 · 9.0:1 */
 }
 
 /* explicit override beats system preference; without the attribute the
@@ -572,6 +640,11 @@
     --platform-min-width: 40px;
     --mark-width: 36px;
     --mark-height: 18px;
+    /* the slot keeps its fixed-width contract, just narrower: the Frecce monogram is
+       1.77:1, so 18px of height needs 32px of it and the text fallback gets the rest */
+    --logo-width: 64px;
+    --logo-height: 18px;
+    --logo-fallback-size: var(--type-tertiary-size);
     --exception-label-size: var(--type-tertiary-size);
     --via-visibility: none;
     --train-visibility-exception: none;
@@ -610,6 +683,11 @@
     --platform-min-width: 40px;
     --mark-width: 36px;
     --mark-height: 18px;
+    /* the slot keeps its fixed-width contract, just narrower: the Frecce monogram is
+       1.77:1, so 18px of height needs 32px of it and the text fallback gets the rest */
+    --logo-width: 64px;
+    --logo-height: 18px;
+    --logo-fallback-size: var(--type-tertiary-size);
     --exception-label-size: var(--type-tertiary-size);
     --via-visibility: none;
     --train-visibility-exception: none;
@@ -740,6 +818,33 @@
 }
 
 /* outside the six: data heartbeat */
+@keyframes tab-skeleton {
+  0%,
+  100% {
+    opacity: var(--skeleton-opacity-low);
+  }
+  50% {
+    opacity: var(--skeleton-opacity-high);
+  }
+}
+
+/* outside the six: overflowing text scrolls to its end and comes back, still at both
+   ends so the beginning of the name is readable. --marquee-distance is the measured
+   overflow in px, set inline by the component. */
+@keyframes tab-marquee {
+  0%,
+  16% {
+    transform: translateX(0);
+  }
+  50%,
+  66% {
+    transform: translateX(calc(-1 * var(--marquee-distance, 0px)));
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
 @keyframes tab-data-beat {
   0% {
     opacity: 0.45;
@@ -853,6 +958,21 @@
       transform: none;
     }
   }
+  /* the component already wraps the text instead of scrolling it; this only guarantees
+     that no movement survives if the animation is applied before that is known */
+  @keyframes tab-marquee {
+    0%,
+    100% {
+      transform: none;
+    }
+  }
+  /* the placeholder stays visible and still: it is information, not decoration */
+  @keyframes tab-skeleton {
+    0%,
+    100% {
+      opacity: var(--skeleton-opacity-low);
+    }
+  }
   /* aging keeps the final state: information, not decoration */
   @keyframes tab-aging {
     from {
@@ -864,4 +984,20 @@
       opacity: var(--stale-opacity);
     }
   }
+  /* The bottom sheet still appears and still leaves — it just stops travelling and stops
+     scaling the page behind it. vaul sets these transitions inline while it animates, so
+     this is the one place in the file that has to raise its voice to be heard. */
+  /* biome-ignore-start lint/complexity/noImportantStyles: overriding a library's inline
+     styles is the one case the cascade cannot express any other way */
+  [data-vaul-drawer],
+  [data-vaul-overlay],
+  [data-vaul-drawer-wrapper] {
+    transition: none !important;
+    animation: none !important;
+  }
+  [data-vaul-drawer-wrapper] {
+    transform: none !important;
+    border-radius: 0 !important;
+  }
+  /* biome-ignore-end lint/complexity/noImportantStyles: back to normal cascade rules */
 }

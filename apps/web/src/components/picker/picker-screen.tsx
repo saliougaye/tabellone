@@ -6,14 +6,13 @@
  * `localStorage`. First launch with nothing saved shows the sheet-12 empty state, whose
  * CTA opens the picker — the same flow as the prototype (sheet 15).
  */
-import type { Station } from '@tabellone/core'
 import { useEffect, useState } from 'react'
 import { HomeEmpty } from '@/components/picker/home-empty'
 import { StationPicker } from '@/components/picker/station-picker'
 import { listFavourites, listRecents, type SavedStation } from '@/lib/saved-stations'
+import { useStations } from '@/lib/use-stations'
 
 export function PickerScreen() {
-  const [stations, setStations] = useState<Station[] | null | undefined>(undefined)
   const [recents, setRecents] = useState<SavedStation[]>([])
   const [favourites, setFavourites] = useState<SavedStation[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -25,23 +24,9 @@ export function PickerScreen() {
     setLoaded(true)
   }, [])
 
-  useEffect(() => {
-    let cancelled = false
-    fetch('/api/stations', { headers: { accept: 'application/json' } })
-      .then(async (response) => {
-        if (!response.ok) throw new Error(`stations fetch failed: ${response.status}`)
-        return (await response.json()) as Station[]
-      })
-      .then((payload) => {
-        if (!cancelled) setStations(payload)
-      })
-      .catch(() => {
-        if (!cancelled) setStations(null)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  // Same query key as the board's "cambia stazione" sheet: whichever screen fetches the
+  // catalogue first, the other one opens with it already in hand.
+  const { stations, loading, failed } = useStations()
 
   const nothingSaved = loaded && recents.length === 0 && favourites.length === 0
   const showEmptyHome = nothingSaved && !pickerOpened
@@ -56,7 +41,8 @@ export function PickerScreen() {
       ) : (
         loaded && (
           <StationPicker
-            stations={stations === undefined ? [] : stations}
+            stations={failed ? null : (stations ?? [])}
+            loading={loading}
             recents={recents}
             favourites={favourites}
           />

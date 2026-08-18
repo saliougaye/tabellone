@@ -12982,9 +12982,7 @@
   {
     "slug": "milano-centrale",
     "name": "Milano Centrale",
-    "aliases": [
-      "milano"
-    ],
+    "aliases": ["milano"],
     "rfiPlaceId": "1728",
     "lat": 45.4862,
     "lon": 9.2049,
@@ -14568,9 +14566,7 @@
   {
     "slug": "napoli-centrale",
     "name": "Napoli Centrale",
-    "aliases": [
-      "napoli"
-    ],
+    "aliases": ["napoli"],
     "rfiPlaceId": "1888",
     "lat": 40.8525,
     "lon": 14.2727,
@@ -19850,10 +19846,7 @@
   {
     "slug": "roma-termini",
     "name": "Roma Termini",
-    "aliases": [
-      "termini",
-      "roma"
-    ],
+    "aliases": ["termini", "roma"],
     "rfiPlaceId": "2416",
     "lat": 41.9009,
     "lon": 12.5023,

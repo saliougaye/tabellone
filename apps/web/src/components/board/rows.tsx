@@ -6,21 +6,11 @@
  * mobile hero card and the mobile list row. All purely presentational: `BoardRow` in,
  * pixels out — the row knows nothing about fetching or polling.
  */
-import type { BoardMode, BoardRow, TrainCategory } from '@tabellone/core'
+import type { BoardMode, BoardRow } from '@tabellone/core'
 import { useState } from 'react'
-import { displayedTime, serviceLabel, statusPresentation } from '@/lib/presentation'
+import { displayedTime, statusPresentation } from '@/lib/presentation'
 import { strings } from '@/strings'
-import { OperatorMark, PlatformBox, RouteStrip, StopsDetail } from './parts'
-
-const categoryStyle: Record<TrainCategory, { weightVar: string; colorVar: string }> = {
-  HIGH_SPEED: { weightVar: 'var(--weight-max)', colorVar: 'var(--text-primary)' },
-  INTERCITY: { weightVar: 'var(--weight-strong)', colorVar: 'var(--text-primary)' },
-  REGIONAL: { weightVar: 'var(--weight-regular)', colorVar: 'var(--text-secondary)' },
-  REGIONAL_FAST: { weightVar: 'var(--weight-regular)', colorVar: 'var(--text-secondary)' },
-  SUBURBAN: { weightVar: 'var(--weight-regular)', colorVar: 'var(--text-secondary)' },
-  BUS: { weightVar: 'var(--weight-strong)', colorVar: 'var(--bus-text)' },
-  OTHER: { weightVar: 'var(--weight-regular)', colorVar: 'var(--text-secondary)' },
-}
+import { PlatformBox, RouteStrip, ServiceMark, StopsDetail } from './parts'
 
 function rowView(row: BoardRow, mode: BoardMode) {
   const status = statusPresentation(row, mode)
@@ -32,7 +22,6 @@ function rowView(row: BoardRow, mode: BoardMode) {
     times,
     cancelled,
     imminent,
-    category: categoryStyle[row.category] ?? categoryStyle.OTHER,
     timeColor: cancelled
       ? 'var(--text-tertiary)'
       : row.status === 'DELAYED'
@@ -102,17 +91,7 @@ export function RichRow({
             {row.headsign}
           </span>
           <div className="flex min-w-0 items-center gap-(--mark-gap)">
-            <OperatorMark operator={row.operator} cancelled={v.cancelled} />
-            <span
-              className="whitespace-nowrap"
-              style={{
-                fontSize: 'var(--category-size)',
-                fontWeight: v.category.weightVar,
-                color: v.cancelled ? 'var(--text-tertiary)' : v.category.colorVar,
-              }}
-            >
-              {serviceLabel(row)}
-            </span>
+            <ServiceMark row={row} cancelled={v.cancelled} />
             <span className="whitespace-nowrap text-text-tertiary type-tertiary">
               {row.trainNumber}
             </span>
@@ -162,10 +141,8 @@ export function LaterRow({ row, mode }: { row: BoardRow; mode: BoardMode }) {
           {row.headsign}
         </span>
         <div className="flex items-center gap-(--mark-gap)">
-          <OperatorMark operator={row.operator} cancelled={v.cancelled} />
-          <span className="text-text-tertiary type-tertiary">
-            {serviceLabel(row)} {row.trainNumber}
-          </span>
+          <ServiceMark row={row} cancelled={v.cancelled} />
+          <span className="text-text-tertiary type-tertiary">{row.trainNumber}</span>
         </div>
       </div>
       <div className="flex items-baseline justify-end gap-2">
@@ -211,7 +188,7 @@ export function HeroCard({
       <div className="relative flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-2">
           <div className="flex items-center gap-(--mark-gap)">
-            <OperatorMark operator={row.operator} cancelled={v.cancelled} />
+            <ServiceMark row={row} cancelled={v.cancelled} />
             <span className="whitespace-nowrap text-text-tertiary type-tertiary">
               {row.trainNumber}
             </span>
@@ -225,15 +202,6 @@ export function HeroCard({
             }}
           >
             {row.headsign}
-          </span>
-          <span
-            className="type-secondary"
-            style={{
-              fontWeight: v.category.weightVar,
-              color: v.cancelled ? 'var(--text-tertiary)' : v.category.colorVar,
-            }}
-          >
-            {serviceLabel(row)}
           </span>
         </div>
         <div className="flex flex-none flex-col items-end gap-1">
@@ -339,9 +307,9 @@ export function CompactRow({ row, mode }: { row: BoardRow; mode: BoardMode }) {
             {row.headsign}
           </span>
           <div className="flex min-w-0 items-center gap-(--mark-gap)">
-            <OperatorMark operator={row.operator} cancelled={v.cancelled} />
+            <ServiceMark row={row} cancelled={v.cancelled} />
             <span className="overflow-hidden text-ellipsis whitespace-nowrap text-text-tertiary type-tertiary">
-              {serviceLabel(row)} {row.trainNumber}
+              {row.trainNumber}
             </span>
           </div>
         </div>

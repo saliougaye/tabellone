@@ -1,47 +1,51 @@
-import { SerwistProvider } from "@serwist/turbopack/react";
-import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Sans } from "next/font/google";
-import type { ReactNode } from "react";
-import { strings } from "@/strings";
-import "./globals.css";
-import { Analytics } from "@vercel/analytics/next";
+import { SerwistProvider } from '@serwist/turbopack/react'
+import type { Metadata, Viewport } from 'next'
+import { IBM_Plex_Sans } from 'next/font/google'
+import type { ReactNode } from 'react'
+import { QueryProvider } from '@/lib/query-provider'
+import { strings } from '@/strings'
+import './globals.css'
+import { Analytics } from '@vercel/analytics/next'
 
 const plexSans = IBM_Plex_Sans({
-	subsets: ["latin"],
-	weight: ["400", "500", "600", "700"],
-	variable: "--font-plex-sans",
-	display: "swap",
-});
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-plex-sans',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
-	title: strings.appName,
-	description: "Arrivi e partenze in tempo reale per le stazioni italiane",
-	icons: {
-		icon: [
-			{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-			{ url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
-		],
-		apple: "/icons/apple-touch-icon.png",
-	},
-};
+  title: strings.appName,
+  description: 'Arrivi e partenze in tempo reale per le stazioni italiane',
+  icons: {
+    icon: [
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: '/icons/apple-touch-icon.png',
+  },
+}
 
 export const viewport: Viewport = {
-	themeColor: [
-		{ media: "(prefers-color-scheme: light)", color: "#f9fafb" },
-		{ media: "(prefers-color-scheme: dark)", color: "#0e0f12" },
-	],
-};
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f9fafb' },
+    { media: '(prefers-color-scheme: dark)', color: '#0e0f12' },
+  ],
+}
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-	return (
-		<html
-			lang="it"
-			className={plexSans.variable}
-		>
-			<body>
-				<SerwistProvider swUrl="/serwist/sw.js">{children}</SerwistProvider>
-				<Analytics />
-			</body>
-		</html>
-	);
+  return (
+    <html lang="it" className={plexSans.variable}>
+      <body>
+        {/* data-vaul-drawer-wrapper: what the bottom sheet scales down behind itself
+            (`shouldScaleBackground`), the way a phone sheet pushes the screen back. */}
+        <div data-vaul-drawer-wrapper className="bg-surface">
+          <SerwistProvider swUrl="/serwist/sw.js">
+            <QueryProvider>{children}</QueryProvider>
+          </SerwistProvider>
+        </div>
+        <Analytics />
+      </body>
+    </html>
+  )
 }

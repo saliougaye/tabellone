@@ -8,7 +8,7 @@
  * absent or unrecognised resolves to `departures`, never 404 — a mangled shared link must
  * still show a board. `view` on the page, `mode` in the API, same values (CONTEXT.md).
  */
-import type { BoardMode } from '@tabellone/core'
+import { type BoardMode, findStationBySlug } from '@tabellone/core'
 import { BoardScreen } from '@/components/board/board-screen'
 
 type Props = {
@@ -23,5 +23,13 @@ function resolveMode(view: string | undefined): BoardMode {
 export default async function BoardPage({ params, searchParams }: Props) {
   const { slug } = await params
   const { view } = await searchParams
-  return <BoardScreen slug={slug} initialMode={resolveMode(view)} />
+  // The catalogue is imported at build time, so the real station name is free here — the
+  // screen never has to fall back to the raw slug while the first board is in flight.
+  return (
+    <BoardScreen
+      slug={slug}
+      initialMode={resolveMode(view)}
+      catalogName={findStationBySlug(slug)?.name}
+    />
+  )
 }

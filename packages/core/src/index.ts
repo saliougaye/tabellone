@@ -13,6 +13,7 @@ export type {
   BoardMode,
   BoardRow,
   BoardStore,
+  Brand,
   Clock,
   Operator,
   Platform,

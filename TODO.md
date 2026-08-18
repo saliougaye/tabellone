@@ -26,9 +26,35 @@
 - [x] `<link rel="manifest">` + `theme-color` meta in `apps/web/src/app/layout.tsx`.
 
 # Improvements
-- Switch departurs arribals to slow, add a loading state
-- on mobile station name overflowing
-- on mobile when changing station should open a bottom sheet
-- add animations
-- investigate new ui for notices
-- investigate new ui for train stops
+- [x] Switch departures/arrivals felt slow — added a loading state and moved fetching to React Query (`@tanstack/react-query`, provider in `apps/web/src/lib/query-provider.tsx`). The board cache is keyed `['board', slug, mode]`, so the toggle is a different key: the old mode's rows no longer sit under the new label while the request is in flight. During that window the header (station, favourite, toggle) stays mounted and the rows become shape-matched placeholders (`BoardSkeleton`, new `tab-skeleton` keyframe in `theme.css` with a `prefers-reduced-motion` override). A mode already fetched paints instantly. `refetchInterval` + React Query's focus manager replace the hand-rolled 20 s timer and hidden-document suspension; `/api/stations` moved to React Query too.
+- [x] on mobile station name overflowing — the station name sat in a `whitespace-nowrap` span with no `overflow` on the header, so "MILANO CENTRALE" at `--type-title` ran past 375px and under the chevron. New `MarqueeText` (`apps/web/src/components/board/marquee-text.tsx`) clips the line and scrolls it to its end and back, but only when it measures a real overflow (`ResizeObserver`, so short names never move); distance and duration are per-instance, the shape is the new `tab-marquee`/`--anim-marquee` in `theme.css`. Under `prefers-reduced-motion` there is nothing to substitute — no keyframe can reveal hidden text — so the line wraps instead. Chevron and favourite star are now `flex-none` outside the scrolling area; desktop title got the same treatment, since a long name overflows there too.
+- [x] on mobile when changing station should open a bottom sheet — the station name on the board is a button below 600px (`onOpenPicker` in `board-view.tsx`) that opens `StationSheet`, the full `StationPicker` inside a new native-`<dialog>` bottom sheet (`components/ui/bottom-sheet.tsx`): platform focus trap/inert/Esc, plus the two things `<dialog>` doesn't give — an exit animation (`close()` would cut the slide-out, so a `closing` state waits for `animationend` with a timeout fallback) and background scroll lock. Desktop keeps the link to `/` unchanged. Motion is **not** ours: the first hand-rolled `<dialog>` + keyframes version opened and closed correctly but didn't *feel* like a sheet, so it now sits on **`vaul`** — drag tracking, rubber-band past the top edge, velocity-based release, iOS curve `cubic-bezier(0.32, 0.72, 0, 1)`, plus `shouldScaleBackground` shrinking the page behind it. vaul writes transform and curve inline, so `theme.css` keeps only the `prefers-reduced-motion` override for it (`!important` — nothing else outranks inline styles) and no `--anim-sheet-*` tokens. `setBackgroundColorOnScale={false}`: the overlay already veils the strip around the scaled page, and vaul's forced black would flash through the light theme on close. Radix underneath also replaces the focus trap, Esc, inert background and scroll lock we were hand-maintaining. No height jump on a cold open: the panel is `h-[88dvh]` (fixed, not `max-h`) so neither the catalogue landing nor a search keystroke resizes it, and `StationPicker` takes a `loading` prop — `useStations`' pending state, kept distinct from `stations === null` which means the read *failed* — rendering `PickerSkeleton` at the real row heights. `SkeletonBlock` moved out of `board-states.tsx` to `components/ui/` so board and picker placeholders share one geometry and pulse. Measured cold with `/api/stations` delayed 3 s: panel 743px while loading and 743px after, skeleton → 2441 rows. Catalogue moved to a shared `useStations` hook, so the sheet and the picker page hit one React Query key; the sheet mounts only on first open, so a desktop session never fetches for it.
+- [ ] add animations
+- [ ] investigate new ui for notices
+- [ ] investigate new ui for train stops
+- [x] fix when no data is present in the row dont show anything — RFI pads a short board out to a fixed row count with blank `<tr name="treno">` rows (no `id` on the `<tr>`, `RTreno`/`RStazione`/`ROrario` all empty); they were rendering as `00:00` departures to nowhere. `parser.ts` drops them (`isFillerRow`), new real fixture `filler-rows.html` (Abano Terme, 1 real train + 14 fillers) + 2 tests.
+- [x] show trains logos — the board's service mark is now the logo slot `theme.css` §7 always
+  reserved but nothing ever filled (`--logo-width` 88×22, mobile 64×18) plus the existing
+  operator tile: slot answers *which service*, tile answers *who runs it*. Brand logos are
+  committed SVG paths drawing in `currentColor` (`apps/web/src/components/board/brand-logos.tsx`),
+  coloured by per-theme `--brand-*` tokens — RFI is not a source, its `logoCliente` `src` is a
+  34-byte 1×1 spacer with the real mark in a stylesheet sprite that is both off-limits and out
+  of date. Shipped: the Frecce monogram (Frecciarossa/Frecciargento/Frecciabianca), Italo's hare,
+  Trenord's sail, the FS monogram for Trenitalia, the Intercity and Leonardo Express
+  wordmarks, and Regionale — all traced from reference rasters by `scripts/trace-logo.py`.
+  A mark's second fill comes from `--logo-ink-2` declared with `currentColor` as its
+  fallback, which is also what makes a cancelled row mute both halves by just omitting the
+  property. Regionale is keyed on **category**, not brand, because Trenitalia's regional
+  services are branded Regionale and RFI's `vettore` column only says "TRENITALIA";
+  `serviceLogo` encodes that precedence. Frecciabianca and Frecciargento have wordmark
+  references that are deliberately unused — past ~4.5:1 the slot's width cap scales a
+  wordmark below 15px tall and it turns to mush, so those two keep the monogram. Only
+  Malpensa Express still falls back to text. `brand` in
+  `packages/core/src/types.ts` is now a `Brand` union, so a brand the parser learns without a
+  presentation entry is a typecheck error rather than an empty slot. The duplicate
+  `serviceLabel` text was removed from all four row shapes; slot + tile share one
+  `role="img"`/`aria-label` so a screen reader hears the service once.
+- [ ] POC with ollama parsing html
+- [ ] Change URL to improve seo: /:station/arrivi and /:station/partenze
+- [ ] Internalization: url with /:locale/stations/:station/departures and /:locale/stations/:station/arrivals
+- [ ] Add offline screen state, now shows the no data state

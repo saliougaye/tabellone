@@ -240,3 +240,16 @@ describe('parseBoard — never leaks RFI raw payload', () => {
     expect(serialised).not.toContain('base64')
   })
 })
+
+describe('parseBoard — filler rows', () => {
+  it('drops the blank rows RFI pads a short board with', () => {
+    const rows = parseBoard(fixture('filler-rows.html'), 'departures')
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({ trainNumber: '17015', headsign: 'ROVIGO' })
+  })
+
+  it('keeps the real row’s timestamp intact rather than a 00:00 placeholder', () => {
+    const row = nth(parseBoard(fixture('filler-rows.html'), 'departures'), 0)
+    expect(row.scheduledTime).toBe('2026-08-18T20:50:00.000+02:00')
+  })
+})
