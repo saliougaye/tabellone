@@ -1,15 +1,10 @@
 /**
- * Station selection — one of the two pages in the app (ARCHITECTURE 4.1). Will search the
- * static catalogue and list favourites from `localStorage`. Layout reference: design sheets
- * 11/13 (station picker, desktop and mobile).
+ * Station selection — one of the two pages in the app (ARCHITECTURE 4.1). Searches the
+ * static catalogue via `/api/stations` and lists saved stations from `localStorage`.
+ * Layout reference: design sheets 12/13/14.
  */
-import { strings } from '@/strings'
+import { PickerScreen } from '@/components/picker/picker-screen'
 
 export default function StationPickerPage() {
-  return (
-    <main>
-      <h1>{strings.appName}</h1>
-      <p>{strings.scaffold}</p>
-    </main>
-  )
+  return <PickerScreen />
 }

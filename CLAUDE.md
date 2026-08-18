@@ -4,13 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository state
 
-Scaffolded, not implemented. The pnpm workspace, toolchain and module skeleton exist:
-`packages/core` has every module (`catalog`, `fetcher`, `parser`, `store`, `types`) as
-documented signatures that throw `NotImplementedError`, and `apps/web` has the two pages
-and the route handlers as placeholders (the API stubs answer **501**, deliberately — a
-stubbed 200 with an empty board would be indistinguishable from a quiet night). The
-station catalogue (`packages/core/src/catalog/stations.json`) is an empty list. No
-behaviour exists yet; everything below is still the design contract to build against.
+UI implemented, backend not. `packages/core` still has every module (`catalog`, `fetcher`,
+`parser`, `store`) as documented signatures that throw `NotImplementedError`, and the
+route handlers still answer **501**, deliberately — a stubbed 200 with an empty board
+would be indistinguishable from a quiet night. `apps/web` now has the real UI built from
+the design sheets: presentational components (`src/components`), live pages that poll the
+real API and honestly render the failed-read state, favourites/recents in `localStorage`,
+and a **temporary** dev-only scenario gallery at `/dev/scenari` fed by typed fixtures in
+`src/fixtures` (both marked TEMPORARY — delete when the backend lands; fixtures never
+cross the API boundary). The station catalogue has 3 real stations with
+`rfiPlaceId: "PLACEHOLDER"` — slugs are already final (ADR-007), place ids are not.
+Everything below about caching, fetching and parsing is still the design contract to
+build against.
 
 `ARCHITECTURE.md` is the authoritative spec (10 ADRs in `adrs/`). Read it before any
 structural work, and **update it before a structural change, not after**. `CONTEXT.md`

@@ -1,1 +1,35 @@
-[]
+[
+  {
+    "slug": "milano-centrale",
+    "name": "Milano Centrale",
+    "aliases": ["milano"],
+    "rfiPlaceId": "PLACEHOLDER",
+    "lat": 45.4862,
+    "lon": 9.2049,
+    "city": "Milano",
+    "isMajor": true,
+    "checkedAt": "2026-08-18"
+  },
+  {
+    "slug": "roma-termini",
+    "name": "Roma Termini",
+    "aliases": ["termini", "roma"],
+    "rfiPlaceId": "PLACEHOLDER",
+    "lat": 41.9009,
+    "lon": 12.5023,
+    "city": "Roma",
+    "isMajor": true,
+    "checkedAt": "2026-08-18"
+  },
+  {
+    "slug": "napoli-centrale",
+    "name": "Napoli Centrale",
+    "aliases": ["napoli"],
+    "rfiPlaceId": "PLACEHOLDER",
+    "lat": 40.8525,
+    "lon": 14.2727,
+    "city": "Napoli",
+    "isMajor": true,
+    "checkedAt": "2026-08-18"
+  }
+]
