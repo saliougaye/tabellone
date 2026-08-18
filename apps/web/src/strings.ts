@@ -17,6 +17,8 @@ export const strings = {
   fetchFailedHint:
     'Il tabellone non riesce a leggere i dati della stazione. Riproviamo automaticamente ogni 20 secondi.',
   retry: 'Riprova ora',
+  offlineTitle: 'Sei offline',
+  offlineHint: 'Nessuna connessione. Riprova quando la rete torna disponibile.',
   staleData: (minutes: number) => `Dati di ${minutes} min fa`,
   updatedNow: 'aggiornato ora',
   loading: 'Caricamento…',
