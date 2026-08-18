@@ -57,4 +57,20 @@
 - [ ] POC with ollama parsing html
 - [ ] Change URL to improve seo: /:station/arrivi and /:station/partenze
 - [ ] Internalization: url with /:locale/stations/:station/departures and /:locale/stations/:station/arrivals
-- [ ] Add offline screen state, now shows the no data state
+- [x] Add offline screen state, now shows the no data state — offline is its own state now,
+  same layout as the failed read (`BoardMessage`, shared by both plus the service worker's
+  `/~offline` fallback) with its own copy and a struck-through `TrainIcon`. The reason it
+  was showing as "dati non disponibili" is not what it looked like: React Query's default
+  `networkMode: 'online'` **pauses** a query while the browser reports no connection, so an
+  offline board never errors — it stays `isPending` and the screen sat on "Caricamento…"
+  indefinitely. So `useOnline` (`useSyncExternalStore` over the `online`/`offline` events,
+  server snapshot `true` so hydration matches) is checked *before* `loading`, not after, in
+  `board-screen.tsx`; `useStations` encodes the same rule for the picker and the mobile
+  sheet (`loading` only counts while online, no catalogue while offline is a failure with
+  `offline: true` for the copy). A board already fetched survives going offline and is
+  flagged `isStale` — cached rows beat an empty screen, and nothing can refresh them until
+  the network returns. `refetchOnReconnect` is spelled out in the query provider because
+  the offline screen leans on it: coming back online repaints by itself, verified live, so
+  "Riprova ora" is an option and not the only way out. Side fix found while verifying:
+  `freshnessLabel` said "Dati di 0 min fa" for a board that went stale seconds ago —
+  under a minute it now reads "Dati non aggiornati".

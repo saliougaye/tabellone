@@ -17,9 +17,17 @@ export const strings = {
   fetchFailedHint:
     'Il tabellone non riesce a leggere i dati della stazione. Riproviamo automaticamente ogni 20 secondi.',
   retry: 'Riprova ora',
+  /* offline is its own state, not a failed read: the request never left the device */
   offlineTitle: 'Sei offline',
   offlineHint: 'Nessuna connessione. Riprova quando la rete torna disponibile.',
+  offlineBoardHint:
+    'Senza connessione il tabellone non può leggere gli orari in tempo reale. Si aggiorna da solo appena la rete torna.',
+  catalogueOffline: 'Sei offline',
+  catalogueOfflineHint:
+    'Senza connessione l\u2019elenco delle stazioni non è raggiungibile. Le stazioni salvate restano disponibili.',
   staleData: (minutes: number) => `Dati di ${minutes} min fa`,
+  /** Stale but less than a minute old: "Dati di 0 min fa" says nothing true. */
+  staleDataFresh: 'Dati non aggiornati',
   updatedNow: 'aggiornato ora',
   loading: 'Caricamento…',
 

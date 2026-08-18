@@ -22,7 +22,7 @@ import { strings } from '@/strings'
 import { BottomSheet } from '../ui/bottom-sheet'
 
 export function StationSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { stations, loading, failed } = useStations()
+  const { stations, loading, failed, offline } = useStations()
   const [saved, setSaved] = useState<{ recents: SavedStation[]; favourites: SavedStation[] }>({
     recents: [],
     favourites: [],
@@ -38,6 +38,7 @@ export function StationSheet({ open, onClose }: { open: boolean; onClose: () => 
       <StationPicker
         stations={failed ? null : (stations ?? [])}
         loading={loading}
+        offline={offline}
         recents={saved.recents}
         favourites={saved.favourites}
         showHeading={false}

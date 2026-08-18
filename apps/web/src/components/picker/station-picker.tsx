@@ -4,7 +4,9 @@
  * Station picker, presentational (sheets 13–14): search field, suggested tiles, A–Z
  * groups, saved stations (recents + favourites). The catalogue arrives as a prop —
  * `null` means the catalogue read failed, and the picker says so honestly while the
- * saved stations, which live client-side, keep working.
+ * saved stations, which live client-side, keep working. `offline` narrows that same box
+ * to the reason when the device has no connection at all: the catalogue is not broken,
+ * it is simply unreachable from here.
  */
 import type { Station } from '@tabellone/core'
 import Link from 'next/link'
@@ -25,6 +27,11 @@ type PickerProps = {
    */
   loading?: boolean
   /**
+   * The device has no network connection. Only changes the copy of the catalogue-failed
+   * box — the saved stations above it are `localStorage` and work offline unchanged.
+   */
+  offline?: boolean
+  /**
    * `false` drops the app name and the page title: inside the mobile bottom sheet the
    * sheet's own title bar already names the panel, and a second heading would repeat it.
    * The search field is part of the picker either way.
@@ -42,6 +49,7 @@ export function StationPicker({
   recents,
   favourites,
   loading = false,
+  offline = false,
   showHeading = true,
   onSelect,
 }: PickerProps) {
@@ -124,10 +132,10 @@ export function StationPicker({
         ) : stations === null ? (
           <section className="flex flex-col items-center gap-3 rounded-minimal border border-line bg-surface-raised px-4 py-10 text-center">
             <span className="type-primary" style={{ fontWeight: 'var(--weight-strong)' }}>
-              {strings.catalogueUnavailable}
+              {offline ? strings.catalogueOffline : strings.catalogueUnavailable}
             </span>
             <p className="m-0 max-w-[34ch] text-text-secondary type-reading">
-              {strings.catalogueUnavailableHint}
+              {offline ? strings.catalogueOfflineHint : strings.catalogueUnavailableHint}
             </p>
           </section>
         ) : (

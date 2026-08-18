@@ -4,6 +4,10 @@
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "module": "esnext",
     "jsx": "preserve",
+    // React props are declared `foo?: T`, and passing an already-optional value through
+    // (`foo={maybeUndefined}`) is the normal idiom — under exactOptionalPropertyTypes it is an
+    // error. The flag stays on in packages/core, where the domain types are ours to shape.
+    "exactOptionalPropertyTypes": false,
     "incremental": true,
     "allowJs": true,
     "plugins": [{ "name": "next" }],

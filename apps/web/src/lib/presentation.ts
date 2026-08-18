@@ -168,7 +168,12 @@ export function minutesSince(iso: string, now: Date): number {
 
 /** Freshness caption next to the data dot: "aggiornato ora · 14:22" or the stale form. */
 export function freshnessLabel(generatedAt: string, isStale: boolean, now: Date): string {
-  if (isStale) return strings.staleData(minutesSince(generatedAt, now))
+  if (isStale) {
+    // Going offline flags the board stale straight away, when it is still seconds old:
+    // "Dati di 0 min fa" would be a number saying nothing.
+    const minutes = minutesSince(generatedAt, now)
+    return minutes < 1 ? strings.staleDataFresh : strings.staleData(minutes)
+  }
   return `${strings.updatedNow} · ${formatTime(generatedAt)}`
 }
 

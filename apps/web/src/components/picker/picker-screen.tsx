@@ -26,7 +26,7 @@ export function PickerScreen() {
 
   // Same query key as the board's "cambia stazione" sheet: whichever screen fetches the
   // catalogue first, the other one opens with it already in hand.
-  const { stations, loading, failed } = useStations()
+  const { stations, loading, failed, offline } = useStations()
 
   const nothingSaved = loaded && recents.length === 0 && favourites.length === 0
   const showEmptyHome = nothingSaved && !pickerOpened
@@ -43,6 +43,7 @@ export function PickerScreen() {
           <StationPicker
             stations={failed ? null : (stations ?? [])}
             loading={loading}
+            offline={offline}
             recents={recents}
             favourites={favourites}
           />

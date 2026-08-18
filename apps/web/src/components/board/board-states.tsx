@@ -4,9 +4,16 @@
  * The board's non-data states. A failed read looks deliberately different from an empty
  * board: empty is a quiet night (rendered inside BoardView), failed is this screen.
  *
+ * Offline is a third state, not a variant of the failed read. Both end with no rows, but
+ * they are different facts and ask the reader for different things: a failed read means
+ * the data could not be got and retrying now is worth a tap, offline means the request
+ * never left the device and nothing will change until the network does. Same layout, own
+ * icon and own copy — see `useOnline`, which is what tells them apart.
+ *
  * `stationLabel` is optional and omitted, never substituted with the slug: on an unknown
  * station these screens carry no name rather than a URL fragment posing as one.
  */
+import type { ReactNode } from 'react'
 import { SkeletonBlock } from '@/components/ui/skeleton-block'
 import { strings } from '@/strings'
 
@@ -18,15 +25,61 @@ export function BoardError({
   onRetry: () => void
 }) {
   return (
+    <BoardMessage
+      icon={<TrainIcon />}
+      stationLabel={stationLabel}
+      title={strings.fetchFailed}
+      hint={strings.fetchFailedHint}
+      onRetry={onRetry}
+    />
+  )
+}
+
+/**
+ * No connection. `onRetry` is still offered — the user may know the network is back
+ * before the `online` event says so — but it is not the way out of this screen: React
+ * Query refetches on reconnect, so the board comes back on its own.
+ */
+export function BoardOffline({
+  stationLabel,
+  onRetry,
+}: {
+  stationLabel?: string
+  onRetry: () => void
+}) {
+  return (
+    <BoardMessage
+      icon={<OfflineIcon />}
+      stationLabel={stationLabel}
+      title={strings.offlineTitle}
+      hint={strings.offlineBoardHint}
+      onRetry={onRetry}
+    />
+  )
+}
+
+/** The shape both of the above share: framed icon, optional station, title, hint, retry. */
+export function BoardMessage({
+  icon,
+  stationLabel,
+  title,
+  hint,
+  onRetry,
+}: {
+  icon: ReactNode
+  stationLabel?: string
+  title: string
+  hint: string
+  onRetry: () => void
+}) {
+  return (
     <section className="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-16 text-center">
       <span className="flex h-24 w-24 items-center justify-center border border-line bg-veil-empty">
-        <TrainIcon />
+        {icon}
       </span>
       {stationLabel && <span className="text-text-secondary type-label">{stationLabel}</span>}
-      <h1 className="m-0 uppercase type-title leading-(--type-dominant-leading)">
-        {strings.fetchFailed}
-      </h1>
-      <p className="m-0 max-w-[34ch] text-text-secondary type-reading">{strings.fetchFailedHint}</p>
+      <h1 className="m-0 uppercase type-title leading-(--type-dominant-leading)">{title}</h1>
+      <p className="m-0 max-w-[34ch] text-text-secondary type-reading">{hint}</p>
       <button
         type="button"
         onClick={onRetry}
@@ -73,6 +126,33 @@ export function TrainIcon() {
       aria-hidden="true"
     >
       <path d="M3.2 10.6V4.4h9.6v6.2H3.2zM3.2 7.5h9.6M8 4.4v3.1M1.5 13h13M5.4 12.2l.8-1.6M10.6 12.2l-.8-1.6" />
+    </svg>
+  )
+}
+
+/**
+ * `TrainIcon` struck through: identical geometry, viewBox and stroke weight, plus one
+ * diagonal. Deliberately the same icon rather than a new one — the two screens are the
+ * same subject in two conditions, and the strike is the whole difference. The slash is
+ * doubled, the lower copy drawn in the frame's own fill, so it reads as a cut through the
+ * train instead of a line lying on top of it.
+ */
+export function OfflineIcon() {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      width="46"
+      height="46"
+      fill="none"
+      stroke="var(--text-tertiary)"
+      strokeWidth="1"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3.2 10.6V4.4h9.6v6.2H3.2zM3.2 7.5h9.6M8 4.4v3.1M1.5 13h13M5.4 12.2l.8-1.6M10.6 12.2l-.8-1.6" />
+      <path d="M2.6 2.2l10.8 11.6" stroke="var(--veil-empty)" strokeWidth="2.4" />
+      <path d="M2.6 2.2l10.8 11.6" />
     </svg>
   )
 }

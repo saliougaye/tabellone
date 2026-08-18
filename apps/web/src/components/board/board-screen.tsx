@@ -11,6 +11,20 @@
  * an entry point, never a second source of truth for the current station. It closes on the
  * slug it navigates to, in case Next keeps this component mounted across the param change.
  *
+ * With no board to show, the reason matters: a read that failed with the network up is
+ * "dati non disponibili" and worth a retry, a read that never left the device is "sei
+ * offline" and worth nothing but the network coming back. `useOnline` is what separates
+ * them; React Query refetches on reconnect, so the offline screen leaves on its own.
+ *
+ * Offline is checked *before* `loading`, not after, and that ordering is the whole fix:
+ * React Query's default `networkMode: 'online'` pauses a query while the browser reports
+ * no connection, so offline never produces an error — the query simply stays pending. Read
+ * in `loading`-first order the screen would sit on "Caricamento…" for as long as the
+ * network is down.
+ *
+ * A board already in hand survives going offline: cached rows beat an empty screen, and
+ * they are flagged `isStale` because nothing can refresh them until the network returns.
+ *
  * Switching departures ↔ arrivals is a different cache key, so the first switch has
  * nothing to show. Rather than freeze on the previous mode's rows — which read as a slow,
  * unresponsive toggle — the header is kept from the last board and the rows become
@@ -22,7 +36,8 @@ import { useEffect, useRef, useState } from 'react'
 import { StationSheet } from '@/components/picker/station-sheet'
 import { isFavourite, recordVisit, toggleFavourite } from '@/lib/saved-stations'
 import { useBoard } from '@/lib/use-board'
-import { BoardError, BoardLoading } from './board-states'
+import { useOnline } from '@/lib/use-online'
+import { BoardError, BoardLoading, BoardOffline } from './board-states'
 import { BoardView } from './board-view'
 
 export function BoardScreen({
@@ -48,6 +63,7 @@ export function BoardScreen({
     setPickerOpen(true)
   }
   const { board, error, loading, refresh } = useBoard(slug, mode)
+  const online = useOnline()
 
   // The last board of *either* mode, kept only so the header survives a mode switch.
   const lastBoard = useRef<StationBoard | null>(null)
@@ -81,17 +97,20 @@ export function BoardScreen({
   }
 
   // Loading with a previous board in hand: the mode switch. Loading with none: first load.
+  // Both only reachable with the network up — offline is answered above them.
   const previous = lastBoard.current
   const content =
     board !== null ? (
       <BoardView
-        board={error ? { ...board, isStale: true } : board}
+        board={error || !online ? { ...board, isStale: true } : board}
         now={new Date()}
         onSwitchMode={switchMode}
         pickerHref="/"
         onOpenPicker={openPicker}
         favourite={favouriteProps}
       />
+    ) : !online ? (
+      <BoardOffline stationLabel={stationName} onRetry={refresh} />
     ) : loading && previous ? (
       <BoardView
         board={{ ...previous, mode, rows: [], notices: [], isStale: false }}

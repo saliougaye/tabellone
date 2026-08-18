@@ -24,6 +24,9 @@ export function makeQueryClient() {
         staleTime: 0,
         retry: 1,
         refetchOnWindowFocus: true,
+        // Default already, spelled out because the offline screen leans on it: coming back
+        // online refetches by itself, so that screen is not a dead end waiting on a tap.
+        refetchOnReconnect: true,
       },
     },
   })
