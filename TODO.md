@@ -24,3 +24,11 @@
 - [x] Icon set (multiple sizes) + `apple-touch-icon`. Placeholder art, swap for real branding later.
 - [x] Service worker for installability/offline shell (`@serwist/turbopack` — `@serwist/next`'s webpack plugin doesn't support this repo's Turbopack-default builds).
 - [x] `<link rel="manifest">` + `theme-color` meta in `apps/web/src/app/layout.tsx`.
+
+# Improvements
+- Switch departurs arribals to slow, add a loading state
+- on mobile station name overflowing
+- on mobile when changing station should open a bottom sheet
+- add animations
+- investigate new ui for notices
+- investigate new ui for train stops
