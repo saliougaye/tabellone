@@ -1,0 +1,172 @@
+@import "tailwindcss";
+@import "./theme.css";
+
+/* ── Tailwind bridge ─────────────────────────────────────────────────────────
+   theme.css owns every value; this block only exposes tokens as utilities.
+   `inline` makes utilities emit var(--token), so media-query and theme
+   redefinitions in theme.css keep working through the utility classes.
+   Not mapped, on purpose:
+   - spacing: Tailwind's default 0.25rem scale IS the base-4 grid (p-1 = 4px
+     = --sp-1); semantic spacings stay vars, used as p-(--screen-margin).
+   - durations: no @theme namespace; use duration-(--duration-entry).
+   - row/grid geometry and typography levels: compound tokens, consumed by
+     the @utility classes below or by component CSS. */
+@theme inline {
+  --font-sans: var(--font-family);
+
+  /* surfaces and text */
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-pressed: var(--surface-pressed);
+  --color-surface-inverse: var(--surface-inverse);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-inverse: var(--text-inverse);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-focus: var(--focus);
+
+  /* row states */
+  --color-state-on-time: var(--state-on-time);
+  --color-state-delay-minor: var(--state-delay-minor);
+  --color-state-delay-severe: var(--state-delay-severe);
+  --color-state-cancelled: var(--state-cancelled);
+  --color-state-cancelled-partial: var(--state-cancelled-partial);
+  --color-state-rerouted: var(--state-rerouted);
+  --color-state-departure: var(--state-departure);
+  --color-state-departure-halo: var(--state-departure-halo);
+
+  /* platform */
+  --color-platform-absent-text: var(--platform-absent-text);
+  --color-platform-scheduled-text: var(--platform-scheduled-text);
+  --color-platform-scheduled-line: var(--platform-scheduled-line);
+  --color-platform-confirmed-surface: var(--platform-confirmed-surface);
+  --color-platform-confirmed-text: var(--platform-confirmed-text);
+
+  /* bus, freshness, veils */
+  --color-bus-text: var(--bus-text);
+  --color-bus-line: var(--bus-line);
+  --color-data-fresh: var(--data-fresh);
+  --color-data-stale: var(--data-stale);
+  --color-data-absent: var(--data-absent);
+  --color-veil-empty: var(--veil-empty);
+  --color-veil-modal: var(--veil-modal);
+
+  /* operator identity */
+  --color-identity-trenitalia: var(--identity-trenitalia);
+  --color-identity-italo: var(--identity-italo);
+  --color-identity-trenord: var(--identity-trenord);
+  --color-identity-neutral: var(--identity-neutral);
+  --color-identity-mono: var(--identity-mono);
+  --color-mark-ink: var(--mark-ink);
+  --color-nav-affordance: var(--nav-affordance);
+
+  /* corners → rounded-minimal / rounded-badge / rounded-field */
+  --radius-minimal: var(--corner-minimal);
+  --radius-badge: var(--corner-badge);
+  --radius-field: var(--corner-field);
+
+  /* named curves → ease-entry, ease-exit, … */
+  --ease-entry: var(--curve-entry);
+  --ease-exit: var(--curve-exit);
+  --ease-standard: var(--curve-standard);
+  --ease-snap: var(--curve-snap);
+  --ease-worsening: var(--curve-worsening);
+  --ease-breath: var(--curve-breath);
+
+  /* the six transitions → animate-row-entry, animate-exit-departed, … */
+  --animate-row-entry: var(--anim-row-entry);
+  --animate-exit-departed: var(--anim-exit-departed);
+  --animate-exit-cancelled: var(--anim-exit-cancelled);
+  --animate-value-up: var(--anim-value-up);
+  --animate-value-down: var(--anim-value-down);
+  --animate-platform-confirm: var(--anim-platform-confirm);
+  --animate-imminent-pulse: var(--anim-imminent-pulse);
+  --animate-halo-pulse: var(--anim-halo-pulse);
+  --animate-aging: var(--anim-aging);
+  --animate-data-beat: var(--anim-data-beat);
+
+  /* label tracking for ad-hoc use; the full label style is `type-label` */
+  --tracking-label: var(--track-label);
+}
+
+/* ── The four type levels (plus the declared extras) as single utilities.
+   Named type-*, not text-*: text-primary/secondary/tertiary are colour
+   utilities here, and a font-size namespace would collide with them. */
+@utility type-dominant {
+  font-size: var(--type-dominant-size);
+  font-weight: var(--type-dominant-weight);
+  letter-spacing: var(--type-dominant-tracking);
+  line-height: var(--type-dominant-leading);
+}
+@utility type-primary {
+  font-size: var(--type-primary-size);
+  font-weight: var(--type-primary-weight);
+  letter-spacing: var(--type-primary-tracking);
+  line-height: var(--type-primary-leading);
+}
+@utility type-primary-wide {
+  font-size: var(--type-primary-wide);
+  font-weight: var(--type-primary-weight);
+  letter-spacing: var(--type-primary-tracking);
+  line-height: var(--type-primary-leading);
+}
+@utility type-secondary {
+  font-size: var(--type-secondary-size);
+  font-weight: var(--type-secondary-weight);
+  letter-spacing: var(--type-secondary-tracking);
+  line-height: var(--type-secondary-leading);
+}
+@utility type-tertiary {
+  font-size: var(--type-tertiary-size);
+  font-weight: var(--type-tertiary-weight);
+  letter-spacing: var(--type-tertiary-tracking);
+  line-height: var(--type-tertiary-leading);
+}
+@utility type-reading {
+  font-size: var(--type-reading-size);
+  line-height: var(--type-reading-leading);
+}
+@utility type-title {
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  letter-spacing: var(--type-title-tracking);
+}
+/* the one spaced-caps style: only for labels naming a region (rule 2) */
+@utility type-label {
+  font-size: var(--label-style-size);
+  font-weight: var(--label-style-weight);
+  letter-spacing: var(--label-style-tracking);
+  line-height: var(--label-style-leading);
+  text-transform: uppercase;
+}
+
+/* ── Base styles (end of design/tokens.css) ── */
+@layer base {
+  html {
+    background: var(--surface);
+  }
+  body {
+    background: var(--surface);
+    color: var(--text-primary);
+    font-family: var(--font-family);
+    font-feature-settings: var(--digits-tabular);
+    font-variant-numeric: var(--digits-tabular-variant);
+    -webkit-font-smoothing: antialiased;
+  }
+  /* prose returns to proportional digits: tabular ones serve the columns */
+  p,
+  [data-prose] {
+    font-feature-settings: var(--digits-proportional);
+    font-variant-numeric: var(--digits-proportional-variant);
+  }
+  a {
+    color: var(--focus);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+  }
+  a:hover {
+    color: var(--text-primary);
+  }
+}

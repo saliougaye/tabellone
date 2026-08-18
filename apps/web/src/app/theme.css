@@ -1,0 +1,867 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   TABELLONE · THEME TOKENS
+   English port of design/tokens.css (Claude Design export v2 — gitignored
+   local reference, re-download link in CLAUDE.md). Token order follows the
+   source file so the two stay comparable side by side.
+
+   Deliberate differences from the source:
+   - Names are English (CONTEXT.md naming rule). Mapping table below.
+   - The two hand-written palettes are merged per token with light-dark();
+     system preference wins by default, [data-theme="dark"|"light"] overrides
+     (source: dark default + [data-tema="scuro"|"chiaro"] blocks). Contrast
+     comments read "light · dark".
+   - Where a Tailwind v4 @theme namespace would collide, the raw token takes a
+     different stem: curva→curve (not ease), raggio→corner (not radius),
+     traccia→track (not tracking). globals.css maps them into @theme.
+   - Cut, out of v1 scope: kiosk scale ([data-scala="kiosk"] and every *-kiosk
+     token), historic aliases (--durata-breve…, --tr-*, --op-*, the old text
+     scale --testo-micro…--testo-titanico, --spostamento-cancellato), the
+     documentation-only --annotazione-* pair, and the alias keyframes
+     (tab-rullo-su, tab-pulsazione-partenza, tab-desaturazione).
+   - The html/body/p/a base styles at the end of the source live in
+     globals.css under @layer base.
+
+   ── Italian → English mapping ──────────────────────────────────────────────
+   Suffixes: -corpo→-size · -peso→-weight · -traccia→-tracking ·
+   -interlinea→-leading · -larghezza→-width · -altezza→-height ·
+   -visibilita→-visibility · -riserva→-reserve
+
+   Typography    tipo-dominante→type-dominant · tipo-primario→type-primary ·
+                 tipo-primario-ampio→type-primary-wide ·
+                 tipo-secondario→type-secondary · tipo-terziario→type-tertiary ·
+                 tipo-lettura→type-reading · tipo-titolo→type-title ·
+                 peso-sottile/testo/medio/forte/massimo→
+                   weight-thin/regular/medium/strong/max ·
+                 stile-etichetta→label-style ·
+                 traccia-stretta/normale/etichetta→track-tight/normal/label
+   Digits        cifre-tabulari→digits-tabular ·
+                 cifre-proporzionali→digits-proportional ·
+                 colonna-orario→column-schedule · colonna-ritardo→column-delay ·
+                 colonna-cifra-binario→column-platform-digit
+   Layout        sp-*→sp-* · margine-schermo(-ampio)→screen-margin(-wide) ·
+                 aria-riga→row-air · altezza-riga-min→row-height-min ·
+                 tocco-min→touch-min · colonna-tempo→column-time ·
+                 colonna-binario→column-platform ·
+                 larghezza-contenuto-max→content-max-width ·
+                 griglia-riga-colonne/aree/gap/allineamento→
+                   row-grid-columns/areas/gap/align ·
+                 spessore-linea(-forte)→line-width(-strong) ·
+                 raggio-nullo/minimo/badge/campo→corner-none/minimal/badge/field
+   Grid areas    filetto/tempo/centro/binario→accent/time/center/platform
+   Logo slot     logo-*→logo-* · logo-fallback-*→logo-fallback-*
+   Motion        durata-istante/valore/ingresso/conferma/uscita/schermata/
+                   pulsazione/invecchiamento→duration-instant/value/entry/
+                   confirm/exit/screen/pulse/aging ·
+                 ritardo-scaglionato→stagger-delay ·
+                 curva-entrata/uscita/standard/scatto/peggioramento/respiro/
+                   lineare→curve-entry/exit/standard/snap/worsening/breath/linear ·
+                 spostamento-ingresso/uscita/valore→shift-entry/exit/value ·
+                 anim-ingresso-riga→anim-row-entry ·
+                 mov-ingresso-riga→motion-row-entry ·
+                 anim-uscita-partito→anim-exit-departed ·
+                 anim-uscita-cancellato→anim-exit-cancelled ·
+                 anim-valore-su/giu→anim-value-up/down ·
+                 mov-valore-numerico→motion-value ·
+                 mov-peggioramento→motion-worsening ·
+                 scala-conferma→confirm-scale ·
+                 anim-conferma-binario→anim-platform-confirm ·
+                 mov-conferma-binario→motion-platform-confirm ·
+                 alone-imminente→halo-imminent ·
+                 anim-pulsazione-imminente→anim-imminent-pulse ·
+                 anim-pulsazione-alone→anim-halo-pulse ·
+                 desaturazione-stantia→stale-desaturation ·
+                 opacita-stantia→stale-opacity ·
+                 anim-invecchiamento→anim-aging · mov-invecchiamento→motion-aging ·
+                 mov-schermata→motion-screen · mov-stato→motion-state ·
+                 anim-battito-dato→anim-data-beat
+   Row v3        riga-*→row-* · riga-ricca→rich-row · riga-compatta→compact-row ·
+                 riga-testo-max-righe→row-text-max-lines ·
+                 riga-min-altezza→row-min-height · colonna-conto→column-countdown ·
+                 conto-riserva→countdown-reserve · conto-gap→countdown-gap ·
+                 conto-altezza-riservata→countdown-reserved-height ·
+                 conto-unita-corpo→countdown-unit-size ·
+                 via-altezza-riservata→via-reserved-height ·
+                 ritardo-riserva→delay-reserve · binario-altezza→platform-height ·
+                 binario-larghezza-min→platform-min-width ·
+                 binario-riserva→platform-reserve · marchio-*→mark-* ·
+                 categoria-corpo→category-size ·
+                 etichetta-eccezione→exception-label ·
+                 via-visibilita→via-visibility ·
+                 treno-visibilita-eccezione→train-visibility-exception ·
+                 eccezione-dettaglio-visibilita→exception-detail-visibility ·
+                 affordanza-larghezza/corpo/spessore→
+                   affordance-width/size/stroke ·
+                 percorso-visibilita→route-visibility
+   Colours       sfondo(-elevato/-premuto/-inverso)→
+                   surface(-raised/-pressed/-inverse) ·
+                 testo-primario/secondario/terziario/inverso→
+                   text-primary/secondary/tertiary/inverse ·
+                 linea(-forte)→line(-strong) · fuoco→focus ·
+                 stato-in-orario→state-on-time ·
+                 stato-ritardo-lieve/grave→state-delay-minor/severe ·
+                 stato-cancellato(-parziale)→state-cancelled(-partial) ·
+                 stato-deviato→state-rerouted ·
+                 stato-partenza(-alone)→state-departure(-halo) ·
+                 binario-assente/programmato/confermato-*→
+                   platform-absent/scheduled/confirmed-* ·
+                 bus-testo/linea→bus-text/line ·
+                 dato-fresco/stantio/assente→data-fresh/stale/absent ·
+                 velo-vuoto/modale→veil-empty/modal ·
+                 identita-*→identity-* (neutra→neutral) ·
+                 identita-spessore→identity-width ·
+                 marchio-inchiostro→mark-ink ·
+                 affordanza-navigazione→nav-affordance
+   Keyframes     tab-ingresso-riga→tab-row-entry ·
+                 tab-uscita-partito→tab-exit-departed ·
+                 tab-uscita-cancellato→tab-exit-cancelled ·
+                 tab-valore-su/giu→tab-value-up/down ·
+                 tab-conferma-binario→tab-platform-confirm ·
+                 tab-pulsazione-imminente→tab-imminent-pulse ·
+                 tab-pulsazione-alone→tab-halo-pulse ·
+                 tab-invecchiamento→tab-aging · tab-battito-dato→tab-data-beat
+   Attributes    data-tema scuro/chiaro→data-theme dark/light ·
+                 data-prosa→data-prose · data-board unchanged
+
+   The seven binding rules of the source still hold:
+   1. Four type levels; the dominant→primary jump is 2.67×.
+   2. One spaced-caps style (--label-style-*), for exactly one thing.
+   3. Tabular digits declared twice: font-feature + font-variant-numeric.
+   4. Semantic names. No token is named after its own colour.
+   5. Dark and light: two hand-written palettes, verified separately.
+   6. Six recurring transitions, each defined exactly once.
+   7. Fixed-size operator logo slot with a monochrome fallback.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* wired to next/font in layout.tsx; quoted name is the no-JS fallback */
+  --font-family: var(--font-plex-sans, "IBM Plex Sans"), system-ui, sans-serif;
+
+  /* ── 1 · FOUR LEVELS ─────────────────────────────────────────────────────
+     dominant   time remaining — readable with peripheral vision
+     primary    destination (and the platform digit)
+     secondary  scheduled time, operator mark, train number
+     tertiary   metadata: via stops, category, data freshness
+     Dominant→primary jump 2.67× (sharp). Then small steps: 1.29× and 1.17×.
+     One hierarchy shouts; the other three differ by weight and colour. */
+  --type-dominant-size: 3rem; /* 48px */
+  --type-dominant-weight: 700;
+  --type-dominant-tracking: -0.035em;
+  --type-dominant-leading: 0.92;
+
+  --type-primary-size: 1.125rem; /* 18px · 48/18 = 2.67× */
+  --type-primary-weight: 600;
+  --type-primary-tracking: -0.005em;
+  --type-primary-leading: 1.15;
+
+  --type-secondary-size: 0.875rem; /* 14px */
+  --type-secondary-weight: 500;
+  --type-secondary-tracking: 0em;
+  --type-secondary-leading: 1.3;
+
+  --type-tertiary-size: 0.75rem; /* 12px */
+  --type-tertiary-weight: 400;
+  --type-tertiary-tracking: 0em;
+  --type-tertiary-leading: 1.45;
+
+  /* destination on a wide board: primary grows, the ratio to dominant stays
+     sharp (48/26 = 1.85×). Below 600px it returns to the native primary. */
+  --type-primary-wide: 1.625rem; /* 26px */
+
+  /* outside the four given levels, two declared cases: prose and screen title */
+  --type-reading-size: 0.9375rem;
+  --type-reading-leading: 1.5;
+  --type-title-size: 2.75rem;
+  --type-title-weight: 700;
+  --type-title-tracking: -0.03em;
+
+  --weight-thin: 200;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-strong: 600;
+  --weight-max: 700;
+
+  /* ── 2 · ONE SPACED-CAPS STYLE ───────────────────────────────────────────
+     Only permitted use: the label naming a region of the interface
+     («PARTENZE», «PROSSIMI 90 MINUTI», «BINARIO»). Never on a value, never on
+     a state, never on a service category, never on a button. If a text does
+     not name a region, it is set in regular case. */
+  --label-style-size: 0.6875rem; /* 11px */
+  --label-style-weight: 600;
+  --label-style-tracking: 0.1em;
+  --label-style-leading: 1.2;
+
+  --track-tight: -0.035em;
+  --track-normal: 0em;
+  --track-label: 0.1em; /* consumed only by --label-style-tracking */
+
+  /* ── 3 · DIGITS ──────────────────────────────────────────────────────────
+     Deliberate redundancy: font-feature-settings for older engines,
+     font-variant-numeric for those that prefer it. Times, delay minutes and
+     platform numbers align on these widths. */
+  --digits-tabular: "tnum" 1, "lnum" 1, "zero" 0;
+  --digits-tabular-variant: tabular-nums lining-nums;
+  --digits-proportional: "pnum" 1; /* only inside prose */
+  --digits-proportional-variant: proportional-nums;
+  --column-schedule: 5ch; /* 14:32 */
+  --column-delay: 4ch; /* +18 · −2 */
+  --column-platform-digit: 3ch;
+
+  /* ── Space · base-4 grid ── */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+  --sp-20: 80px;
+
+  --screen-margin: var(--sp-4);
+  --screen-margin-wide: var(--sp-8);
+  --row-air: var(--sp-5);
+  --row-height-min: 84px;
+  --touch-min: 44px;
+  --column-time: 148px; /* aligns --type-dominant-size */
+  --column-platform: 56px;
+  --content-max-width: 1360px;
+  --row-grid-columns: 4px minmax(var(--column-time), max-content) minmax(0, 1fr) auto;
+  --row-grid-areas: "accent time center platform";
+  --row-grid-gap: var(--sp-4);
+  --row-grid-align: center;
+  --line-width: 1px;
+  --line-width-strong: 2px;
+
+  --corner-none: 0px;
+  --corner-minimal: 2px;
+  --corner-badge: 3px;
+  --corner-field: 6px;
+
+  /* ── 7 · OPERATOR LOGO SLOT ──────────────────────────────────────────────
+     The box always exists and always measures the same: layout does not
+     depend on an image arriving. Without an image, a monochrome 2–3 letter
+     sigla in regular case on --identity-mono (not the spaced-caps style: that
+     belongs to labels), with white-space: nowrap and text-overflow: ellipsis
+     — a long sigla degrades predictably inside 22px of height. The image, if
+     present, sits inside with object-fit: contain and never widens the slot.
+     Operator colour never enters the logo. */
+  --logo-width: 88px;
+  --logo-height: 22px;
+  --logo-fallback-size: var(--type-secondary-size);
+  --logo-fallback-weight: 600;
+  --logo-fallback-tracking: -0.01em;
+
+  /* ── 6 · MOTION · named durations ───────────────────────────────────────*/
+  --duration-instant: 120ms;
+  --duration-value: 180ms; /* a digit that changes */
+  --duration-entry: 260ms; /* new row */
+  --duration-confirm: 300ms; /* platform confirmed */
+  --duration-exit: 320ms; /* train departed */
+  --duration-screen: 380ms;
+  --duration-pulse: 1800ms; /* one cycle, sustainable for minutes */
+  --duration-aging: 4000ms;
+  --stagger-delay: 28ms;
+
+  /* ── 6 · MOTION · named curves ──────────────────────────────────────────*/
+  --curve-entry: cubic-bezier(0.16, 0.9, 0.3, 1); /* arrives and settles */
+  --curve-exit: cubic-bezier(0.5, 0, 0.9, 0.4); /* accelerates away */
+  --curve-standard: cubic-bezier(0.4, 0.1, 0.25, 1);
+  --curve-snap: cubic-bezier(0.2, 1.5, 0.4, 1); /* the single overshoot */
+  --curve-worsening: cubic-bezier(0.3, 0, 0.2, 1);
+  --curve-breath: cubic-bezier(0.45, 0, 0.55, 1); /* continuous cycles */
+  --curve-linear: linear; /* aging */
+
+  /* ── 6 · THE SIX RECURRING TRANSITIONS ──────────────────────────────────
+     Every data event has one voice, and only one. --anim-* for discrete
+     events, --motion-* for state changes. Under prefers-reduced-motion the
+     keyframes are rewritten by name at the end of this file: components do
+     not change a line and no movement survives. */
+
+  /* 6.1 · NEW ROW ENTRY
+     260ms · --curve-entry · rises 12px while the height opens.
+     Reduced: no displacement, opacity only in --duration-instant. */
+  --shift-entry: 12px;
+  --anim-row-entry: tab-row-entry var(--duration-entry) var(--curve-entry) both;
+  --motion-row-entry:
+    opacity var(--duration-entry) var(--curve-entry),
+    transform var(--duration-entry) var(--curve-entry),
+    height var(--duration-entry) var(--curve-entry);
+
+  /* 6.2 · ROW EXIT · TRAIN DEPARTED
+     320ms · --curve-exit · leaves UPWARD accelerating and holds opacity to
+     mid-run: it departed, it was not removed from the list. The cancelled
+     train has an opposite, deliberately different shape
+     (--anim-exit-cancelled): stays put, loses colour, collapses.
+     Reduced: no displacement; the distinction moves to the textual state
+     label («Partito» / «Cancellato»), always present. */
+  --shift-exit: -28px;
+  --anim-exit-departed: tab-exit-departed var(--duration-exit) var(--curve-exit) both;
+  --anim-exit-cancelled: tab-exit-cancelled var(--duration-exit) var(--curve-standard) both;
+
+  /* 6.3 · NUMERIC VALUE CHANGE · delay, countdown
+     180ms · --curve-standard · only the changing digit rolls, by 0.6em; the
+     unit stays put. Direction tells direction: up if worsening, down if
+     improving. The colour shift lasts --duration-entry.
+     Reduced: the digit is swapped, no roll and no fade. */
+  --shift-value: 0.6em;
+  --anim-value-up: tab-value-up var(--duration-value) var(--curve-standard) both;
+  --anim-value-down: tab-value-down var(--duration-value) var(--curve-standard) both;
+  --motion-value:
+    transform var(--duration-value) var(--curve-standard),
+    opacity var(--duration-value) var(--curve-linear);
+  --motion-worsening: color var(--duration-entry) var(--curve-worsening);
+
+  /* 6.4 · PLATFORM CONFIRMATION — the strongest visual event in the app
+     300ms · --curve-snap · a single overshoot at 1.14: from outlined digit to
+     inverted solid block. Nothing else is entitled to the snap.
+     Reduced: the inverted solid block appears at once — still the strongest
+     event, because it is a surface inversion, not a movement. */
+  --confirm-scale: 1.14;
+  --anim-platform-confirm: tab-platform-confirm var(--duration-confirm) var(--curve-snap) both;
+  --motion-platform-confirm:
+    background-color var(--duration-value) var(--curve-linear),
+    color var(--duration-value) var(--curve-linear),
+    border-color var(--duration-value) var(--curve-linear);
+
+  /* 6.5 · CONTINUOUS PULSE · imminent departure
+     1800ms · --curve-breath · infinite. Only a halo dilating by 6px: no
+     scale, no blinking colour, no displacement, no border appearing and
+     disappearing. Low amplitude to hold for minutes.
+     Reduced: the halo becomes a permanent static ring, always visible. */
+  --halo-imminent: 6px;
+  --anim-imminent-pulse: tab-imminent-pulse var(--duration-pulse) var(--curve-breath) infinite;
+
+  /* 6.6 · PROGRESSIVE BOARD DESATURATION · aging data
+     4000ms · linear · the whole board drops to saturate(0.35) and opacity
+     0.78. Slow and smooth: noticed without reading, without alarming.
+     Reduced: the final state applies immediately — it is information, not
+     decoration, and cannot be suppressed. */
+  --stale-desaturation: 0.35;
+  --stale-opacity: 0.78;
+  --anim-aging: tab-aging var(--duration-aging) var(--curve-linear) both;
+  --motion-aging:
+    filter var(--duration-aging) var(--curve-linear),
+    opacity var(--duration-aging) var(--curve-linear);
+
+  /* outside the six: screen change, data heartbeat, touch states */
+  --motion-screen:
+    transform var(--duration-screen) var(--curve-entry),
+    opacity var(--duration-entry) var(--curve-linear);
+  --motion-state:
+    color var(--duration-value) var(--curve-linear),
+    background-color var(--duration-value) var(--curve-linear),
+    border-color var(--duration-value) var(--curve-linear);
+  --anim-data-beat: tab-data-beat 2400ms var(--curve-breath) infinite;
+
+  /* ── 4 · OPERATOR IDENTITY · usage rule ──────────────────────────────────
+     Colour identifies the operator, it does not decorate. One use per row.
+     Never as a row background, never on text, never on an icon, never for a
+     state, never on a second element of the same row. Unknown operator:
+     --identity-neutral, not an invented colour. States always beat identity:
+     a cancelled row carries --state-cancelled, not the operator colour. */
+  --identity-width: 3px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ROW v3 · geometry, operator mark, motion anchors
+   The row is designed at 375px and then expanded: values here are the desktop
+   ones, mobile versions live in the @media (max-width: 599px) block and, for
+   fixed-width previews, in the @container block.
+   The vertical identity rule is NO longer used in the row: identity lives in
+   the mark (solid tile in the operator colour + monochrome sigla) next to the
+   category sigla. Operator colour therefore enters the mark, and no other
+   point of the row.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* row geometry · four columns: countdown, center, platform, affordance */
+  --row-padding-y: var(--sp-4);
+  --row-padding-x: var(--sp-4);
+  --row-gap-x: var(--sp-4);
+  --row-gap-y: var(--sp-1);
+  --row-min-height: var(--row-height-min);
+  /* the four columns (countdown, center, platform, affordance) are composed
+     at the point of use from the tokens below: a token nesting them would
+     resolve on :root and stay frozen at the desktop values. */
+  --row-text-max-lines: 3; /* mobile: 2 · hard constraint */
+
+  /* ANCHOR A · countdown: the digit has reserved space, the roll of
+     --anim-value-up/down moves nothing around it. */
+  --column-countdown: 132px;
+  --countdown-reserve: 2ch;
+  --countdown-gap: var(--sp-1);
+  /* reserved height of the time column: two sub-rows (countdown + schedule).
+     Redeclared at every breakpoint, like the columns: a calc() with nested
+     var() resolves on the element that declares it. */
+  --countdown-reserved-height: calc(
+    var(--type-dominant-size) *
+    var(--type-dominant-leading) +
+    var(--type-secondary-size) *
+    var(--type-secondary-leading) +
+    var(--countdown-gap)
+  );
+  --via-reserved-height: calc(var(--type-tertiary-size) * var(--type-tertiary-leading));
+  --countdown-unit-size: var(--type-secondary-size);
+
+  /* ANCHOR B · delay minutes: the space exists even without a delay, so the
+     delta appearing does not widen the sub-row. */
+  --delay-reserve: var(--column-delay);
+
+  /* ANCHOR C · platform: the box has fixed minimum height and width, the
+     outline → solid transition of --anim-platform-confirm does not move the row. */
+  --platform-height: 40px;
+  --platform-min-width: 52px;
+  --platform-reserve: 2ch;
+
+  /* operator mark · solid tile, readable from two metres */
+  --mark-width: 52px;
+  --mark-height: 22px;
+  --mark-size: var(--type-tertiary-size);
+  --mark-weight: var(--weight-max);
+  --mark-tracking: -0.01em;
+  --mark-radius: var(--corner-badge);
+  --mark-padding-x: var(--sp-1);
+  --mark-gap: var(--sp-2);
+  --category-size: var(--type-secondary-size);
+
+  /* state label · ONLY exceptional states (cancelled, partial, rerouted) */
+  --exception-label-size: var(--type-secondary-size);
+  --exception-label-weight: var(--weight-max);
+
+  /* visibility governed by tokens, not by component rules */
+  --via-visibility: block; /* via stops: out of the row below 600px */
+  --train-visibility-exception: inline; /* with an exception, on mobile the train number drops */
+  --exception-detail-visibility: inline; /* rerouting detail: only from 600px */
+
+  /* navigation affordance · the row opens the via-stops bottom sheet */
+  --affordance-width: 16px;
+  --affordance-size: 14px;
+  --affordance-stroke: 1.6px;
+
+  /* imminent-departure halo without the inset rule (v3) */
+  --anim-halo-pulse: tab-halo-pulse var(--duration-pulse) var(--curve-breath) infinite;
+
+  /* ── RICH ROW · wide board (desktop and iPad) ────────────────────────────
+     Four zones: time, center, route, platform. No column has a hard minimum:
+     the row cannot break its own edge. Below 1100px the route leaves the row
+     (--route-visibility), as the via stops already do with --via-visibility
+     below 600px: it is the least urgent datum. */
+  --rich-row-columns: minmax(120px, 152px) minmax(0, 1.05fr) minmax(0, 1.1fr) auto;
+  --rich-row-gap: var(--sp-6);
+  --rich-row-padding: var(--sp-5) var(--sp-6);
+  --compact-row-columns: minmax(96px, 132px) minmax(0, 1fr) auto;
+  --route-visibility: block;
+}
+
+@media (max-width: 1099px) {
+  :root {
+    --rich-row-columns: minmax(110px, 140px) minmax(0, 1fr) auto;
+    --rich-row-gap: var(--sp-4);
+    --rich-row-padding: var(--sp-4) var(--sp-5);
+    --compact-row-columns: minmax(88px, 116px) minmax(0, 1fr) auto;
+    --route-visibility: none;
+  }
+}
+
+/* ═══ 5 · THE TWO PALETTES · hand-written, verified separately ═══
+   Source has two blocks (dark default, light rewritten value by value: state
+   tints in light are more saturated and darker, not the dark ones dimmed).
+   Here each token holds both via light-dark(LIGHT, DARK); the pairs are the
+   source values verbatim. System preference decides by default; [data-theme]
+   overrides via color-scheme below. Verified on --surface and
+   --surface-raised: text ≥ 4.5:1, rules and large digits ≥ 3:1. Ratio
+   comments are on --surface, "light · dark". */
+:root {
+  color-scheme: light dark;
+
+  --surface: light-dark(oklch(0.985 0.002 265), oklch(0.17 0.006 265));
+  --surface-raised: light-dark(oklch(1 0 0), oklch(0.22 0.007 265));
+  --surface-pressed: light-dark(oklch(0.94 0.004 265), oklch(0.26 0.008 265));
+  --surface-inverse: light-dark(oklch(0.2 0.006 265), oklch(0.95 0.004 265));
+
+  --text-primary: light-dark(oklch(0.2 0.006 265), oklch(0.97 0.003 265)); /* 17.3:1 · 17.5:1 */
+  --text-secondary: light-dark(oklch(0.44 0.008 265), oklch(0.74 0.006 265)); /* 7.4:1 · 8.3:1 */
+  --text-tertiary: light-dark(oklch(0.53 0.008 265), oklch(0.62 0.008 265)); /* 5.1:1 · 5.3:1 */
+  --text-inverse: light-dark(oklch(0.99 0.002 265), oklch(0.17 0.006 265));
+
+  --line: light-dark(
+    oklch(0.89 0.005 265),
+    oklch(0.28 0.008 265)
+  ); /* separator, not load-bearing */
+  --line-strong: light-dark(oklch(0.64 0.008 265), oklch(0.52 0.01 265)); /* 3.2:1 · 3.4:1 */
+  --focus: light-dark(oklch(0.52 0.16 250), oklch(0.8 0.12 230)); /* 5.2:1 · 10.5:1 */
+
+  --state-on-time: light-dark(oklch(0.48 0.13 155), oklch(0.78 0.11 155)); /* 5.8:1 · 10.0:1 */
+  --state-delay-minor: light-dark(oklch(0.53 0.14 75), oklch(0.83 0.14 85)); /* 5.1:1 · 11.2:1 */
+  --state-delay-severe: light-dark(oklch(0.52 0.2 32), oklch(0.72 0.19 35)); /* 5.8:1 · 6.9:1 */
+  --state-cancelled: light-dark(oklch(0.5 0.21 20), oklch(0.68 0.2 20)); /* 6.3:1 · 6.0:1 */
+  --state-cancelled-partial: light-dark(oklch(0.54 0.15 50), oklch(0.78 0.13 55));
+  --state-rerouted: light-dark(oklch(0.48 0.12 255), oklch(0.76 0.09 250));
+  --state-departure: light-dark(oklch(0.24 0.02 240), oklch(0.98 0.02 200)); /* 15.7:1 · 18.2:1 */
+  --state-departure-halo: light-dark(oklch(0.24 0.02 240 / 0.12), oklch(0.98 0.02 200 / 0.16));
+
+  --platform-absent-text: light-dark(oklch(0.53 0.008 265), oklch(0.62 0.008 265));
+  --platform-scheduled-text: light-dark(oklch(0.44 0.008 265), oklch(0.74 0.006 265));
+  --platform-scheduled-line: light-dark(oklch(0.64 0.008 265), oklch(0.52 0.01 265));
+  --platform-confirmed-surface: light-dark(oklch(0.2 0.006 265), oklch(0.95 0.004 265));
+  /* on the solid block: 17.6:1 · 16.5:1 */
+  --platform-confirmed-text: light-dark(oklch(0.99 0.002 265), oklch(0.17 0.006 265));
+
+  --bus-text: light-dark(oklch(0.48 0.12 85), oklch(0.86 0.12 95));
+  --bus-line: light-dark(oklch(0.6 0.12 85), oklch(0.7 0.11 95));
+
+  --data-fresh: light-dark(oklch(0.48 0.13 155), oklch(0.78 0.11 155));
+  --data-stale: light-dark(oklch(0.53 0.14 75), oklch(0.83 0.14 85));
+  --data-absent: light-dark(oklch(0.53 0.008 265), oklch(0.62 0.008 265));
+  --veil-empty: light-dark(oklch(0.96 0.003 265), oklch(0.22 0.007 265));
+  /* modal veil: the alpha lives IN the colour, so the veil stays at opacity 1
+     and cannot lower the verified contrast of the dialog above it. */
+  --veil-modal: light-dark(oklch(0.96 0.003 265 / 0.72), oklch(0.14 0.006 265 / 0.74));
+
+  --identity-trenitalia: light-dark(oklch(0.52 0.19 25), oklch(0.66 0.17 25)); /* 5.8:1 · 5.7:1 */
+  --identity-italo: light-dark(oklch(0.52 0.16 350), oklch(0.66 0.13 350)); /* 5.8:1 · 5.8:1 */
+  --identity-trenord: light-dark(oklch(0.48 0.14 148), oklch(0.68 0.14 145)); /* 5.9:1 · 7.0:1 */
+  --identity-neutral: light-dark(oklch(0.55 0.02 250), oklch(0.7 0.02 250)); /* unknown operator */
+  --identity-mono: light-dark(oklch(0.44 0.008 265), oklch(0.74 0.006 265)); /* fallback sigla */
+  /* sigla on the solid tile: 5.6:1 · 8.9:1 min */
+  --mark-ink: light-dark(oklch(0.99 0.002 265), oklch(0.17 0.006 265));
+  --nav-affordance: light-dark(oklch(0.53 0.008 265), oklch(0.62 0.008 265));
+}
+
+/* explicit override beats system preference; without the attribute the
+   light-dark() pairs above follow prefers-color-scheme */
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+[data-theme="light"] {
+  color-scheme: light;
+}
+
+/* ── Below 600px the row goes from four columns to two bands.
+      Only dominant and primary shrink, together: the ratio stays 2.5×.
+      Secondary and tertiary do not shrink — already at the readable minimum. ── */
+@media (max-width: 599px) {
+  :root {
+    --type-dominant-size: 2.5rem; /* 40px */
+    --type-primary-size: 1rem; /* 16px · 40/16 = 2.5× */
+    --type-primary-wide: 1.125rem; /* 18px */
+    --column-time: 116px;
+    --row-grid-columns: 4px minmax(var(--column-time), max-content) minmax(0, 1fr);
+    --row-grid-areas: "accent time platform" "accent center center";
+    --row-grid-gap: var(--sp-3) var(--sp-4);
+    --row-grid-align: start;
+    --screen-margin: var(--sp-4);
+
+    /* ROW v3 · native mobile values (the row is designed here) */
+    --row-padding-y: var(--sp-3);
+    --row-padding-x: var(--sp-3);
+    --row-gap-x: var(--sp-3);
+    --row-min-height: 72px;
+    --row-text-max-lines: 2;
+    --column-countdown: 84px;
+    --countdown-reserved-height: calc(
+      var(--type-dominant-size) *
+      var(--type-dominant-leading) +
+      var(--type-secondary-size) *
+      var(--type-secondary-leading) +
+      var(--countdown-gap)
+    );
+    --column-platform: 44px;
+    --platform-height: 34px;
+    --platform-min-width: 40px;
+    --mark-width: 36px;
+    --mark-height: 18px;
+    --exception-label-size: var(--type-tertiary-size);
+    --via-visibility: none;
+    --train-visibility-exception: none;
+    --exception-detail-visibility: none;
+  }
+}
+
+/* Same reorganisation on the container, for mobile previews inside a desktop
+   page. The container declares container-type. */
+@container (max-width: 599px) {
+  [data-board] * {
+    --type-dominant-size: 2.5rem;
+    --type-primary-size: 1rem;
+    --type-title-size: 2rem;
+    --column-time: 116px;
+    --row-grid-columns: 4px minmax(var(--column-time), max-content) minmax(0, 1fr);
+    --row-grid-areas: "accent time platform" "accent center center";
+    --row-grid-gap: var(--sp-3) var(--sp-4);
+    --row-grid-align: start;
+
+    --row-padding-y: var(--sp-3);
+    --row-padding-x: var(--sp-3);
+    --row-gap-x: var(--sp-3);
+    --row-min-height: 72px;
+    --row-text-max-lines: 2;
+    --column-countdown: 84px;
+    --countdown-reserved-height: calc(
+      var(--type-dominant-size) *
+      var(--type-dominant-leading) +
+      var(--type-secondary-size) *
+      var(--type-secondary-leading) +
+      var(--countdown-gap)
+    );
+    --column-platform: 44px;
+    --platform-height: 34px;
+    --platform-min-width: 40px;
+    --mark-width: 36px;
+    --mark-height: 18px;
+    --exception-label-size: var(--type-tertiary-size);
+    --via-visibility: none;
+    --train-visibility-exception: none;
+    --exception-detail-visibility: none;
+  }
+}
+
+/* ═══ 6 · CANONICAL KEYFRAMES · one per transition ═══ */
+
+/* 6.1 row entry */
+@keyframes tab-row-entry {
+  from {
+    opacity: 0;
+    transform: translateY(var(--shift-entry));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 6.2a exit · departed: holds opacity to mid-run, then accelerates upward */
+@keyframes tab-exit-departed {
+  0% {
+    opacity: 1;
+    transform: none;
+  }
+  50% {
+    opacity: 0.9;
+    transform: translateY(calc(var(--shift-exit) * 0.3));
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(var(--shift-exit));
+  }
+}
+/* 6.2b exit · cancelled: stays put, loses colour, collapses in place */
+@keyframes tab-exit-cancelled {
+  0% {
+    opacity: 1;
+    filter: saturate(1);
+  }
+  55% {
+    opacity: 0.5;
+    filter: saturate(0.1);
+  }
+  100% {
+    opacity: 0;
+    filter: saturate(0);
+    transform: scaleY(0.9);
+  }
+}
+
+/* 6.3 numeric value · up = worsens, down = improves */
+@keyframes tab-value-up {
+  from {
+    transform: translateY(var(--shift-value));
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes tab-value-down {
+  from {
+    transform: translateY(calc(var(--shift-value) * -1));
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* 6.4 platform confirmation · the app's only overshoot */
+@keyframes tab-platform-confirm {
+  0% {
+    transform: scale(0.82);
+    opacity: 0;
+  }
+  55% {
+    transform: scale(var(--confirm-scale));
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* 6.5 imminent pulse · only the halo breathes */
+@keyframes tab-imminent-pulse {
+  0%,
+  100% {
+    box-shadow:
+      inset var(--line-width-strong) 0 0 0 var(--state-departure),
+      0 0 0 0 var(--state-departure-halo);
+  }
+  50% {
+    box-shadow:
+      inset var(--line-width-strong) 0 0 0 var(--state-departure),
+      0 0 0 var(--halo-imminent) var(--state-departure-halo);
+  }
+}
+/* 6.5b pulse v3 · only the outer halo: the v3 row no longer has the inset
+   rule, so the imminent departure cannot use it. */
+@keyframes tab-halo-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--state-departure-halo);
+  }
+  50% {
+    box-shadow: 0 0 0 var(--halo-imminent) var(--state-departure-halo);
+  }
+}
+
+/* 6.6 board aging */
+@keyframes tab-aging {
+  from {
+    filter: saturate(1);
+    opacity: 1;
+  }
+  to {
+    filter: saturate(var(--stale-desaturation));
+    opacity: var(--stale-opacity);
+  }
+}
+
+/* outside the six: data heartbeat */
+@keyframes tab-data-beat {
+  0% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.6);
+  }
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+}
+
+/* ═══ 6 · PREFERS-REDUCED-MOTION ═══
+   The keyframes are redefined with the same names: whatever component uses
+   them, the movement disappears but the information stays. Not one component
+   line to modify. The static substitutions, event by event:
+   1 row entry          → appearance, no displacement
+   2 row exit           → disappearance; departed/cancelled distinguished by
+                          the textual label, not by movement
+   3 numeric value      → hard swap of the digit, no roll
+   4 platform confirm   → immediate inversion to solid block: still the
+                          strongest event, because it is surface, not movement
+   5 imminent departure → permanent static ring instead of the breathing
+   6 aging              → final state applied at once: it is information */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-instant: 1ms;
+    --duration-value: 1ms;
+    --duration-entry: 1ms;
+    --duration-confirm: 1ms;
+    --duration-exit: 1ms;
+    --duration-screen: 1ms;
+    --duration-pulse: 1ms;
+    --duration-aging: 1ms;
+    --stagger-delay: 0ms;
+    --shift-entry: 0px;
+    --shift-exit: 0px;
+    --shift-value: 0px;
+    --confirm-scale: 1;
+  }
+  @keyframes tab-row-entry {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes tab-exit-departed {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes tab-exit-cancelled {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes tab-value-up {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes tab-value-down {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes tab-platform-confirm {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  /* static ring, not a pulse */
+  @keyframes tab-imminent-pulse {
+    0%,
+    100% {
+      box-shadow:
+        inset var(--line-width-strong) 0 0 0 var(--state-departure),
+        0 0 0 var(--halo-imminent) var(--state-departure-halo);
+    }
+  }
+  @keyframes tab-halo-pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 var(--halo-imminent) var(--state-departure-halo);
+    }
+  }
+  @keyframes tab-data-beat {
+    0%,
+    100% {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  /* aging keeps the final state: information, not decoration */
+  @keyframes tab-aging {
+    from {
+      filter: saturate(var(--stale-desaturation));
+      opacity: var(--stale-opacity);
+    }
+    to {
+      filter: saturate(var(--stale-desaturation));
+      opacity: var(--stale-opacity);
+    }
+  }
+}
