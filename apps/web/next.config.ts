@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next'
+import { withSerwist } from '@serwist/turbopack'
 
 const nextConfig: NextConfig = {
   // `@tabellone/core` ships as TypeScript source (`exports` points at `src/index.ts`);
@@ -9,4 +10,4 @@ const nextConfig: NextConfig = {
   agentRules: false,
 }
 
-export default nextConfig
+export default withSerwist(nextConfig)
