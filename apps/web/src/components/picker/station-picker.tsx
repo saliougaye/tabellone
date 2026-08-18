@@ -12,6 +12,7 @@ import type { Station } from '@tabellone/core'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { SkeletonBlock } from '@/components/ui/skeleton-block'
+import { canonicalBoardPath } from '@/lib/board-routes'
 import type { SavedStation } from '@/lib/saved-stations'
 import { strings } from '@/strings'
 
@@ -147,7 +148,7 @@ export function StationPicker({
                   {suggested.map((station) => (
                     <Link
                       key={station.slug}
-                      href={`/${station.slug}`}
+                      href={canonicalBoardPath(station.slug, 'departures')}
                       onClick={() => onSelect?.(station.slug)}
                       className="flex flex-col items-start gap-2 rounded-minimal border border-line bg-surface-raised px-3 py-4 no-underline transition-[background-color,border-color]"
                     >
@@ -190,7 +191,7 @@ export function StationPicker({
                   {entries.map((station) => (
                     <Link
                       key={station.slug}
-                      href={`/${station.slug}`}
+                      href={canonicalBoardPath(station.slug, 'departures')}
                       onClick={() => onSelect?.(station.slug)}
                       className="flex w-full items-center gap-3 border-b border-line bg-surface-raised px-4 py-3 no-underline min-h-(--touch-min)"
                     >
@@ -323,7 +324,7 @@ function SavedSection({
         {entries.map((entry) => (
           <Link
             key={entry.slug}
-            href={`/${entry.slug}`}
+            href={canonicalBoardPath(entry.slug, 'departures')}
             onClick={() => onSelect?.(entry.slug)}
             className="flex items-center gap-3 rounded-minimal border border-line bg-surface-raised p-3 no-underline min-h-(--touch-min)"
           >

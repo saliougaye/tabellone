@@ -1,6 +1,9 @@
 # The mode is a query param on one page, not a second route
 
-**Status:** accepted · supersedes the route list in ARCHITECTURE.md §4.1
+**Status:** superseded by ADR-011 — canonical path routes added under `/stazioni` for SEO,
+and the URL-stability consequence below no longer holds (the bare/`?view=` URLs moved under
+the new prefix rather than staying put). Kept for the query-param-vs-route reasoning, which
+still applies. Originally: supersedes the route list in ARCHITECTURE.md §4.1
 
 The board originally had two routes, `/[slug]` for departures and `/[slug]/arrivi` for
 arrivals. Instead there is one page, `/[slug]`, and the mode is a query param:

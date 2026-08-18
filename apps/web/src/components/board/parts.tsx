@@ -1,10 +1,12 @@
+'use client'
+
 /**
  * Small board parts, straight from design sheets 01–02: service mark (logo slot + operator
  * tile), platform box (the three states of ANCHOR C), freshness dot, mode toggle and the
  * route strip of the rich row.
  */
 import type { BoardMode, BoardRow, Platform, ViaStop } from '@tabellone/core'
-import type { CSSProperties } from 'react'
+import { type CSSProperties, useEffect, useRef, useState } from 'react'
 import {
   categoryStyle,
   freshnessLabel,
@@ -15,6 +17,25 @@ import {
 } from '@/lib/presentation'
 import { strings } from '@/strings'
 import { brandLogoInk, brandLogos } from './brand-logos'
+
+/**
+ * Touch feedback for every control on the board. `--duration-instant` is documented as
+ * covering "screen change, data heartbeat, touch states", so this needs no token of its own,
+ * and it already collapses to 1ms under `prefers-reduced-motion`.
+ *
+ * No JS: `:active` is enough because every control that carries this is a `<button>` with an
+ * `onClick`, which is precisely what makes iOS Safari fire `:active` on a tap at all.
+ *
+ * Two exports because `transition-property` is one declaration: a control that already
+ * transitions its colours cannot also be given `transition-transform` — the two classes
+ * would fight and the cascade, not the code, would pick a winner. Such a control names
+ * `scale` in its own `transition-[…]` list and takes `pressScale` alone. `scale`, not
+ * `transform`: Tailwind's `scale-*` compiles to the independent `scale` property, so a list
+ * naming only `transform` transitions nothing and the press would snap.
+ */
+export const pressScale = 'duration-(--duration-instant) ease-standard active:scale-[0.97]'
+/** Complete press feedback for a control that transitions nothing else. */
+export const pressFeedback = `transition-transform ${pressScale}`
 
 /**
  * What the traveller identifies the train by, in two halves: the brand's logo (or, with no
@@ -171,6 +192,34 @@ export function FreshnessDot({
   )
 }
 
+const modeSegments: Array<{ mode: BoardMode; label: string; icon: string }> = [
+  {
+    mode: 'departures',
+    label: strings.departures,
+    icon: 'M1.8 14h12.4M2.6 11V5.2A1.6 1.6 0 0 1 4.2 3.6h4.2A1.6 1.6 0 0 1 10 5.2V11H2.6zM2.6 7.4h7.4M6.3 3.6V7.4M4.2 11l-.9 2M8.4 11l.9 2M11.6 5.6h2.6M11.6 8.2h2.6',
+  },
+  {
+    mode: 'arrivals',
+    label: strings.arrivals,
+    icon: 'M1.8 14h12.4M13.4 11V5.2A1.6 1.6 0 0 0 11.8 3.6H7.6A1.6 1.6 0 0 0 6 5.2V11h7.4zM6 7.4h7.4M9.7 3.6V7.4M7.8 11l-.9 2M11.8 11l.9 2M1.8 5.6h2.6M1.8 8.2h2.6',
+  },
+]
+
+/**
+ * The two-segment departures/arrivals switch. The active segment's surface is not painted on
+ * the segment itself but on a single pill sliding behind both, so the switch reads as one
+ * control moving rather than two independently repainting.
+ *
+ * `left`/`width` rather than `translateX(100%)`: the segments are only equal width below
+ * 600px (`flex-1`); on desktop each is as wide as its own label, so there is no percentage
+ * that lands on both breakpoints. So the pill is measured off the active button and synced
+ * with a `ResizeObserver` — the same measure-and-sync shape `MarqueeText` already uses.
+ *
+ * Until that first measurement lands the active segment keeps painting its own background,
+ * which is what the toggle looked like before the pill existed: server-rendered markup and
+ * the first client paint are identical, and the pill takes over in the same commit that
+ * removes the background, at exactly the geometry it was already drawn at.
+ */
 export function ModeToggle({
   mode,
   onChange,
@@ -178,47 +227,88 @@ export function ModeToggle({
   mode: BoardMode
   onChange: (mode: BoardMode) => void
 }) {
-  const segment = (target: BoardMode, label: string, icon: string) => {
-    const active = mode === target
-    return (
-      <button
-        type="button"
-        onClick={() => onChange(target)}
-        aria-pressed={active}
-        className={`inline-flex flex-1 min-[600px]:flex-none cursor-pointer items-center justify-center gap-2 px-5 py-3 type-secondary transition-[background-color,color] min-h-(--touch-min) ${
-          active ? 'bg-surface-inverse text-text-inverse' : 'bg-transparent text-text-secondary'
-        }`}
-        style={{ fontWeight: active ? 'var(--weight-max)' : 'var(--weight-medium)' }}
-      >
-        <svg
-          viewBox="0 0 16 16"
-          width="14"
-          height="14"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d={icon} />
-        </svg>
-        <span>{label}</span>
-      </button>
-    )
-  }
+  const container = useRef<HTMLDivElement>(null)
+  const segments = useRef<Array<HTMLButtonElement | null>>([])
+  const [pill, setPill] = useState<{ left: number; width: number } | null>(null)
+  const activeIndex = modeSegments.findIndex((segment) => segment.mode === mode)
+
+  useEffect(() => {
+    const box = container.current
+    const button = segments.current[activeIndex]
+    if (!box || !button) return
+    const measure = () => {
+      // offsetLeft is relative to the offsetParent, which is the container: it is the only
+      // positioned ancestor here, and the pill is positioned against the same box.
+      const width = button.offsetWidth
+      // No box at all: this is the copy of the toggle on the far side of the 600px
+      // breakpoint. A pill measured at zero width would be a switch with nothing lit, so
+      // report nothing and let the active segment paint its own background until the toggle
+      // is on screen again.
+      setPill(width > 0 ? { left: button.offsetLeft, width } : null)
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(box)
+    observer.observe(button)
+    // ResizeObserver skips an element with no box, so it cannot report the one change that
+    // matters most here: the breakpoint being crossed, which is exactly when this toggle goes
+    // from `display: none` to laid out. The window listener covers that.
+    window.addEventListener('resize', measure)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', measure)
+    }
+  }, [activeIndex])
+
   return (
-    <div className="flex overflow-hidden rounded-minimal border border-line-strong">
-      {segment(
-        'departures',
-        strings.departures,
-        'M1.8 14h12.4M2.6 11V5.2A1.6 1.6 0 0 1 4.2 3.6h4.2A1.6 1.6 0 0 1 10 5.2V11H2.6zM2.6 7.4h7.4M6.3 3.6V7.4M4.2 11l-.9 2M8.4 11l.9 2M11.6 5.6h2.6M11.6 8.2h2.6',
+    <div
+      ref={container}
+      className="relative flex overflow-hidden rounded-minimal border border-line-strong"
+    >
+      {pill && (
+        <span
+          aria-hidden="true"
+          className="absolute top-0 bottom-0 bg-surface-inverse transition-[left,width] duration-(--duration-instant) ease-standard"
+          style={{ left: `${pill.left}px`, width: `${pill.width}px` }}
+        />
       )}
-      {segment(
-        'arrivals',
-        strings.arrivals,
-        'M1.8 14h12.4M13.4 11V5.2A1.6 1.6 0 0 0 11.8 3.6H7.6A1.6 1.6 0 0 0 6 5.2V11h7.4zM6 7.4h7.4M9.7 3.6V7.4M7.8 11l-.9 2M11.8 11l.9 2M1.8 5.6h2.6M1.8 8.2h2.6',
-      )}
+      {modeSegments.map((segment, index) => {
+        const active = segment.mode === mode
+        return (
+          <button
+            key={segment.mode}
+            ref={(node) => {
+              segments.current[index] = node
+            }}
+            type="button"
+            onClick={() => onChange(segment.mode)}
+            aria-pressed={active}
+            // `relative`: the pill is absolutely positioned, so it would otherwise paint over
+            // the label instead of behind it.
+            className={`relative inline-flex flex-1 min-[600px]:flex-none cursor-pointer items-center justify-center gap-2 px-5 py-3 type-secondary transition-[color,scale] min-h-(--touch-min) ${pressScale} ${
+              active
+                ? `text-text-inverse ${pill ? '' : 'bg-surface-inverse'}`
+                : 'text-text-secondary'
+            }`}
+            style={{ fontWeight: active ? 'var(--weight-max)' : 'var(--weight-medium)' }}
+          >
+            <svg
+              viewBox="0 0 16 16"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d={segment.icon} />
+            </svg>
+            <span>{segment.label}</span>
+          </button>
+        )
+      })}
     </div>
   )
 }

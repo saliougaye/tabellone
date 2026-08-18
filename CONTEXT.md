@@ -15,9 +15,11 @@ identifier, not ours.
 planned.
 
 **Mode** — which of the two boards is being looked at: `departures` or `arrivals`. Two
-separate things at the source, so never "the board with a filter". Spelled `view` in page
-URLs (`/[slug]?view=arrivals`) and `mode` in the API (`/api/board/:slug?mode=arrivals`); same
-values, two parameter names, no third spelling.
+separate things at the source, so never "the board with a filter". Three spellings, same two
+values: `mode` in the API (`/api/board/:slug?mode=arrivals`), `view` on the legacy page query
+param (`/stazioni/[slug]?view=arrivals`, ADR-010), and the canonical path segment on the page
+the app actually links to — `partenze`/`arrivi`, Italian rather than the other two's English,
+because it is user-facing (ADR-011).
 
 **Row** — one train's line on a board. A row is a *stop*: the same train appears as a row
 on many stations' boards, with a different time on each.

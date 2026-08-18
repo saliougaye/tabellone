@@ -29,7 +29,38 @@
 - [x] Switch departures/arrivals felt slow — added a loading state and moved fetching to React Query (`@tanstack/react-query`, provider in `apps/web/src/lib/query-provider.tsx`). The board cache is keyed `['board', slug, mode]`, so the toggle is a different key: the old mode's rows no longer sit under the new label while the request is in flight. During that window the header (station, favourite, toggle) stays mounted and the rows become shape-matched placeholders (`BoardSkeleton`, new `tab-skeleton` keyframe in `theme.css` with a `prefers-reduced-motion` override). A mode already fetched paints instantly. `refetchInterval` + React Query's focus manager replace the hand-rolled 20 s timer and hidden-document suspension; `/api/stations` moved to React Query too.
 - [x] on mobile station name overflowing — the station name sat in a `whitespace-nowrap` span with no `overflow` on the header, so "MILANO CENTRALE" at `--type-title` ran past 375px and under the chevron. New `MarqueeText` (`apps/web/src/components/board/marquee-text.tsx`) clips the line and scrolls it to its end and back, but only when it measures a real overflow (`ResizeObserver`, so short names never move); distance and duration are per-instance, the shape is the new `tab-marquee`/`--anim-marquee` in `theme.css`. Under `prefers-reduced-motion` there is nothing to substitute — no keyframe can reveal hidden text — so the line wraps instead. Chevron and favourite star are now `flex-none` outside the scrolling area; desktop title got the same treatment, since a long name overflows there too.
 - [x] on mobile when changing station should open a bottom sheet — the station name on the board is a button below 600px (`onOpenPicker` in `board-view.tsx`) that opens `StationSheet`, the full `StationPicker` inside a new native-`<dialog>` bottom sheet (`components/ui/bottom-sheet.tsx`): platform focus trap/inert/Esc, plus the two things `<dialog>` doesn't give — an exit animation (`close()` would cut the slide-out, so a `closing` state waits for `animationend` with a timeout fallback) and background scroll lock. Desktop keeps the link to `/` unchanged. Motion is **not** ours: the first hand-rolled `<dialog>` + keyframes version opened and closed correctly but didn't *feel* like a sheet, so it now sits on **`vaul`** — drag tracking, rubber-band past the top edge, velocity-based release, iOS curve `cubic-bezier(0.32, 0.72, 0, 1)`, plus `shouldScaleBackground` shrinking the page behind it. vaul writes transform and curve inline, so `theme.css` keeps only the `prefers-reduced-motion` override for it (`!important` — nothing else outranks inline styles) and no `--anim-sheet-*` tokens. `setBackgroundColorOnScale={false}`: the overlay already veils the strip around the scaled page, and vaul's forced black would flash through the light theme on close. Radix underneath also replaces the focus trap, Esc, inert background and scroll lock we were hand-maintaining. No height jump on a cold open: the panel is `h-[88dvh]` (fixed, not `max-h`) so neither the catalogue landing nor a search keystroke resizes it, and `StationPicker` takes a `loading` prop — `useStations`' pending state, kept distinct from `stations === null` which means the read *failed* — rendering `PickerSkeleton` at the real row heights. `SkeletonBlock` moved out of `board-states.tsx` to `components/ui/` so board and picker placeholders share one geometry and pulse. Measured cold with `/api/stations` delayed 3 s: panel 743px while loading and 743px after, skeleton → 2441 rows. Catalogue moved to a shared `useStations` hook, so the sheet and the picker page hit one React Query key; the sheet mounts only on first open, so a desktop session never fetches for it.
-- [ ] add animations
+- [x] add animations — `theme.css` already carried the whole motion system; five of its
+  transitions were defined and unused. Now wired, plus the small amount of new motion the
+  design pass called for (`docs/superpowers/specs/2026-08-18-board-animations-design.md`).
+  Entry needs no diffing: a list `key` that was not in the previous render is a new DOM
+  node, so `animate-row-entry` plays on first paint, staggered by
+  `animationDelay: calc(var(--stagger-delay) * index)`. Exit is the only part that needs
+  state — a departed train is simply absent from the next poll, and no keyframe can play on
+  an unmounted node — so `use-departing-rows.ts` holds a vanished key one more beat in the
+  gap it left, with its last row snapshot, and the caller reads `status` off that to pick
+  between `animate-exit-departed` and `animate-exit-cancelled`. The hold length is read
+  from `--duration-exit` rather than a hand-matched JS constant, floored at 50ms so the
+  reduced-motion 1ms still leaves React a frame to commit. Entry/exit live on a wrapper
+  element, not the row's own box: `animate-halo-pulse` compiles to the same `animation`
+  shorthand and a blinking row would keep only whichever class Tailwind emitted last.
+  `use-rolled-value.ts` rolls the dominant time when the delay changes (up = worsening),
+  keyed so the `both`-filled `animate-value-*` keyframe plays at all; `LaterRow` is skipped
+  on purpose. `ModeToggle`'s active surface is now one pill sliding behind both segments —
+  `left`/`width` measured off the active button, because the segments are only equal width
+  below 600px so no `translateX(100%)` lands on both breakpoints; until the first
+  measurement the active segment still paints its own background, so SSR and first paint
+  are unchanged. Press feedback is plain `active:scale-[0.97]` on `--duration-instant`;
+  it has to be spelled `scale`, not `transform`, in a control's own `transition-[…]` list,
+  since Tailwind's `scale-*` sets the independent `scale` property. One new keyframe,
+  `tab-favourite-pop` (borrowing `--curve-snap`, fires only off→on), with its
+  reduced-motion entry alongside the other ten. Page transition was descoped to the true
+  initial mount of `BoardScreen`'s `<main>` (`--motion-screen`): `router.replace`
+  navigations are excluded, because the mode switch already has tuned skeleton logic a
+  page-level fade would only muddy. `animate-platform-confirm` needed no fix — `PlatformBox`
+  swaps to a different branch's `<span>`, which changes `animation-name` and replays the
+  keyframe on the poll where confirmation happens. Both hooks are unit-tested (22 cases,
+  `@testing-library/react` added to `apps/web`); the keyframes themselves stay manually
+  verified, since `/dev/scenari` is gone and nothing else can drive entry/exit on demand.
 - [ ] investigate new ui for notices
 - [ ] investigate new ui for train stops
 - [x] fix when no data is present in the row dont show anything — RFI pads a short board out to a fixed row count with blank `<tr name="treno">` rows (no `id` on the `<tr>`, `RTreno`/`RStazione`/`ROrario` all empty); they were rendering as `00:00` departures to nowhere. `parser.ts` drops them (`isFillerRow`), new real fixture `filler-rows.html` (Abano Terme, 1 real train + 14 fillers) + 2 tests.
@@ -55,7 +86,13 @@
   `serviceLabel` text was removed from all four row shapes; slot + tile share one
   `role="img"`/`aria-label` so a screen reader hears the service once.
 - [ ] POC with ollama parsing html
-- [ ] Change URL to improve seo: /:station/arrivi and /:station/partenze
+- [x] Change URL to improve seo: /:station/arrivi and /:station/partenze — new canonical
+  path routes `apps/web/src/app/stazioni/[slug]/partenze/page.tsx` and `.../arrivi/page.tsx`,
+  each with its own `generateMetadata` (title/description/canonical). Whole board route
+  moved under a `/stazioni` prefix (ADR-011, supersedes ADR-010's URL-stability guarantee —
+  accepted pre-launch, nothing indexed yet): `/stazioni/[slug]` and `?view=` still resolve
+  but now carry `canonical` links to the matching path route; internal navigation (mode
+  toggle, station picker) points at the new routes.
 - [ ] Internalization: url with /:locale/stations/:station/departures and /:locale/stations/:station/arrivals
 - [x] Add offline screen state, now shows the no data state — offline is its own state now,
   same layout as the failed read (`BoardMessage`, shared by both plus the service worker's

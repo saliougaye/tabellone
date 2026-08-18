@@ -184,14 +184,21 @@ Responsibilities: rendering, routing, interaction, UI state, exposing the API.
 Routes:
 
 ```
-/                                     station selection
-/[slug]                               board, departures by default
-/[slug]?view=arrivals|departures      board, explicit mode
+/                                        station selection
+/stazioni/[slug]/partenze               board, departures — canonical, indexable
+/stazioni/[slug]/arrivi                 board, arrivals — canonical, indexable
+/stazioni/[slug]                        board, departures by default (legacy, kept working)
+/stazioni/[slug]?view=arrivals|departures   board, explicit mode (legacy, kept working)
 ```
 
-Two pages only. The mode is a query param, not a second route (see ADR-010): `view` absent or
+One `BoardScreen`, four URLs into it, all under `/stazioni` (ADR-011 — Italian, matching the
+`arrivi`/`partenze` segments and CONTEXT.md's naming rule for user-facing URL parts). ADR-010
+put the mode in a `view` query param instead of a second route; ADR-011 added the two path
+routes above for SEO (search engines rank path segments, not query params) without reopening
+that decision — the bare and `?view=` forms still resolve exactly as before (`view` absent or
 unrecognised resolves to `departures` rather than 404, because a mangled shared link should
-still show a board.
+still show a board) and their `generateMetadata` sets `canonical` to the matching path route.
+The app's own links (mode toggle, station picker) always point at the path routes.
 
 ### 4.2 `packages/core` — domain
 

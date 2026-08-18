@@ -364,6 +364,16 @@
   --skeleton-opacity-high: 0.75;
   --anim-skeleton: tab-skeleton 1600ms var(--curve-breath) infinite;
 
+  /* outside the six: the favourite star turning ON. Borrows --duration-confirm and
+     --curve-snap from 6.4 on purpose: this is the second confirmation event in the app, and
+     the snap is the shape a confirmation has here. 6.4's "nothing else is entitled to the
+     snap" is about the row's platform box — no other *row* state may overshoot — not about
+     the header's one deliberate act by the traveller. Turning a favourite off gets nothing:
+     the event worth confirming is gaining one.
+     Reduced: --duration-confirm is already 1ms and --confirm-scale already 1, so the
+     keyframe below is redefined only to keep the convention intact. */
+  --anim-favourite-pop: tab-favourite-pop var(--duration-confirm) var(--curve-snap) both;
+
   /* outside the six: a line of text wider than its container scrolls back and forth
      rather than being clipped — the station name at --type-title does not fit 375px, and
      a truncated station name is a wrong station name. Only the shape and the curve live
@@ -860,6 +870,20 @@
   }
 }
 
+/* outside the six: favourite star pop · the same single overshoot as 6.4, starting and
+   ending at rest because the star is already there — only its meaning changes. */
+@keyframes tab-favourite-pop {
+  0% {
+    transform: scale(1);
+  }
+  55% {
+    transform: scale(var(--confirm-scale));
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 /* ═══ 6 · PREFERS-REDUCED-MOTION ═══
    The keyframes are redefined with the same names: whatever component uses
    them, the movement disappears but the information stays. Not one component
@@ -955,6 +979,13 @@
     0%,
     100% {
       opacity: 1;
+      transform: none;
+    }
+  }
+  /* the star still fills, it just does not jump */
+  @keyframes tab-favourite-pop {
+    0%,
+    100% {
       transform: none;
     }
   }

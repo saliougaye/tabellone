@@ -2,14 +2,17 @@
 
 /**
  * Live wiring of the board page: polls `/api/board/:slug` (20 s, hidden-suspended, via
- * React Query), keeps the `view` query param in sync (ADR-010), records the visit and
- * toggles the favourite in `localStorage`. Rendering is delegated to the presentational
- * BoardView.
+ * React Query), keeps the URL in sync with the mode by navigating to the canonical
+ * `/stazioni/:slug/partenze` or `/stazioni/:slug/arrivi` route (ADR-011) — regardless of
+ * which of the three board URLs (bare, `?view=`, or a path route) it was mounted from —
+ * records the visit and toggles the favourite in `localStorage`. Rendering is delegated to
+ * the presentational BoardView.
  *
  * Changing station is a bottom sheet on mobile (`StationSheet`) and a link to the picker
- * page on desktop — both end in a normal navigation to `/:slug`, so the sheet is only ever
- * an entry point, never a second source of truth for the current station. It closes on the
- * slug it navigates to, in case Next keeps this component mounted across the param change.
+ * page on desktop — both end in a normal navigation to `/stazioni/:slug/partenze`, so the
+ * sheet is only ever an entry point, never a second source of truth for the current
+ * station. It closes on the slug it navigates to, in case Next keeps this component
+ * mounted across the param change.
  *
  * With no board to show, the reason matters: a read that failed with the network up is
  * "dati non disponibili" and worth a retry, a read that never left the device is "sei
@@ -34,6 +37,7 @@ import type { BoardMode, StationBoard } from '@tabellone/core'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { StationSheet } from '@/components/picker/station-sheet'
+import { canonicalBoardPath } from '@/lib/board-routes'
 import { isFavourite, recordVisit, toggleFavourite } from '@/lib/saved-stations'
 import { useBoard } from '@/lib/use-board'
 import { useOnline } from '@/lib/use-online'
@@ -62,6 +66,12 @@ export function BoardScreen({
     setPickerMounted(true)
     setPickerOpen(true)
   }
+  // `--motion-screen`, on the one navigation that is a real screen change: the first paint of
+  // the app shell. Deliberately not wired to the mode or station switches — both are
+  // `router.replace` on a mounted component, and both already have tuned skeleton logic from
+  // the "switch felt slow" fix that a page-level fade on top of would only muddy.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
   const { board, error, loading, refresh } = useBoard(slug, mode)
   const online = useOnline()
 
@@ -88,7 +98,7 @@ export function BoardScreen({
 
   const switchMode = (next: BoardMode) => {
     setMode(next)
-    router.replace(next === 'arrivals' ? `/${slug}?view=arrivals` : `/${slug}`, { scroll: false })
+    router.replace(canonicalBoardPath(slug, next), { scroll: false })
   }
 
   const favouriteProps = {
@@ -130,7 +140,14 @@ export function BoardScreen({
   return (
     <main
       className="flex min-h-dvh flex-col"
-      style={{ padding: 'clamp(20px, 3vw, 40px) clamp(16px, 3vw, 40px) var(--sp-20)' }}
+      style={{
+        padding: 'clamp(20px, 3vw, 40px) clamp(16px, 3vw, 40px) var(--sp-20)',
+        transition: 'var(--motion-screen)',
+        opacity: mounted ? 1 : 0,
+        // Half of the row-entry shift: the same displacement vocabulary, an order of
+        // magnitude less of it, and it goes to 0 with the token under reduced motion.
+        transform: mounted ? 'none' : 'translateY(calc(var(--shift-entry) / 2))',
+      }}
     >
       {content}
       {pickerMounted && <StationSheet open={pickerOpen} onClose={() => setPickerOpen(false)} />}

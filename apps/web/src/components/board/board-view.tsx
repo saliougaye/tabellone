@@ -5,15 +5,24 @@
  * from sheet 10 (rich rows + "Più tardi"), mobile from sheet 11 (hero card + list),
  * split at 600px like the tokens. Fetching, polling and favourites live in the caller.
  */
-import type { BoardMode, StationBoard } from '@tabellone/core'
+import type { BoardMode, BoardRow, StationBoard } from '@tabellone/core'
 import Link from 'next/link'
+import { useState } from 'react'
 import { strings } from '@/strings'
 import { BoardSkeleton } from './board-states'
 import { MarqueeText } from './marquee-text'
-import { FreshnessDot, ModeToggle } from './parts'
+import { FreshnessDot, ModeToggle, pressFeedback, pressScale } from './parts'
 import { CompactRow, HeroCard, LaterRow, RichRow } from './rows'
+import { rowExitClass, useDepartingRows } from './use-departing-rows'
 
 const RICH_ROW_COUNT = 5
+
+/**
+ * The row's identity on the board, and therefore its React key: a train number alone is not
+ * one, since the same number runs again the next day and, on a board spanning midnight, can
+ * appear twice at once.
+ */
+const rowKey = (row: BoardRow) => `${row.trainNumber}-${row.scheduledTime}`
 
 export type BoardViewProps = {
   board: StationBoard
@@ -51,6 +60,17 @@ export function BoardView({
   const laterRows = board.rows.slice(RICH_ROW_COUNT)
   const [heroRow, ...restRows] = board.rows
 
+  // Three independent lists, three independent holds: a train sliding out of the desktop
+  // rich block and into "Più tardi" is a departure from one list and an entry into the other,
+  // and each side animates it as such.
+  const richEntries = useDepartingRows(richRows, rowKey)
+  const laterEntries = useDepartingRows(laterRows, rowKey)
+  const restEntries = useDepartingRows(restRows, rowKey)
+
+  // Only the star pops, and only on off→on: gaining a favourite is the event worth
+  // confirming, losing one is not.
+  const [justFavourited, setJustFavourited] = useState(false)
+
   const stationTitle = (
     <span className="flex min-w-0 items-center gap-3 uppercase type-title leading-(--type-dominant-leading)">
       {/* A long name scrolls instead of being clipped; the chevron stays put beside it. */}
@@ -77,13 +97,22 @@ export function BoardView({
   const favouriteButton = favourite && (
     <button
       type="button"
-      onClick={favourite.onToggle}
+      onClick={() => {
+        // `active` is the state the toggle is about to leave, so this is the off→on edge.
+        if (!favourite.active) setJustFavourited(true)
+        favourite.onToggle()
+      }}
       aria-pressed={favourite.active}
       title={favourite.active ? strings.unfollow : strings.follow}
-      className="inline-flex flex-none cursor-pointer items-center justify-center rounded-minimal border border-line text-text-secondary transition-[color,border-color] min-h-(--touch-min) min-w-(--touch-min)"
+      className={`inline-flex flex-none cursor-pointer items-center justify-center rounded-minimal border border-line text-text-secondary transition-[color,border-color,scale] min-h-(--touch-min) min-w-(--touch-min) ${pressScale}`}
       style={favourite.active ? { color: 'var(--state-on-time)' } : undefined}
     >
+      {/* The pop sits on the star rather than the whole button: it is the star that changes
+          meaning, and this also keeps the keyframe's `transform` clear of the button's
+          `:active` `scale`, so a tap during the pop still presses. */}
       <svg
+        className={justFavourited ? 'animate-favourite-pop' : undefined}
+        onAnimationEnd={() => setJustFavourited(false)}
         viewBox="0 0 16 16"
         width="16"
         height="16"
@@ -176,12 +205,16 @@ export function BoardView({
               </span>
             </div>
             <div className="flex flex-col gap-3">
-              {richRows.map((row) => (
+              {richEntries.map((entry, index) => (
                 <RichRow
-                  key={`${row.trainNumber}-${row.scheduledTime}`}
-                  row={row}
+                  key={entry.key}
+                  row={entry.row}
                   mode={board.mode}
                   originName={board.stationName}
+                  motion={{
+                    index,
+                    exitClass: entry.phase === 'leaving' ? rowExitClass(entry.row) : undefined,
+                  }}
                 />
               ))}
             </div>
@@ -194,11 +227,15 @@ export function BoardView({
               <span className="text-text-tertiary type-label">{strings.later}</span>
             </div>
             <div className="flex flex-col gap-2">
-              {laterRows.map((row) => (
+              {laterEntries.map((entry, index) => (
                 <LaterRow
-                  key={`${row.trainNumber}-${row.scheduledTime}`}
-                  row={row}
+                  key={entry.key}
+                  row={entry.row}
                   mode={board.mode}
+                  motion={{
+                    index,
+                    exitClass: entry.phase === 'leaving' ? rowExitClass(entry.row) : undefined,
+                  }}
                 />
               ))}
             </div>
@@ -223,7 +260,7 @@ export function BoardView({
                   type="button"
                   onClick={onOpenPicker}
                   aria-haspopup="dialog"
-                  className="min-w-0 flex-1 cursor-pointer border-0 bg-transparent p-0 text-left text-text-primary"
+                  className={`min-w-0 flex-1 cursor-pointer border-0 bg-transparent p-0 text-left text-text-primary ${pressFeedback}`}
                 >
                   {stationTitle}
                   <span className="sr-only">{strings.changeStation}</span>
@@ -245,8 +282,15 @@ export function BoardView({
         {!pending && empty}
         {pending && <BoardSkeleton variant="mobile" />}
 
+        {/* Keyed on the train, not on the slot: the hero is one position, so the only way a
+            new train arriving in it can animate is by being a new node. */}
         {!pending && heroRow && (
-          <HeroCard row={heroRow} mode={board.mode} originName={board.stationName} />
+          <HeroCard
+            key={rowKey(heroRow)}
+            row={heroRow}
+            mode={board.mode}
+            originName={board.stationName}
+          />
         )}
 
         {!pending && restRows.length > 0 && (
@@ -258,11 +302,15 @@ export function BoardView({
               </span>
             </div>
             <div className="flex flex-col gap-2">
-              {restRows.map((row) => (
+              {restEntries.map((entry, index) => (
                 <CompactRow
-                  key={`${row.trainNumber}-${row.scheduledTime}`}
-                  row={row}
+                  key={entry.key}
+                  row={entry.row}
                   mode={board.mode}
+                  motion={{
+                    index,
+                    exitClass: entry.phase === 'leaving' ? rowExitClass(entry.row) : undefined,
+                  }}
                 />
               ))}
             </div>
