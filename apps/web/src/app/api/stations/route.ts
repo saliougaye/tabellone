@@ -15,9 +15,11 @@ const etag = `"${createHash('sha1').update(body).digest('hex')}"`
 
 export async function GET(request: Request) {
   if (request.headers.get('if-none-match') === etag) {
+    console.log(JSON.stringify({ route: 'GET /api/stations', status: 304 }))
     return new NextResponse(null, { status: 304, headers: { etag } })
   }
 
+  console.log(JSON.stringify({ route: 'GET /api/stations', status: 200, count: stations.length }))
   return new NextResponse(body, {
     status: 200,
     headers: {

@@ -23,15 +23,18 @@ function isBoardMode(value: string | null): value is BoardMode {
 }
 
 export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
+  const start = Date.now()
   const { slug } = await params
   const mode = new URL(request.url).searchParams.get('mode')
 
   if (!isBoardMode(mode)) {
+    console.warn(JSON.stringify({ route: 'GET /api/board/:slug', slug, mode, status: 400 }))
     return NextResponse.json({ error: 'mode must be "departures" or "arrivals"' }, { status: 400 })
   }
 
   const station = findStationBySlug(slug)
   if (!station) {
+    console.warn(JSON.stringify({ route: 'GET /api/board/:slug', slug, mode, status: 404 }))
     return NextResponse.json({ error: `no station with slug "${slug}"` }, { status: 404 })
   }
 
@@ -41,11 +44,41 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
       station,
       mode,
     )
+    console.log(
+      JSON.stringify({
+        route: 'GET /api/board/:slug',
+        slug,
+        mode,
+        status: 200,
+        stale: board.isStale,
+        durationMs: Date.now() - start,
+      }),
+    )
     return NextResponse.json(board)
   } catch (error) {
     if (error instanceof BoardUnavailableError) {
+      console.error(
+        JSON.stringify({
+          route: 'GET /api/board/:slug',
+          slug,
+          mode,
+          status: 503,
+          durationMs: Date.now() - start,
+          error: error.message,
+        }),
+      )
       return NextResponse.json({ error: error.message }, { status: 503 })
     }
+    console.error(
+      JSON.stringify({
+        route: 'GET /api/board/:slug',
+        slug,
+        mode,
+        status: 500,
+        durationMs: Date.now() - start,
+        error: error instanceof Error ? error.message : String(error),
+      }),
+    )
     throw error
   }
 }
