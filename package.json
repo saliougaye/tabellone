@@ -21,5 +21,8 @@
     "jsdom": "27.0.1",
     "typescript": "5.9.3",
     "vitest": "4.1.10"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "@swc/core"]
   }
 }
