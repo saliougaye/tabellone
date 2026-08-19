@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Tabellone">
+<title>Tabellone</title>
+<style>
+  .piastra { fill: #161E25; }
+  .cella { fill: #00BDB7; }
+  .barra { fill: #FAF7F2; }
+  @media (prefers-color-scheme: dark) {
+    .piastra { fill: none; }
+  }
+</style>
+<path class="piastra" d="M256 0 C68 0 0 68 0 256 C0 444 68 512 256 512 C444 512 512 444 512 256 C512 68 444 0 256 0 Z"></path>
+<rect class="cella" x="84" y="170" width="180" height="172" rx="30"></rect>
+<rect class="barra" x="300" y="228" width="136" height="56" rx="28"></rect>
+</svg>
