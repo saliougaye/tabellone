@@ -5,18 +5,40 @@
  * the picker then shows its honest unavailable state), the saved stations from
  * `localStorage`. First launch with nothing saved shows the sheet-12 empty state, whose
  * CTA opens the picker — the same flow as the prototype (sheet 15).
+ *
+ * Before any of that: a session-scoped redirect back to the last board open
+ * (`sessionStorage`, `consumeRedirect` — design:
+ * docs/superpowers/specs/2026-08-19-last-station-redirect-design.md). Fires at most once
+ * per session, on the first mount of this screen, so a deliberate return to the picker
+ * later in the session isn't bounced straight back to the board.
  */
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { HomeEmpty } from '@/components/picker/home-empty'
 import { StationPicker } from '@/components/picker/station-picker'
+import { canonicalBoardPath } from '@/lib/board-routes'
+import { consumeRedirect } from '@/lib/last-station'
 import { listFavourites, listRecents, type SavedStation } from '@/lib/saved-stations'
 import { useStations } from '@/lib/use-stations'
 
 export function PickerScreen() {
+  const router = useRouter()
   const [recents, setRecents] = useState<SavedStation[]>([])
   const [favourites, setFavourites] = useState<SavedStation[]>([])
   const [loaded, setLoaded] = useState(false)
   const [pickerOpened, setPickerOpened] = useState(false)
+  // null = not checked yet, true = redirecting, false = stay on this screen.
+  const [redirecting, setRedirecting] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    const last = consumeRedirect()
+    if (last) {
+      router.replace(canonicalBoardPath(last.slug, last.mode))
+      setRedirecting(true)
+    } else {
+      setRedirecting(false)
+    }
+  }, [router])
 
   useEffect(() => {
     setRecents(listRecents())
@@ -30,6 +52,9 @@ export function PickerScreen() {
 
   const nothingSaved = loaded && recents.length === 0 && favourites.length === 0
   const showEmptyHome = nothingSaved && !pickerOpened
+
+  // Still checking sessionStorage, or mid-redirect to the last board: nothing to paint.
+  if (redirecting !== false) return null
 
   return (
     <main

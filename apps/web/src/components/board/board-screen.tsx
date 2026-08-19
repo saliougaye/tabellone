@@ -38,6 +38,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { StationSheet } from '@/components/picker/station-sheet'
 import { canonicalBoardPath } from '@/lib/board-routes'
+import { recordLastStation } from '@/lib/last-station'
 import { isFavourite, recordVisit, toggleFavourite } from '@/lib/saved-stations'
 import { useBoard } from '@/lib/use-board'
 import { useOnline } from '@/lib/use-online'
@@ -95,6 +96,10 @@ export function BoardScreen({
     // "recenti" as one.
     if (stationName) recordVisit(slug, stationName)
   }, [slug, stationName])
+
+  useEffect(() => {
+    recordLastStation(slug, mode)
+  }, [slug, mode])
 
   const switchMode = (next: BoardMode) => {
     setMode(next)
