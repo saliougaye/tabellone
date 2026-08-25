@@ -17,16 +17,29 @@ and today always ends by catching `fetchBoard`'s `NotImplementedError` and answe
 **503** (the same "RFI unreachable, nothing cached" slot the contract already reserved) —
 honest, not a stub 200, and this route does not need to change again once `fetcher` and
 `parser` land. Local Redis: `pnpm redis` (docker compose, no volume, flush-safe).
-`apps/web` has the real UI built from the design sheets: presentational components
-(`src/components`), live pages that poll the real API and honestly render the failed-read
-state, favourites/recents in `localStorage`, and a **temporary** dev-only scenario gallery
-at `/dev/scenari` fed by typed fixtures in `src/fixtures` (both marked TEMPORARY — delete
-when the backend lands; fixtures never cross the API boundary). The station catalogue has
-3 real stations with `rfiPlaceId: "PLACEHOLDER"` — slugs are already final (ADR-007), place
-ids are not. Everything below about fetching and parsing is still the design contract to
-build against.
+`apps/web` has the real UI: a persistent app shell (`components/shell`), presentational
+components (`src/components`), live pages that poll the real API and honestly render the
+failed-read state, and favourites/recents in `localStorage`. The dev-only scenario gallery
+at `/dev/scenari` and its fixtures are gone. The station catalogue holds 2435 real stations
+with real `rfiPlaceId`s, 3 of them flagged `isMajor`; slugs are final (ADR-007).
+The UI went through two design passes in August 2026. The first: `theme.css` §6 (motion)
+re-authored rather than ported, the four row components collapsed into one `BoardRow` with
+two variants, the 600px markup fork removed, every non-brand icon moved to Phosphor
+(`components/ui/icon.tsx`). The second, the **signage pass**, committed the whole UI to the
+language of a station board — read `theme.css` §0 and the CORNERS block before touching any
+of it:
+- **Two families.** Archivo (variable, `wdth` axis) is the display face; IBM Plex Mono
+  carries every figure on the board. IBM Plex Sans is gone. `type-figures` is the utility
+  that makes a value mono; `type-plate` is the station name and nothing else.
+- **Rules, not cards.** A row is a band with one `border-b`. No radius anywhere except the
+  operator tile's 3px badge, which is a mark and not a surface. `--corner-*` are all 0.
+- **Both palettes re-pitched** and re-verified value by value: light is paper (a warm
+  off-white at chroma 0.004), dark is a deeper concourse black. Every hue survived; only the
+  grounds and the ink moved. Ratio comments in §5 are current.
+- The board is one full-width column of bands, not a two-column dashboard. Everything below about fetching and parsing is still the design
+contract to build against.
 
-`ARCHITECTURE.md` is the authoritative spec (10 ADRs in `adrs/`). Read it before any
+`ARCHITECTURE.md` is the authoritative spec (11 ADRs in `adrs/`). Read it before any
 structural work, and **update it before a structural change, not after**. `CONTEXT.md`
 holds the vocabulary; code identifiers are English, user-facing copy is Italian, and all
 UI strings live in `apps/web/src/strings.ts` (ADR-009).

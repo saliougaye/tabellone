@@ -189,7 +189,18 @@ Routes:
 /stazioni/[slug]/arrivi                 board, arrivals — canonical, indexable
 /stazioni/[slug]                        board, departures by default (legacy, kept working)
 /stazioni/[slug]?view=arrivals|departures   board, explicit mode (legacy, kept working)
+/sitemap.xml                             every canonical board URL, both modes
+/robots.txt                              allows everything except /api/ and /serwist/
 ```
+
+The two path routes are prerendered at build time for the stations flagged `isMajor` and
+rendered on demand for the rest (`generateStaticParams` + the default `dynamicParams`):
+building ~4900 shells up front costs minutes for pages whose content arrives from the
+client anyway. The sitemap is the only thing that leads a crawler to a station page — the
+picker's list is client-side and bounded — so it lists all of them (~4900 URLs, one file,
+well inside the 50 000 limit). Each board page also emits a `TrainStation` and a
+`BreadcrumbList` JSON-LD graph; the rows are deliberately not described in it, because they
+are true for twenty seconds and are not in the server-rendered HTML.
 
 One `BoardScreen`, four URLs into it, all under `/stazioni` (ADR-011 — Italian, matching the
 `arrivi`/`partenze` segments and CONTEXT.md's naming rule for user-facing URL parts). ADR-010
@@ -199,6 +210,30 @@ that decision — the bare and `?view=` forms still resolve exactly as before (`
 unrecognised resolves to `departures` rather than 404, because a mangled shared link should
 still show a board) and their `generateMetadata` sets `canonical` to the matching path route.
 The app's own links (mode toggle, station picker) always point at the path routes.
+
+UI structure (all of it presentational; fetching and polling live in the two `*Screen`
+components):
+
+```
+components/shell     AppHeader (sticky, 64px) + Wordmark — the persistent app shell
+components/board     BoardScreen → BoardView → BoardRow (variants: lead | row)
+                     parts.tsx (ServiceMark, PlatformBox, ModeToggle, RouteStrip, …)
+                     brand-logos.tsx (committed inline SVG service marks)
+components/picker    PickerScreen → StationPicker, StationSheet (the same picker in a sheet)
+components/ui        BottomSheet, SkeletonBlock, icon.tsx (the one icon family)
+```
+
+The visual language is station signage (the August 2026 signage pass): a plate names the
+station in expanded caps over a heavy rule, every figure is set in mono, rows are bands
+divided by 1px lines rather than cards, and nothing has a corner radius except the operator
+tile. The type stack is Archivo + IBM Plex Mono; `theme.css` §0 says which family carries
+which level and why.
+
+One tree per screen, not one per breakpoint: the board's composition is the same at every
+width and only its grid changes. Every icon that is not a brand mark comes from Phosphor
+through `components/ui/icon.tsx` (one family, one weight, sizes named after the type level
+they sit beside); `brand-logos.tsx` is the deliberate exception, because those are real
+service marks and no library has them.
 
 ### 4.2 `packages/core` — domain
 

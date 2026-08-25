@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "@serwist/turbopack": "^9.5.12",
     "@tabellone/core": "workspace:*",
     "@tanstack/react-query": "^5.101.4",

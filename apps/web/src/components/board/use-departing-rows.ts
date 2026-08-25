@@ -36,11 +36,12 @@ export type DepartingRow<T> = {
  * had even painted. 50ms is invisible and gives the commit room.
  */
 const MIN_EXIT_MS = 50
-/** Only used when `--duration-exit` cannot be read at all (no DOM, no stylesheet). */
-const FALLBACK_EXIT_MS = 320
+/** Only used when `--duration-exit` cannot be read at all (no DOM, no stylesheet). Kept
+ *  level with the token in theme.css §6, which is 380ms since the motion rewrite. */
+const FALLBACK_EXIT_MS = 380
 
 /**
- * Exported for its own test: the point of reading the token instead of hard-coding 320 is
+ * Exported for its own test: the point of reading the token instead of hard-coding 380 is
  * that the CSS stays the single source of the exit duration, including its reduced-motion
  * rewrite — a JS constant kept level with the token by hand is a constant that drifts.
  */

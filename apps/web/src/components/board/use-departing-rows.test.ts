@@ -10,19 +10,19 @@ const keyFn = (row: Row) => row.id
 const row = (id: string, status: TrainStatus = 'ON_TIME'): Row => ({ id, status })
 
 /** No stylesheet is loaded in jsdom, so `--duration-exit` is unreadable and the hook falls
- *  back to 320ms — the value the token holds. */
-const EXIT_MS = 320
+ *  back to 380ms — the value the token holds. */
+const EXIT_MS = 380
 
 afterEach(cleanup)
 
 describe('parseExitDuration', () => {
   it('reads the token in both CSS time units', () => {
-    expect(parseExitDuration('320ms')).toBe(320)
-    expect(parseExitDuration(' 0.32s ')).toBe(320)
+    expect(parseExitDuration('380ms')).toBe(380)
+    expect(parseExitDuration(' 0.38s ')).toBe(380)
   })
 
   it('falls back to the token value when nothing can be read', () => {
-    expect(parseExitDuration('')).toBe(320)
+    expect(parseExitDuration('')).toBe(380)
   })
 
   it('never drops below the commit floor, so reduced motion still renders one frame', () => {

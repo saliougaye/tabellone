@@ -18,7 +18,9 @@
  *
  * Colours, radii, spacing and the touch minimum still come from the tokens.
  */
+import { X } from '@phosphor-icons/react'
 import { Drawer } from 'vaul'
+import { iconSize } from '@/components/ui/icon'
 import { strings } from '@/strings'
 
 export type BottomSheetProps = {
@@ -53,7 +55,7 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
           // Fixed height, not max-height: a sheet whose height follows its content resizes
           // when the catalogue lands and again on every search keystroke. Phone sheets sit
           // at a detent and scroll inside it.
-          className="fixed inset-x-0 bottom-0 z-50 flex h-[88dvh] flex-col rounded-t-(--corner-field) border-t border-line-strong bg-surface outline-none"
+          className="fixed inset-x-0 bottom-0 z-50 flex h-[88dvh] flex-col border-line-strong border-t-2 bg-surface outline-none"
         >
           {/* vaul injects its handle rule at runtime (hardcoded light grey, 5px), so the
               token has to outrank an injected stylesheet: inline wins without !important.
@@ -72,23 +74,12 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
             }}
           />
           <div className="flex flex-none items-center justify-between gap-3 border-b border-line px-4 pb-3">
-            <Drawer.Title className="m-0 text-text-tertiary type-label">{title}</Drawer.Title>
+            <Drawer.Title className="m-0 text-text-secondary type-label">{title}</Drawer.Title>
             <Drawer.Close
               aria-label={strings.closeSheet}
-              className="inline-flex flex-none cursor-pointer items-center justify-center rounded-minimal border border-line bg-transparent text-text-secondary min-h-(--touch-min) min-w-(--touch-min)"
+              className="inline-flex flex-none cursor-pointer items-center justify-center rounded-control border border-line-strong bg-transparent text-text-secondary min-h-(--touch-min) min-w-(--touch-min)"
             >
-              <svg
-                viewBox="0 0 16 16"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                aria-hidden="true"
-              >
-                <path d="M4 4l8 8M12 4l-8 8" />
-              </svg>
+              <X size={iconSize.control} aria-hidden="true" />
             </Drawer.Close>
           </div>
           <div

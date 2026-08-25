@@ -1,20 +1,34 @@
 'use client'
 
 /**
- * Station picker, presentational (sheets 13–14): search field, suggested tiles, A–Z
- * groups, saved stations (recents + favourites). The catalogue arrives as a prop —
- * `null` means the catalogue read failed, and the picker says so honestly while the
- * saved stations, which live client-side, keep working. `offline` narrows that same box
- * to the reason when the device has no connection at all: the catalogue is not broken,
- * it is simply unreachable from here.
+ * The station picker: search field, saved stations, suggested stations, and a bounded slice
+ * of the A–Z catalogue. The catalogue arrives as a prop — `null` means the read failed, and
+ * the picker says so honestly while the saved stations, which live client-side, keep
+ * working. `offline` narrows that same box to the reason when the device has no connection
+ * at all: the catalogue is not broken, it is simply unreachable from here.
+ *
+ * Search is the primary object on this screen, not a filter above a list. The catalogue is
+ * 2400 stations; the previous version rendered every one of them as an anchor on first paint
+ * (2400 links, 2400 rows, before the reader had typed anything), which is a page that costs
+ * a second to lay out in order to show a list nobody scrolls to the end of. Here the list is
+ * capped at `MAX_LISTED` and says so, and the way to the other 2300 is the field at the top.
  */
+import { CaretRight, MagnifyingGlass, Star, X } from '@phosphor-icons/react'
 import type { Station } from '@tabellone/core'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
+import { iconSize } from '@/components/ui/icon'
 import { SkeletonBlock } from '@/components/ui/skeleton-block'
 import { canonicalBoardPath } from '@/lib/board-routes'
 import type { SavedStation } from '@/lib/saved-stations'
 import { strings } from '@/strings'
+
+/**
+ * How many stations the A–Z list renders. Not a paging window: it is the point past which a
+ * list stops being browsable and the search field is the better tool, and the copy under it
+ * says exactly that.
+ */
+const MAX_LISTED = 60
 
 type PickerProps = {
   stations: Station[] | null
@@ -22,20 +36,20 @@ type PickerProps = {
   favourites: SavedStation[]
   /**
    * The catalogue read is still in flight. Kept apart from `stations === null`, which means
-   * it *failed*: while loading, the picker shows placeholders of the same height as the
-   * real rows instead of an empty list. Inside the bottom sheet that is the difference
-   * between a panel that settles once and a panel that visibly grows under the thumb.
+   * it *failed*: while loading, the picker shows placeholders of the same height as the real
+   * rows instead of an empty list. Inside the bottom sheet that is the difference between a
+   * panel that settles once and a panel that visibly grows under the thumb.
    */
   loading?: boolean
   /**
-   * The device has no network connection. Only changes the copy of the catalogue-failed
-   * box — the saved stations above it are `localStorage` and work offline unchanged.
+   * The device has no network connection. Only changes the copy of the catalogue-failed box
+   * — the saved stations above it are `localStorage` and work offline unchanged.
    */
   offline?: boolean
   /**
-   * `false` drops the app name and the page title: inside the mobile bottom sheet the
-   * sheet's own title bar already names the panel, and a second heading would repeat it.
-   * The search field is part of the picker either way.
+   * `false` drops the page heading: inside the mobile bottom sheet the sheet's own title bar
+   * already names the panel, and a second heading would repeat it. The search field is part
+   * of the picker either way.
    */
   showHeading?: boolean
   /**
@@ -56,6 +70,7 @@ export function StationPicker({
 }: PickerProps) {
   const [query, setQuery] = useState('')
   const trimmed = query.trim().toLowerCase()
+  const nothingSaved = favourites.length === 0 && recents.length === 0
 
   const filtered = useMemo(() => {
     if (!stations) return []
@@ -67,14 +82,16 @@ export function StationPicker({
     )
   }, [stations, trimmed])
 
+  const listed = useMemo(() => filtered.slice(0, MAX_LISTED), [filtered])
+
   const groups = useMemo(() => {
     const byLetter = new Map<string, Station[]>()
-    for (const station of filtered) {
+    for (const station of listed) {
       const letter = station.name[0]?.toUpperCase() ?? '#'
       byLetter.set(letter, [...(byLetter.get(letter) ?? []), station])
     }
     return [...byLetter.entries()].sort(([a], [b]) => a.localeCompare(b))
-  }, [filtered])
+  }, [listed])
 
   const suggested = useMemo(
     () => (stations ?? []).filter((station) => station.isMajor).slice(0, 4),
@@ -83,220 +100,246 @@ export function StationPicker({
   const favouriteSlugs = useMemo(() => new Set(favourites.map((entry) => entry.slug)), [favourites])
 
   return (
-    <div className="mx-auto grid w-full max-w-[1000px] gap-8 min-[900px]:grid-cols-[minmax(0,1.9fr)_minmax(260px,1fr)]">
-      <div className="flex min-w-0 flex-col gap-5">
-        <header className="flex flex-col gap-3">
-          {showHeading && (
-            <>
-              <span className="text-text-tertiary type-label">{strings.appName}</span>
-              <h1 className="m-0 type-primary-wide" style={{ fontWeight: 'var(--weight-max)' }}>
-                {strings.pickStation}
-              </h1>
-            </>
-          )}
-          <div className="relative flex items-center">
-            <SearchIcon />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={strings.searchPlaceholder}
-              disabled={loading || !stations}
-              className="box-border w-full rounded-field border border-line-strong bg-surface-raised pr-10 pl-8 text-text-primary outline-none type-secondary min-h-(--touch-min) focus:border-focus disabled:opacity-60"
-              style={{ paddingTop: 'var(--sp-3)', paddingBottom: 'var(--sp-3)' }}
-            />
-            {query.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setQuery('')}
-                aria-label={strings.clearSearch}
-                className="absolute right-2 inline-flex h-8 w-8 cursor-pointer items-center justify-center border-0 bg-transparent text-text-tertiary"
-              >
-                <svg
-                  viewBox="0 0 16 16"
-                  width="14"
-                  height="14"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                  aria-hidden="true"
-                >
-                  <path d="M4 4l8 8M12 4l-8 8" />
-                </svg>
-              </button>
+    <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-10">
+      <header className="flex flex-col gap-5">
+        {showHeading && (
+          <div className="flex max-w-[46ch] flex-col gap-3 border-line-strong border-b-2 pb-5">
+            <h1 className="m-0 type-plate">
+              {nothingSaved ? strings.chooseStation : strings.pickStation}
+            </h1>
+            {nothingSaved && (
+              <p className="m-0 text-text-secondary type-reading [text-wrap:pretty]">
+                {strings.chooseStationHint}
+              </p>
             )}
           </div>
-        </header>
+        )}
+        {/* The one large control on the screen: this is what the page is for. */}
+        <div className="relative flex items-center">
+          <MagnifyingGlass
+            size={iconSize.control}
+            color="var(--text-tertiary)"
+            aria-hidden="true"
+            className="pointer-events-none absolute left-4"
+          />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={strings.searchPlaceholder}
+            aria-label={strings.searchStation}
+            disabled={loading || !stations}
+            className="box-border w-full rounded-field border-2 border-line-strong bg-surface-raised py-4 pr-12 pl-12 text-text-primary outline-none type-primary min-h-(--touch-min) placeholder:text-text-tertiary focus:border-focus disabled:opacity-60"
+            style={{ transition: 'var(--motion-state)' }}
+          />
+          {query.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              aria-label={strings.clearSearch}
+              className="absolute right-3 inline-flex size-9 cursor-pointer items-center justify-center border-0 bg-transparent text-text-tertiary"
+            >
+              <X size={iconSize.control} aria-hidden="true" />
+            </button>
+          )}
+        </div>
+      </header>
 
-        {loading ? (
-          <PickerSkeleton />
-        ) : stations === null ? (
-          <section className="flex flex-col items-center gap-3 rounded-minimal border border-line bg-surface-raised px-4 py-10 text-center">
-            <span className="type-primary" style={{ fontWeight: 'var(--weight-strong)' }}>
-              {offline ? strings.catalogueOffline : strings.catalogueUnavailable}
-            </span>
-            <p className="m-0 max-w-[34ch] text-text-secondary type-reading">
-              {offline ? strings.catalogueOfflineHint : strings.catalogueUnavailableHint}
-            </p>
-          </section>
-        ) : (
-          <>
+      {loading ? (
+        <PickerSkeleton />
+      ) : stations === null ? (
+        <section className="flex max-w-[40ch] flex-col gap-3 border-line-strong border-l-2 bg-surface-raised px-4 py-4">
+          <span className="type-primary" style={{ fontWeight: 'var(--weight-strong)' }}>
+            {offline ? strings.catalogueOffline : strings.catalogueUnavailable}
+          </span>
+          <p className="m-0 text-text-secondary type-reading">
+            {offline ? strings.catalogueOfflineHint : strings.catalogueUnavailableHint}
+          </p>
+        </section>
+      ) : (
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.6fr)_minmax(260px,1fr)] lg:gap-12">
+          <div className="flex min-w-0 flex-col gap-10">
             {trimmed === '' && suggested.length > 0 && (
-              <section className="flex flex-col gap-3">
-                <span className="text-text-tertiary type-label">{strings.suggestedStations}</span>
-                <div className="grid grid-cols-2 gap-2">
+              <section className="flex flex-col">
+                <SectionHead label={strings.suggestedStations} />
+                {/* Exactly as many cells as there are major stations: an empty tile to
+                    square off the grid would be a tile that means nothing. */}
+                <div className="grid sm:grid-cols-2">
                   {suggested.map((station) => (
                     <Link
                       key={station.slug}
                       href={canonicalBoardPath(station.slug, 'departures')}
                       onClick={() => onSelect?.(station.slug)}
-                      className="flex flex-col items-start gap-2 rounded-minimal border border-line bg-surface-raised px-3 py-4 no-underline transition-[background-color,border-color]"
+                      className="group flex items-center justify-between gap-3 border-line border-b bg-surface-raised px-4 py-4 no-underline hover:bg-surface-pressed"
+                      style={{ transition: 'var(--motion-state)' }}
                     >
-                      <StationSigla city={station.city} />
-                      <span
-                        className="text-left text-text-primary type-primary"
-                        style={{ fontWeight: 'var(--weight-strong)' }}
-                      >
-                        {station.name}
+                      <span className="flex min-w-0 flex-col gap-1">
+                        <span
+                          className="overflow-hidden text-ellipsis whitespace-nowrap text-text-primary type-primary"
+                          style={{ fontWeight: 'var(--weight-max)' }}
+                        >
+                          {station.name}
+                        </span>
+                        <span className="text-text-tertiary type-tertiary">{station.city}</span>
                       </span>
-                      <span className="text-left text-text-tertiary type-tertiary">
-                        {station.city}
-                      </span>
+                      <CaretRight
+                        size={iconSize.control}
+                        color="var(--nav-affordance)"
+                        aria-hidden="true"
+                        className="flex-none"
+                      />
                     </Link>
                   ))}
                 </div>
               </section>
             )}
 
-            <section className="flex flex-col pb-8">
-              <div className="flex items-baseline justify-between gap-4 pb-3">
-                <span className="text-text-tertiary type-label">
-                  {trimmed ? strings.searchResults : strings.allStations}
-                </span>
-                <span className="text-text-tertiary type-tertiary">
-                  {strings.stationCount(filtered.length)}
-                </span>
+            <section className="flex flex-col">
+              <SectionHead
+                label={trimmed ? strings.searchResults : strings.allStations}
+                count={strings.stationCount(filtered.length)}
+              />
+
+              <div>
+                {groups.map(([letter, entries]) => (
+                  <div key={letter}>
+                    <div className="sticky top-16 z-10 border-line-strong border-b bg-surface-pressed px-4 py-1.5">
+                      {/* The app's one spaced-caps label (theme.css rule 2, `type-label`):
+                          an index letter is the single thing on either screen that is a
+                          label naming a region rather than a heading or a datum. */}
+                      <span className="text-text-secondary type-label">{letter}</span>
+                    </div>
+                    {entries.map((station) => (
+                      <Link
+                        key={station.slug}
+                        href={canonicalBoardPath(station.slug, 'departures')}
+                        onClick={() => onSelect?.(station.slug)}
+                        className="flex w-full items-center gap-3 border-line border-b bg-surface-raised px-4 py-3 no-underline hover:bg-surface-pressed min-h-(--touch-min)"
+                        style={{ transition: 'var(--motion-state)' }}
+                      >
+                        <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
+                          <span
+                            className="overflow-hidden text-ellipsis whitespace-nowrap text-text-primary type-primary"
+                            style={{ fontWeight: 'var(--weight-strong)' }}
+                          >
+                            {station.name}
+                          </span>
+                          {station.city && (
+                            <span className="text-text-tertiary type-tertiary">{station.city}</span>
+                          )}
+                        </span>
+                        {favouriteSlugs.has(station.slug) && (
+                          <Star
+                            size={iconSize.meta}
+                            weight="fill"
+                            color="var(--state-on-time)"
+                            aria-label={strings.followed}
+                            className="flex-none"
+                          />
+                        )}
+                        <CaretRight
+                          size={iconSize.control}
+                          color="var(--nav-affordance)"
+                          aria-hidden="true"
+                          className="flex-none"
+                        />
+                      </Link>
+                    ))}
+                  </div>
+                ))}
               </div>
 
-              {groups.map(([letter, entries]) => (
-                <div key={letter}>
-                  <div className="border-y border-line bg-surface-pressed px-4 py-2">
-                    <span
-                      className="text-text-secondary type-label"
-                      style={{ fontWeight: 'var(--weight-max)' }}
-                    >
-                      {letter}
-                    </span>
-                  </div>
-                  {entries.map((station) => (
-                    <Link
-                      key={station.slug}
-                      href={canonicalBoardPath(station.slug, 'departures')}
-                      onClick={() => onSelect?.(station.slug)}
-                      className="flex w-full items-center gap-3 border-b border-line bg-surface-raised px-4 py-3 no-underline min-h-(--touch-min)"
-                    >
-                      <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
-                        <span
-                          className="overflow-hidden text-ellipsis whitespace-nowrap text-text-primary type-primary"
-                          style={{ fontWeight: 'var(--weight-strong)' }}
-                        >
-                          {station.name}
-                        </span>
-                        <span className="text-text-tertiary type-tertiary">{station.city}</span>
-                      </span>
-                      {favouriteSlugs.has(station.slug) && (
-                        <span
-                          className="type-tertiary"
-                          style={{
-                            fontWeight: 'var(--weight-max)',
-                            color: 'var(--state-on-time)',
-                          }}
-                        >
-                          {strings.followed}
-                        </span>
-                      )}
-                      <Chevron />
-                    </Link>
-                  ))}
-                </div>
-              ))}
+              {filtered.length > listed.length && (
+                <p className="m-0 pt-3 text-text-tertiary type-tertiary">
+                  {strings.resultsCapped(listed.length, filtered.length)}
+                </p>
+              )}
 
               {trimmed !== '' && filtered.length === 0 && (
-                <div className="flex flex-col items-center gap-3 px-4 py-10 text-center">
+                <div className="flex max-w-[36ch] flex-col gap-3 py-6">
                   <span className="type-primary" style={{ fontWeight: 'var(--weight-strong)' }}>
                     {strings.noResults(query.trim())}
                   </span>
-                  <p className="m-0 max-w-[28ch] text-text-secondary type-reading">
-                    {strings.noResultsHint}
-                  </p>
+                  <p className="m-0 text-text-secondary type-reading">{strings.noResultsHint}</p>
                   <button
                     type="button"
                     onClick={() => setQuery('')}
-                    className="mt-2 cursor-pointer rounded-minimal border border-line-strong bg-transparent px-5 py-3 text-text-primary type-secondary min-h-(--touch-min)"
-                    style={{ fontWeight: 'var(--weight-strong)' }}
+                    className="mt-1 w-fit cursor-pointer rounded-control border border-line-strong bg-transparent px-6 py-3 text-text-primary type-secondary type-wide uppercase tracking-(--track-label) min-h-(--touch-min)"
+                    style={{ fontWeight: 'var(--weight-max)' }}
                   >
                     {strings.clearSearch}
                   </button>
                 </div>
               )}
             </section>
-          </>
-        )}
-      </div>
+          </div>
 
-      <aside className="flex flex-col gap-6 min-[900px]:border-l min-[900px]:border-line min-[900px]:pl-6">
-        <SavedSection title={strings.favouriteStations} entries={favourites} onSelect={onSelect} />
-        <SavedSection
-          title={strings.recentStations}
-          entries={recents}
-          caption={strings.savedCount(recents.length)}
-          onSelect={onSelect}
-        />
-      </aside>
+          <aside className="flex flex-col gap-8 lg:border-line-strong lg:border-l lg:pl-8">
+            <SavedSection
+              title={strings.favouriteStations}
+              entries={favourites}
+              onSelect={onSelect}
+            />
+            <SavedSection
+              title={strings.recentStations}
+              entries={recents}
+              caption={strings.savedCount(recents.length)}
+              onSelect={onSelect}
+            />
+          </aside>
+        </div>
+      )}
     </div>
   )
 }
 
 /**
- * Shape-matched placeholder for the catalogue: the suggested tiles and the first rows of
- * the A–Z list at their real heights (125px tile, 45px row + the sticky letter band), so
- * the layout the data lands into is the layout already on screen.
+ * The band that names a block. Same device as the board's `ListHead`, and the same
+ * justification: theme.css rule 2 reserves the spaced-caps style for a label naming a
+ * region of the interface, which is precisely what these are.
+ */
+function SectionHead({ label, count }: { label: string; count?: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 border-line-strong border-b bg-surface-pressed px-4 py-2">
+      <h2 className="m-0 text-text-secondary type-label">{label}</h2>
+      {count && <span className="text-text-tertiary type-figures type-tertiary">{count}</span>}
+    </div>
+  )
+}
+
+/**
+ * Shape-matched placeholder for the catalogue: the suggested tiles and the first rows of the
+ * A–Z list at their real heights, so the layout the data lands into is the layout already on
+ * screen.
  */
 function PickerSkeleton() {
   const SUGGESTED_TILES = 4
   const ROWS = 8
   return (
-    <div aria-busy="true" className="flex flex-col gap-5">
+    <div aria-busy="true" className="flex flex-col gap-8">
       <span className="sr-only">{strings.loading}</span>
-      <section className="flex flex-col gap-3">
-        <SkeletonBlock height="12px" width="150px" index={0} />
-        <div className="grid grid-cols-2 gap-2">
+      <section className="flex flex-col gap-4">
+        <SkeletonBlock height="16px" width="150px" index={0} />
+        <div className="grid gap-3 sm:grid-cols-2">
           {Array.from({ length: SUGGESTED_TILES }, (_, index) => (
             <SkeletonBlock
               // biome-ignore lint/suspicious/noArrayIndexKey: placeholders have no identity
               key={index}
-              height="125px"
+              height="78px"
               index={index}
             />
           ))}
         </div>
       </section>
-      <section className="flex flex-col gap-3">
-        <div className="flex items-baseline justify-between gap-4">
-          <SkeletonBlock height="12px" width="130px" index={0} />
-          <SkeletonBlock height="12px" width="76px" index={0} />
-        </div>
-        <SkeletonBlock height="33px" index={0} />
-        <div className="flex flex-col gap-2">
-          {Array.from({ length: ROWS }, (_, index) => (
-            <SkeletonBlock
-              // biome-ignore lint/suspicious/noArrayIndexKey: placeholders have no identity
-              key={index}
-              height="45px"
-              index={index + 1}
-            />
-          ))}
-        </div>
+      <section className="flex flex-col gap-2">
+        <SkeletonBlock height="16px" width="130px" index={0} />
+        {Array.from({ length: ROWS }, (_, index) => (
+          <SkeletonBlock
+            // biome-ignore lint/suspicious/noArrayIndexKey: placeholders have no identity
+            key={index}
+            height="56px"
+            index={index + 1}
+          />
+        ))}
       </section>
     </div>
   )
@@ -315,20 +358,17 @@ function SavedSection({
 }) {
   if (entries.length === 0) return null
   return (
-    <section className="flex flex-col gap-3">
-      <div className="flex items-baseline justify-between gap-3 border-b border-line pb-2">
-        <span className="text-text-tertiary type-label">{title}</span>
-        {caption && <span className="text-text-tertiary type-tertiary">{caption}</span>}
-      </div>
-      <div className="flex flex-col gap-2">
+    <section className="flex flex-col">
+      <SectionHead label={title} count={caption} />
+      <div className="flex flex-col">
         {entries.map((entry) => (
           <Link
             key={entry.slug}
             href={canonicalBoardPath(entry.slug, 'departures')}
             onClick={() => onSelect?.(entry.slug)}
-            className="flex items-center gap-3 rounded-minimal border border-line bg-surface-raised p-3 no-underline min-h-(--touch-min)"
+            className="flex items-center gap-3 border-line border-b px-3 py-3 no-underline hover:bg-surface-pressed min-h-(--touch-min)"
+            style={{ transition: 'var(--motion-state)' }}
           >
-            <StationSigla city={entry.name} />
             <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
               <span
                 className="overflow-hidden text-ellipsis whitespace-nowrap text-text-primary type-primary"
@@ -338,63 +378,15 @@ function SavedSection({
               </span>
               <span className="text-text-tertiary type-tertiary">{strings.openBoard}</span>
             </span>
-            <Chevron />
+            <CaretRight
+              size={iconSize.control}
+              color="var(--nav-affordance)"
+              aria-hidden="true"
+              className="flex-none"
+            />
           </Link>
         ))}
       </div>
     </section>
-  )
-}
-
-/** Display-only 2-letter tile for picker rows; derived, never an identifier. */
-function StationSigla({ city }: { city: string }) {
-  return (
-    <span
-      className="inline-flex h-10 w-10 flex-none items-center justify-center border border-line bg-veil-empty text-text-secondary type-secondary"
-      style={{ fontWeight: 'var(--weight-max)' }}
-    >
-      {city
-        .replace(/[^\p{L}]/gu, '')
-        .slice(0, 2)
-        .toUpperCase()}
-    </span>
-  )
-}
-
-function Chevron() {
-  return (
-    <svg
-      viewBox="0 0 16 16"
-      width="16"
-      height="16"
-      fill="none"
-      stroke="var(--nav-affordance)"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="flex-none"
-      aria-hidden="true"
-    >
-      <path d="M6 3.5 10.5 8 6 12.5" />
-    </svg>
-  )
-}
-
-function SearchIcon() {
-  return (
-    <svg
-      viewBox="0 0 16 16"
-      width="15"
-      height="15"
-      fill="none"
-      stroke="var(--text-tertiary)"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      className="pointer-events-none absolute left-3"
-      aria-hidden="true"
-    >
-      <circle cx="7" cy="7" r="4.6" />
-      <path d="M10.4 10.4 14 14" />
-    </svg>
   )
 }

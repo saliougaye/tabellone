@@ -18,6 +18,12 @@
      scale --testo-micro…--testo-titanico, --spostamento-cancellato), the
      documentation-only --annotazione-* pair, and the alias keyframes
      (tab-rullo-su, tab-pulsazione-partenza, tab-desaturazione).
+   - §6 (motion) is no longer a port. It was re-authored in the 2026 design
+     pass: the duration scale, the curve set, the keyframes and the
+     reduced-motion block are ours, and §6 documents why each one exists.
+     Added there and absent from the source: --anim-swap-forward/back (the
+     departures↔arrivals pane), --anim-screen-in, --motion-header,
+     --anim-skeleton-sweep and --stagger-cap.
    - The html/body/p/a base styles at the end of the source live in
      globals.css under @layer base.
 
@@ -29,7 +35,9 @@
    Typography    tipo-dominante→type-dominant · tipo-primario→type-primary ·
                  tipo-primario-ampio→type-primary-wide ·
                  tipo-secondario→type-secondary · tipo-terziario→type-tertiary ·
-                 tipo-lettura→type-reading · tipo-titolo→type-title ·
+                 tipo-lettura→type-reading ·
+                 tipo-titolo→type-plate (the signage pass replaced the screen
+                   title with the station plate: expanded, caps, its own width) ·
                  peso-sottile/testo/medio/forte/massimo→
                    weight-thin/regular/medium/strong/max ·
                  stile-etichetta→label-style ·
@@ -53,22 +61,26 @@
                    pulsazione/invecchiamento→duration-instant/value/entry/
                    confirm/exit/screen/pulse/aging ·
                  ritardo-scaglionato→stagger-delay ·
-                 curva-entrata/uscita/standard/scatto/peggioramento/respiro/
-                   lineare→curve-entry/exit/standard/snap/worsening/breath/linear ·
+                 curva-entrata/uscita/standard/scatto/respiro/lineare→
+                   curve-entry/exit/standard/snap/breath/linear
+                   (curva-peggioramento is not ported: §6 folds it into
+                   --curve-standard, which it was indistinguishable from) ·
                  spostamento-ingresso/uscita/valore→shift-entry/exit/value ·
                  anim-ingresso-riga→anim-row-entry ·
                  mov-ingresso-riga→motion-row-entry ·
                  anim-uscita-partito→anim-exit-departed ·
                  anim-uscita-cancellato→anim-exit-cancelled ·
-                 anim-valore-su/giu→anim-value-up/down ·
+                 anim-valore-su/giu→anim-value-worse/better
+                   (renamed with §6: the pair names the news, not the direction) ·
                  mov-valore-numerico→motion-value ·
                  mov-peggioramento→motion-worsening ·
                  scala-conferma→confirm-scale ·
                  anim-conferma-binario→anim-platform-confirm ·
                  mov-conferma-binario→motion-platform-confirm ·
                  alone-imminente→halo-imminent ·
-                 anim-pulsazione-imminente→anim-imminent-pulse ·
-                 anim-pulsazione-alone→anim-halo-pulse ·
+                 anim-pulsazione-alone→anim-halo-pulse
+                   (anim-pulsazione-imminente is not ported: the v3 row has no
+                   inset rule for its inset-halo variant to sit on) ·
                  desaturazione-stantia→stale-desaturation ·
                  opacita-stantia→stale-opacity ·
                  anim-invecchiamento→anim-aging · mov-invecchiamento→motion-aging ·
@@ -114,9 +126,8 @@
    Keyframes     tab-ingresso-riga→tab-row-entry ·
                  tab-uscita-partito→tab-exit-departed ·
                  tab-uscita-cancellato→tab-exit-cancelled ·
-                 tab-valore-su/giu→tab-value-up/down ·
+                 tab-valore-su/giu→tab-value-worse/better ·
                  tab-conferma-binario→tab-platform-confirm ·
-                 tab-pulsazione-imminente→tab-imminent-pulse ·
                  tab-pulsazione-alone→tab-halo-pulse ·
                  tab-invecchiamento→tab-aging · tab-battito-dato→tab-data-beat
    Attributes    data-tema scuro/chiaro→data-theme dark/light ·
@@ -133,22 +144,50 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* wired to next/font in layout.tsx; quoted name is the no-JS fallback */
-  --font-family: var(--font-plex-sans, "IBM Plex Sans"), system-ui, sans-serif;
+  /* ── 0 · TWO FAMILIES ────────────────────────────────────────────────────
+     Wired to next/font in layout.tsx; the quoted names are the no-JS fallback.
 
-  /* ── 1 · FOUR LEVELS ─────────────────────────────────────────────────────
-     dominant   time remaining — readable with peripheral vision
-     primary    destination (and the platform digit)
-     secondary  scheduled time, operator mark, train number
+     --font-family   Archivo. The signage face. Carries a width axis, so a
+                     station plate is genuinely expanded rather than a normal
+                     grotesk stretched by letter-spacing.
+     --font-family-mono  IBM Plex Mono. Every number on the board. A board is a
+                     table of figures that change while you are reading them;
+                     mono is what stops a changing digit from moving its
+                     neighbours.
+     The width axis is addressed through font-variation-settings rather than
+     font-stretch so it degrades to "no width change" instead of to a
+     synthesised one where the variable font has not loaded. */
+  --font-family: var(--font-archivo, "Archivo"), system-ui, sans-serif;
+  /* named --font-family-mono, not --font-mono: globals.css maps it into the
+     @theme namespace as --font-mono, and a token that shares its own mapped
+     name resolves to itself. Same collision rule as curve→ease, raggio→corner. */
+  --font-family-mono: var(--font-plex-mono, "IBM Plex Mono"), ui-monospace, monospace;
+  --width-plate: 118; /* station plates, mode switch: signage-wide */
+  --width-normal: 100;
+
+  /* ── 1 · FOUR LEVELS + THE PLATE ─────────────────────────────────────────
+     dominant   the time, in mono — readable with peripheral vision
+     primary    destination
+     secondary  service mark, train number, controls
      tertiary   metadata: via stops, category, data freshness
-     Dominant→primary jump 2.67× (sharp). Then small steps: 1.29× and 1.17×.
-     One hierarchy shouts; the other three differ by weight and colour. */
-  --type-dominant-size: 3rem; /* 48px */
-  --type-dominant-weight: 700;
-  --type-dominant-tracking: -0.035em;
-  --type-dominant-leading: 0.92;
+     plate      the station name, and only the station name
 
-  --type-primary-size: 1.125rem; /* 18px · 48/18 = 2.67× */
+     The 2026 signage pass changed which family carries which level rather
+     than the levels themselves: dominant and every other figure moved to
+     --font-mono, the rest stayed on the display face. The dominant→primary
+     jump is 2.4×, then 1.29× and 1.17×: the first is a cliff, the rest are
+     steps, which is what makes one hierarchy shout while three differ by
+     weight and colour.
+
+     The plate is not a fifth level in the ranking sense; it is the one thing
+     on the screen that names the place you are standing in, and on a real
+     concourse that is not set at the same width as everything else. */
+  --type-dominant-size: 2.75rem; /* 44px · mono runs wider than the sans did */
+  --type-dominant-weight: 500;
+  --type-dominant-tracking: -0.02em;
+  --type-dominant-leading: 1;
+
+  --type-primary-size: 1.125rem; /* 18px · 44/18 = 2.4× */
   --type-primary-weight: 600;
   --type-primary-tracking: -0.005em;
   --type-primary-leading: 1.15;
@@ -160,19 +199,27 @@
 
   --type-tertiary-size: 0.75rem; /* 12px */
   --type-tertiary-weight: 400;
-  --type-tertiary-tracking: 0em;
+  --type-tertiary-tracking: 0.01em;
   --type-tertiary-leading: 1.45;
 
   /* destination on a wide board: primary grows, the ratio to dominant stays
-     sharp (48/26 = 1.85×). Below 600px it returns to the native primary. */
+     sharp (44/26 = 1.7×). Below 600px it returns to the native primary. */
   --type-primary-wide: 1.625rem; /* 26px */
 
-  /* outside the four given levels, two declared cases: prose and screen title */
+  /* outside the four given levels, one declared case: prose. The old --type-title
+     is gone with the signage pass — the plate took its only job, and a screen-title
+     level that nothing sets is a level that drifts. */
   --type-reading-size: 0.9375rem;
-  --type-reading-leading: 1.5;
-  --type-title-size: 2.75rem;
-  --type-title-weight: 700;
-  --type-title-tracking: -0.03em;
+  --type-reading-leading: 1.55;
+
+  /* THE PLATE · the station name. Expanded width, positive tracking, caps.
+     Positive tracking on an already-wide face is the signage move: the letters
+     are given room rather than being squeezed into a headline. */
+  --type-plate-size: 2.25rem;
+  --type-plate-weight: 700;
+  --type-plate-tracking: 0.04em;
+  --type-plate-leading: 1;
+  --type-plate-width: var(--width-plate);
 
   --weight-thin: 200;
   --weight-regular: 400;
@@ -221,8 +268,8 @@
 
   --screen-margin: var(--sp-4);
   --screen-margin-wide: var(--sp-8);
-  --row-air: var(--sp-5);
-  --row-height-min: 84px;
+  --row-air: var(--sp-4);
+  --row-height-min: 76px;
   --touch-min: 44px;
   --column-time: 148px; /* aligns --type-dominant-size */
   --column-platform: 56px;
@@ -234,10 +281,19 @@
   --line-width: 1px;
   --line-width-strong: 2px;
 
+  /* ── CORNERS · the signage rule ──────────────────────────────────────────
+     Everything the board is made of is square. A departure board is printed
+     rules and plates, and a rounded rectangle is the single most reliable way
+     to make an interface read as a generic web app rather than as this one.
+     The one documented exception is the operator tile: it is a mark, not a
+     surface, and its 3px keeps it reading as a badge stamped onto the row.
+     Inputs and controls take --corner-control, which is square as well; the
+     token exists so a future decision to soften them is one line, not a sweep. */
   --corner-none: 0px;
-  --corner-minimal: 2px;
-  --corner-badge: 3px;
-  --corner-field: 6px;
+  --corner-minimal: 0px; /* surfaces, panels, sheets: square */
+  --corner-badge: 3px; /* the operator tile, and nothing else */
+  --corner-field: 0px; /* the search field and every button */
+  --corner-control: var(--corner-field);
 
   /* ── 7 · OPERATOR LOGO SLOT ──────────────────────────────────────────────
      --logo-width is a ceiling, not a fixed measure. The source sheet made it
@@ -256,90 +312,111 @@
   --logo-fallback-weight: 600;
   --logo-fallback-tracking: -0.01em;
 
-  /* ── 6 · MOTION · named durations ───────────────────────────────────────*/
-  --duration-instant: 120ms;
-  --duration-value: 180ms; /* a digit that changes */
-  --duration-entry: 260ms; /* new row */
-  --duration-confirm: 300ms; /* platform confirmed */
-  --duration-exit: 320ms; /* train departed */
-  --duration-screen: 380ms;
-  --duration-pulse: 1800ms; /* one cycle, sustainable for minutes */
-  --duration-aging: 4000ms;
-  --stagger-delay: 28ms;
+  /* ── 6 · MOTION · named durations ───────────────────────────────────────
+     Re-authored for the 2026 pass. The ported scale had 260 / 300 / 320ms
+     doing three different jobs inside 60ms of each other, which no reader can
+     tell apart: three names, one perceived speed. The scale below steps by
+     roughly 1.4x, so every duration is visibly its own, and each still names
+     exactly one job. */
+  --duration-instant: 90ms; /* press feedback, hover */
+  --duration-value: 200ms; /* a digit that changes */
+  --duration-entry: 320ms; /* a row arrives */
+  --duration-exit: 380ms; /* a row leaves */
+  --duration-confirm: 440ms; /* platform confirmed, favourite gained */
+  --duration-screen: 560ms; /* first paint, board swap */
+  --duration-pulse: 2600ms; /* one breath, sustainable for minutes */
+  --duration-aging: 3000ms; /* the board going stale */
 
-  /* ── 6 · MOTION · named curves ──────────────────────────────────────────*/
-  --curve-entry: cubic-bezier(0.16, 0.9, 0.3, 1); /* arrives and settles */
-  --curve-exit: cubic-bezier(0.5, 0, 0.9, 0.4); /* accelerates away */
-  --curve-standard: cubic-bezier(0.4, 0.1, 0.25, 1);
-  --curve-snap: cubic-bezier(0.2, 1.5, 0.4, 1); /* the single overshoot */
-  --curve-worsening: cubic-bezier(0.3, 0, 0.2, 1);
+  /* ── 6 · MOTION · orchestration ─────────────────────────────────────────
+     A list entry cascades by --stagger-delay per position, but only up to
+     --stagger-cap positions: past that every row shares the last delay. The
+     old cascade had no ceiling, so a 40-row board animated for 1.1s while a
+     5-row board took 140ms — same code, two different products. The cap is
+     applied by the component (`staggerDelay`), because clamping an index is
+     arithmetic CSS cannot do on a custom property. */
+  --stagger-delay: 34ms;
+  --stagger-cap: 7;
+
+  /* ── 6 · MOTION · named curves ──────────────────────────────────────────
+     Five shapes and linear. The ported set had seven, of which --curve-standard
+     and --curve-worsening were within a hair of each other: two names for one
+     motion is how a vocabulary stops meaning anything. Each curve below has a
+     personality that can be described in words. */
+  --curve-entry: cubic-bezier(0.16, 0.84, 0.3, 1); /* arrives and settles */
+  --curve-exit: cubic-bezier(0.55, 0, 0.85, 0.3); /* accelerates away */
+  --curve-standard: cubic-bezier(0.4, 0.06, 0.2, 1); /* eases at both ends */
+  --curve-snap: cubic-bezier(0.22, 1.45, 0.36, 1); /* the single overshoot */
   --curve-breath: cubic-bezier(0.45, 0, 0.55, 1); /* continuous cycles */
-  --curve-linear: linear; /* aging */
+  --curve-linear: linear; /* aging, cross-fades */
 
-  /* ── 6 · THE SIX RECURRING TRANSITIONS ──────────────────────────────────
+  /* ── 6 · THE TRANSITIONS ────────────────────────────────────────────────
      Every data event has one voice, and only one. --anim-* for discrete
      events, --motion-* for state changes. Under prefers-reduced-motion the
      keyframes are rewritten by name at the end of this file: components do
-     not change a line and no movement survives. */
+     not change a line and no movement survives.
 
-  /* 6.1 · NEW ROW ENTRY
-     260ms · --curve-entry · rises 12px while the height opens.
-     Reduced: no displacement, opacity only in --duration-instant. */
-  --shift-entry: 12px;
+     Every animation in this file answers "what does it communicate?" in one
+     sentence, written above it. An animation that cannot answer is not here. */
+
+  /* 6.1 · NEW ROW ENTRY — a train that was not on the board a moment ago is.
+     320ms · --curve-entry · rises 14px and settles. Transform and opacity
+     only: height is not animated, so a list of 40 rows costs no layout.
+     Reduced: appearance, no displacement. */
+  --shift-entry: 14px;
   --anim-row-entry: tab-row-entry var(--duration-entry) var(--curve-entry) both;
   --motion-row-entry:
-    opacity var(--duration-entry) var(--curve-entry),
-    transform var(--duration-entry) var(--curve-entry),
-    height var(--duration-entry) var(--curve-entry);
+    opacity var(--duration-entry) var(--curve-linear),
+    transform var(--duration-entry) var(--curve-entry);
 
-  /* 6.2 · ROW EXIT · TRAIN DEPARTED
-     320ms · --curve-exit · leaves UPWARD accelerating and holds opacity to
-     mid-run: it departed, it was not removed from the list. The cancelled
-     train has an opposite, deliberately different shape
-     (--anim-exit-cancelled): stays put, loses colour, collapses.
-     Reduced: no displacement; the distinction moves to the textual state
-     label («Partito» / «Cancellato»), always present. */
-  --shift-exit: -28px;
+  /* 6.2 · ROW EXIT — the two ways a train leaves the board are not the same
+     fact, so they are not the same motion. Departed goes UP and accelerates:
+     it left the station under its own power. Cancelled stays exactly where it
+     is, loses its colour and collapses: it never went anywhere.
+     Reduced: both simply disappear; the distinction lives in the textual
+     state label, which is always present. */
+  --shift-exit: -32px;
   --anim-exit-departed: tab-exit-departed var(--duration-exit) var(--curve-exit) both;
   --anim-exit-cancelled: tab-exit-cancelled var(--duration-exit) var(--curve-standard) both;
 
-  /* 6.3 · NUMERIC VALUE CHANGE · delay, countdown
-     180ms · --curve-standard · only the changing digit rolls, by 0.6em; the
-     unit stays put. Direction tells direction: up if worsening, down if
-     improving. The colour shift lasts --duration-entry.
-     Reduced: the digit is swapped, no roll and no fade. */
-  --shift-value: 0.6em;
-  --anim-value-up: tab-value-up var(--duration-value) var(--curve-standard) both;
-  --anim-value-down: tab-value-down var(--duration-value) var(--curve-standard) both;
+  /* 6.3 · NUMERIC VALUE CHANGE — the delay moved, and which way it moved is
+     the news. Worse and better are deliberately asymmetric: bad news arrives
+     with a firmer shape and a colour shift, good news settles quietly. The
+     ported system rolled both identically and called the direction meaning;
+     it was not, because a roll of 0.6em up and 0.6em down feel the same.
+     Reduced: the digit is swapped, no roll, no fade. */
+  --shift-value: 0.62em;
+  --anim-value-worse: tab-value-worse var(--duration-value) var(--curve-standard) both;
+  --anim-value-better: tab-value-better var(--duration-value) var(--curve-entry) both;
   --motion-value:
     transform var(--duration-value) var(--curve-standard),
     opacity var(--duration-value) var(--curve-linear);
-  --motion-worsening: color var(--duration-entry) var(--curve-worsening);
+  --motion-worsening: color var(--duration-entry) var(--curve-standard);
 
-  /* 6.4 · PLATFORM CONFIRMATION — the strongest visual event in the app
-     300ms · --curve-snap · a single overshoot at 1.14: from outlined digit to
-     inverted solid block. Nothing else is entitled to the snap.
-     Reduced: the inverted solid block appears at once — still the strongest
-     event, because it is a surface inversion, not a movement. */
-  --confirm-scale: 1.14;
+  /* 6.4 · PLATFORM CONFIRMATION — the strongest event in the app: the thing
+     the traveller is standing there waiting to learn. 440ms · --curve-snap ·
+     one overshoot at 1.16, outlined digit to inverted solid block. Nothing
+     else on a row is entitled to the snap.
+     Reduced: the inverted block appears at once. Still the strongest event,
+     because it is a surface inversion, not a movement. */
+  --confirm-scale: 1.16;
   --anim-platform-confirm: tab-platform-confirm var(--duration-confirm) var(--curve-snap) both;
   --motion-platform-confirm:
     background-color var(--duration-value) var(--curve-linear),
     color var(--duration-value) var(--curve-linear),
-    border-color var(--duration-value) var(--curve-linear);
+    box-shadow var(--duration-value) var(--curve-linear);
 
-  /* 6.5 · CONTINUOUS PULSE · imminent departure
-     1800ms · --curve-breath · infinite. Only a halo dilating by 6px: no
-     scale, no blinking colour, no displacement, no border appearing and
-     disappearing. Low amplitude to hold for minutes.
-     Reduced: the halo becomes a permanent static ring, always visible. */
-  --halo-imminent: 6px;
-  --anim-imminent-pulse: tab-imminent-pulse var(--duration-pulse) var(--curve-breath) infinite;
+  /* 6.5 · IMMINENT DEPARTURE — this train is leaving now, and the board says
+     so without a word. 2600ms · --curve-breath · infinite, a halo dilating by
+     7px. No scale, no blink, no displacement: low amplitude, because it has
+     to hold for minutes without becoming furniture.
+     Reduced: the halo becomes a permanent static ring. */
+  --halo-imminent: 7px;
+  --anim-halo-pulse: tab-halo-pulse var(--duration-pulse) var(--curve-breath) infinite;
 
-  /* 6.6 · PROGRESSIVE BOARD DESATURATION · aging data
-     4000ms · linear · the whole board drops to saturate(0.35) and opacity
-     0.78. Slow and smooth: noticed without reading, without alarming.
-     Reduced: the final state applies immediately — it is information, not
+  /* 6.6 · BOARD AGEING — what is on screen is no longer what is true.
+     3000ms · linear · the board drops to saturate(0.35) and opacity 0.78.
+     Slow enough to be noticed without being read, and never alarming.
+     Reduced: the final state applies at once. It is information, not
      decoration, and cannot be suppressed. */
   --stale-desaturation: 0.35;
   --stale-opacity: 0.78;
@@ -348,40 +425,70 @@
     filter var(--duration-aging) var(--curve-linear),
     opacity var(--duration-aging) var(--curve-linear);
 
-  /* outside the six: screen change, data heartbeat, touch states */
+  /* 6.7 · BOARD SWAP — departures and arrivals are two halves of one board,
+     not two screens. The incoming list enters from the side the toggle moved
+     towards, so the switch reads as a pane sliding across rather than a page
+     being replaced. Forward is departures to arrivals (the toggle travels
+     right, so the content arrives from the right).
+     Reduced: a plain appearance with no travel. */
+  --shift-swap: 28px;
+  --anim-swap-forward: tab-swap-forward var(--duration-entry) var(--curve-entry) both;
+  --anim-swap-back: tab-swap-back var(--duration-entry) var(--curve-entry) both;
+
+  /* 6.8 · SCREEN ENTRY — the app shell has just painted for the first time.
+     Fires once per mount, never on a mode or station change: both of those
+     are `router.replace` on a mounted tree and already own their motion. */
+  --anim-screen-in: tab-screen-in var(--duration-screen) var(--curve-entry) both;
   --motion-screen:
     transform var(--duration-screen) var(--curve-entry),
     opacity var(--duration-entry) var(--curve-linear);
+
+  /* 6.9 · HEADER CONDENSE — the station name moves into the sticky header
+     once its own heading has scrolled away, so the reader always knows which
+     board they are looking at. Transform and opacity only: the header keeps a
+     fixed height, so nothing below it reflows while the swap happens. */
+  --motion-header:
+    transform var(--duration-entry) var(--curve-entry),
+    opacity var(--duration-value) var(--curve-linear);
+
+  /* outside the events: the state-change transition every control shares. */
   --motion-state:
     color var(--duration-value) var(--curve-linear),
     background-color var(--duration-value) var(--curve-linear),
     border-color var(--duration-value) var(--curve-linear);
-  --anim-data-beat: tab-data-beat 2400ms var(--curve-breath) infinite;
 
-  /* outside the six: placeholder breathing while a board is being fetched. Not a state
-     of the data — it says "no value yet", so it never borrows a --state-* colour. */
+  /* outside the events: the data heartbeat next to the freshness label. It
+     beats while a live read is standing; it stops when the data goes stale,
+     which is the only reason it exists. */
+  --anim-data-beat: tab-data-beat var(--duration-pulse) var(--curve-breath) infinite;
+
+  /* outside the events: placeholder while a board is being fetched. A sweep
+     travelling across the block, not the whole block breathing: a pulse says
+     "something is happening here", a sweep says "in this direction, and it is
+     still moving". Transform on a child element, so no repaint of the block.
+     Not a state of the data, so it never borrows a --state-* colour.
+     Reduced: no sweep, the block stays a static placeholder. */
   --skeleton-opacity-low: 0.35;
   --skeleton-opacity-high: 0.75;
-  --anim-skeleton: tab-skeleton 1600ms var(--curve-breath) infinite;
+  --anim-skeleton: tab-skeleton var(--duration-pulse) var(--curve-breath) infinite;
+  --anim-skeleton-sweep: tab-skeleton-sweep 1500ms var(--curve-standard) infinite;
 
-  /* outside the six: the favourite star turning ON. Borrows --duration-confirm and
-     --curve-snap from 6.4 on purpose: this is the second confirmation event in the app, and
-     the snap is the shape a confirmation has here. 6.4's "nothing else is entitled to the
-     snap" is about the row's platform box — no other *row* state may overshoot — not about
-     the header's one deliberate act by the traveller. Turning a favourite off gets nothing:
-     the event worth confirming is gaining one.
-     Reduced: --duration-confirm is already 1ms and --confirm-scale already 1, so the
-     keyframe below is redefined only to keep the convention intact. */
+  /* outside the events: the favourite star turning ON. Borrows --duration-confirm
+     and --curve-snap from 6.4 on purpose — this is the app's second confirmation,
+     and the snap is the shape a confirmation has here. Turning a favourite off
+     gets nothing: the event worth confirming is gaining one.
+     Reduced: --confirm-scale is already 1, so the star fills without jumping. */
   --anim-favourite-pop: tab-favourite-pop var(--duration-confirm) var(--curve-snap) both;
 
-  /* outside the six: a line of text wider than its container scrolls back and forth
-     rather than being clipped — the station name at --type-title does not fit 375px, and
-     a truncated station name is a wrong station name. Only the shape and the curve live
-     here: distance and duration depend on the measured overflow, so the component sets
-     --marquee-distance and animation-duration inline (a var inside this declaration would
-     be substituted here on :root, not on the animated element).
-     Reduced: the component drops the animation and lets the line wrap instead — no
-     keyframe can bring back hidden text. */
+  /* outside the events: a line of text wider than its container scrolls back and
+     forth rather than being clipped — the station name at --type-plate does not
+     fit 375px, and a truncated station name is a wrong station name. Only the
+     shape and the curve live here: distance and duration depend on the measured
+     overflow, so the component sets --marquee-distance and animation-duration
+     inline (a var inside this declaration would be substituted here on :root,
+     not on the animated element).
+     Reduced: the component drops the animation and lets the line wrap instead —
+     no keyframe can bring back hidden text. */
   --anim-marquee: tab-marquee 9000ms var(--curve-standard) infinite;
 
   /* outside the six: THE MOBILE BOTTOM SHEET IS NOT ANIMATED FROM HERE.
@@ -412,8 +519,10 @@
    point of the row.
    ═══════════════════════════════════════════════════════════════════════════ */
 :root {
-  /* row geometry · four columns: countdown, center, platform, affordance */
-  --row-padding-y: var(--sp-4);
+  /* row geometry · four columns: countdown, center, platform, affordance.
+     Denser than the ported values: the rules do the separating now, so the row
+     no longer has to buy its own breathing room with padding. */
+  --row-padding-y: var(--sp-3);
   --row-padding-x: var(--sp-4);
   --row-gap-x: var(--sp-4);
   --row-gap-y: var(--sp-1);
@@ -476,9 +585,6 @@
   --affordance-size: 14px;
   --affordance-stroke: 1.6px;
 
-  /* imminent-departure halo without the inset rule (v3) */
-  --anim-halo-pulse: tab-halo-pulse var(--duration-pulse) var(--curve-breath) infinite;
-
   /* ── RICH ROW · wide board (desktop and iPad) ────────────────────────────
      Four zones: time, center, route, platform. No column has a hard minimum:
      the row cannot break its own edge. Below 1100px the route leaves the row
@@ -502,68 +608,91 @@
 }
 
 /* ═══ 5 · THE TWO PALETTES · hand-written, verified separately ═══
-   Source has two blocks (dark default, light rewritten value by value: state
-   tints in light are more saturated and darker, not the dark ones dimmed).
-   Here each token holds both via light-dark(LIGHT, DARK); the pairs are the
-   source values verbatim. System preference decides by default; [data-theme]
-   overrides via color-scheme below. Verified on --surface and
-   --surface-raised: text ≥ 4.5:1, rules and large digits ≥ 3:1. Ratio
-   comments are on --surface, "light · dark". */
+   Two grounds, re-pitched in the 2026 signage pass and re-verified value by
+   value. Light is paper: a warm off-white with almost no chroma (hue 95 at
+   0.004 — a whisper, not a cream) carrying near-black ink. Dark is a
+   concourse at night: deeper than the ported near-black, so the state
+   colours read as lit rather than printed.
+
+   What did NOT change: every hue. The semantic vocabulary is the same
+   vocabulary, re-anchored to the new grounds and re-measured against them.
+
+   Each token holds both halves via light-dark(LIGHT, DARK). System
+   preference decides by default; [data-theme] overrides via color-scheme
+   below. Verified on --surface AND --surface-raised: text ≥ 4.5:1, rules,
+   marks and large digits ≥ 3:1. Ratio comments are on --surface,
+   "light · dark". */
 :root {
   color-scheme: light dark;
 
-  --surface: light-dark(oklch(0.985 0.002 265), oklch(0.17 0.006 265));
-  --surface-raised: light-dark(oklch(1 0 0), oklch(0.22 0.007 265));
-  --surface-pressed: light-dark(oklch(0.94 0.004 265), oklch(0.26 0.008 265));
-  --surface-inverse: light-dark(oklch(0.2 0.006 265), oklch(0.95 0.004 265));
+  /* paper #f6f6f3 · concourse #090b0e (not pure black: a board has depth) */
+  --surface: light-dark(oklch(0.972 0.004 95), oklch(0.15 0.008 250));
+  --surface-raised: light-dark(oklch(1 0 0), oklch(0.195 0.009 250));
+  --surface-pressed: light-dark(oklch(0.935 0.005 95), oklch(0.245 0.01 250));
+  --surface-inverse: light-dark(oklch(0.16 0.01 250), oklch(0.96 0.004 250));
 
-  --text-primary: light-dark(oklch(0.2 0.006 265), oklch(0.97 0.003 265)); /* 17.3:1 · 17.5:1 */
-  --text-secondary: light-dark(oklch(0.44 0.008 265), oklch(0.74 0.006 265)); /* 7.4:1 · 8.3:1 */
-  --text-tertiary: light-dark(oklch(0.53 0.008 265), oklch(0.62 0.008 265)); /* 5.1:1 · 5.3:1 */
-  --text-inverse: light-dark(oklch(0.99 0.002 265), oklch(0.17 0.006 265));
+  --text-primary: light-dark(oklch(0.18 0.01 95), oklch(0.97 0.003 250)); /* 17.3:1 · 18.0:1 */
+  --text-secondary: light-dark(oklch(0.42 0.012 95), oklch(0.75 0.006 250)); /* 7.8:1 · 8.8:1 */
+  --text-tertiary: light-dark(oklch(0.53 0.012 95), oklch(0.62 0.008 250)); /* 4.9:1 · 5.4:1 */
+  --text-inverse: light-dark(oklch(0.99 0.002 250), oklch(0.15 0.008 250));
 
-  --line: light-dark(
-    oklch(0.89 0.005 265),
-    oklch(0.28 0.008 265)
-  ); /* separator, not load-bearing */
-  --line-strong: light-dark(oklch(0.64 0.008 265), oklch(0.52 0.01 265)); /* 3.2:1 · 3.4:1 */
-  --focus: light-dark(oklch(0.52 0.16 250), oklch(0.8 0.12 230)); /* 5.2:1 · 10.5:1 */
+  /* The rule is the signage system's structural element, so it comes in two
+     strengths and both are load-bearing here: --line divides rows, --line-strong
+     divides regions and underlines the plate. */
+  --line: light-dark(oklch(0.87 0.006 95), oklch(0.27 0.009 250));
+  --line-strong: light-dark(oklch(0.62 0.01 95), oklch(0.5 0.01 250)); /* 3.4:1 · 3.3:1 */
 
-  --state-on-time: light-dark(oklch(0.48 0.13 155), oklch(0.78 0.11 155)); /* 5.8:1 · 10.0:1 */
-  --state-delay-minor: light-dark(oklch(0.53 0.14 75), oklch(0.83 0.14 85)); /* 5.1:1 · 11.2:1 */
-  --state-delay-severe: light-dark(oklch(0.52 0.2 32), oklch(0.72 0.19 35)); /* 5.8:1 · 6.9:1 */
-  --state-cancelled: light-dark(oklch(0.5 0.21 20), oklch(0.68 0.2 20)); /* 6.3:1 · 6.0:1 */
-  --state-cancelled-partial: light-dark(oklch(0.54 0.15 50), oklch(0.78 0.13 55));
-  --state-rerouted: light-dark(oklch(0.48 0.12 255), oklch(0.76 0.09 250));
-  --state-departure: light-dark(oklch(0.24 0.02 240), oklch(0.98 0.02 200)); /* 15.7:1 · 18.2:1 */
-  --state-departure-halo: light-dark(oklch(0.24 0.02 240 / 0.12), oklch(0.98 0.02 200 / 0.16));
+  /* THE INTERACTIVE ACCENT. One accent for the whole app: focus rings, links, the active
+     control. It is the service mark's own teal (the cell of icons/favicon.svg, #00BDB7),
+     darkened on light and lightened on dark until it clears AA as text — a product whose
+     logo is teal and whose links are blue has two accents and therefore none.
+     #006d6d 5.7:1 · #67d2cc 11.0:1 on --surface; 6.2:1 · 10.2:1 on --surface-raised. */
+  --focus: light-dark(oklch(0.48 0.09 195), oklch(0.8 0.1 190)); /* 5.7:1 · 11.0:1 */
 
-  --platform-absent-text: light-dark(oklch(0.53 0.008 265), oklch(0.62 0.008 265));
-  --platform-scheduled-text: light-dark(oklch(0.44 0.008 265), oklch(0.74 0.006 265));
-  --platform-scheduled-line: light-dark(oklch(0.64 0.008 265), oklch(0.52 0.01 265));
-  --platform-confirmed-surface: light-dark(oklch(0.2 0.006 265), oklch(0.95 0.004 265));
-  /* on the solid block: 17.6:1 · 16.5:1 */
-  --platform-confirmed-text: light-dark(oklch(0.99 0.002 265), oklch(0.17 0.006 265));
+  /* THE SERVICE MARK. The logo's teal cell, drawn in the header wordmark. A mark is a
+     graphical object (WCAG 1.4.11), so the bar is 3:1, not 4.5:1 — the same rule the
+     operator brand logos are tuned against, and the same treatment: one hue, re-tuned in
+     lightness per theme. #009794 3.3:1 · #00beb9 8.5:1. */
+  --brand-mark: light-dark(oklch(0.6 0.13 192), oklch(0.72 0.13 192)); /* 3.3:1 · 8.5:1 */
 
-  --bus-text: light-dark(oklch(0.48 0.12 85), oklch(0.86 0.12 95));
+  --state-on-time: light-dark(oklch(0.48 0.13 155), oklch(0.78 0.11 155)); /* 5.6:1 · 10.3:1 */
+  --state-delay-minor: light-dark(oklch(0.53 0.14 75), oklch(0.83 0.14 85)); /* 5.0:1 · 11.6:1 */
+  --state-delay-severe: light-dark(oklch(0.5 0.2 32), oklch(0.72 0.19 35)); /* 6.1:1 · 7.1:1 */
+  --state-cancelled: light-dark(oklch(0.5 0.21 20), oklch(0.68 0.2 20)); /* 6.0:1 · 6.2:1 */
+  --state-cancelled-partial: light-dark(
+    oklch(0.54 0.15 50),
+    oklch(0.78 0.13 55)
+  ); /* 4.9:1 · 9.5:1 */
+  --state-rerouted: light-dark(oklch(0.47 0.13 255), oklch(0.76 0.09 250)); /* 6.4:1 · 9.2:1 */
+  --state-departure: light-dark(oklch(0.2 0.02 240), oklch(0.98 0.02 200)); /* 16.4:1 · 18.6:1 */
+  --state-departure-halo: light-dark(oklch(0.2 0.02 240 / 0.14), oklch(0.98 0.02 200 / 0.18));
+
+  --platform-absent-text: light-dark(oklch(0.53 0.012 95), oklch(0.62 0.008 250));
+  --platform-scheduled-text: light-dark(oklch(0.42 0.012 95), oklch(0.75 0.006 250));
+  --platform-scheduled-line: light-dark(oklch(0.62 0.01 95), oklch(0.5 0.01 250));
+  --platform-confirmed-surface: light-dark(oklch(0.18 0.01 95), oklch(0.96 0.004 250));
+  /* on the solid block: 17.3:1 · 16.8:1 */
+  --platform-confirmed-text: light-dark(oklch(0.99 0.002 250), oklch(0.15 0.008 250));
+
+  --bus-text: light-dark(oklch(0.48 0.12 85), oklch(0.86 0.12 95)); /* 6.1:1 · 12.9:1 */
   --bus-line: light-dark(oklch(0.6 0.12 85), oklch(0.7 0.11 95));
 
   --data-fresh: light-dark(oklch(0.48 0.13 155), oklch(0.78 0.11 155));
   --data-stale: light-dark(oklch(0.53 0.14 75), oklch(0.83 0.14 85));
-  --data-absent: light-dark(oklch(0.53 0.008 265), oklch(0.62 0.008 265));
-  --veil-empty: light-dark(oklch(0.96 0.003 265), oklch(0.22 0.007 265));
+  --data-absent: light-dark(oklch(0.53 0.012 95), oklch(0.62 0.008 250));
+  --veil-empty: light-dark(oklch(0.945 0.005 95), oklch(0.195 0.009 250));
   /* modal veil: the alpha lives IN the colour, so the veil stays at opacity 1
      and cannot lower the verified contrast of the dialog above it. */
-  --veil-modal: light-dark(oklch(0.96 0.003 265 / 0.72), oklch(0.14 0.006 265 / 0.74));
+  --veil-modal: light-dark(oklch(0.945 0.005 95 / 0.74), oklch(0.11 0.008 250 / 0.78));
 
-  --identity-trenitalia: light-dark(oklch(0.52 0.19 25), oklch(0.66 0.17 25)); /* 5.8:1 · 5.7:1 */
-  --identity-italo: light-dark(oklch(0.52 0.16 350), oklch(0.66 0.13 350)); /* 5.8:1 · 5.8:1 */
-  --identity-trenord: light-dark(oklch(0.48 0.14 148), oklch(0.68 0.14 145)); /* 5.9:1 · 7.0:1 */
+  --identity-trenitalia: light-dark(oklch(0.52 0.19 25), oklch(0.66 0.17 25)); /* 5.7:1 · 5.6:1 */
+  --identity-italo: light-dark(oklch(0.52 0.16 350), oklch(0.66 0.13 350)); /* 5.7:1 · 5.7:1 */
+  --identity-trenord: light-dark(oklch(0.48 0.14 148), oklch(0.68 0.14 145)); /* 5.8:1 · 6.9:1 */
   --identity-neutral: light-dark(oklch(0.55 0.02 250), oklch(0.7 0.02 250)); /* unknown operator */
-  --identity-mono: light-dark(oklch(0.44 0.008 265), oklch(0.74 0.006 265)); /* fallback sigla */
-  /* sigla on the solid tile: 5.6:1 · 8.9:1 min */
-  --mark-ink: light-dark(oklch(0.99 0.002 265), oklch(0.17 0.006 265));
-  --nav-affordance: light-dark(oklch(0.53 0.008 265), oklch(0.62 0.008 265));
+  --identity-mono: light-dark(oklch(0.42 0.012 95), oklch(0.75 0.006 250)); /* fallback sigla */
+  /* sigla on the solid tile: 5.5:1 · 8.8:1 min */
+  --mark-ink: light-dark(oklch(0.99 0.002 250), oklch(0.15 0.008 250));
+  --nav-affordance: light-dark(oklch(0.53 0.012 95), oklch(0.62 0.008 250));
 
   /* BRAND LOGOS · the colour a mark in the logo slot is drawn in. The brand's own hue,
      one asset per brand carrying currentColor, each pair re-tuned in lightness for its
@@ -617,13 +746,17 @@
 }
 
 /* ── Below 600px the row goes from four columns to two bands.
-      Only dominant and primary shrink, together: the ratio stays 2.5×.
-      Secondary and tertiary do not shrink — already at the readable minimum. ── */
+      Only dominant, primary and the plate shrink, together: the ratios stay.
+      Secondary and tertiary do not shrink — already at the readable minimum.
+      The plate also gives up a little of its width axis: at 375px the expanded
+      cut costs more room than the signage effect is worth. ── */
 @media (max-width: 599px) {
   :root {
-    --type-dominant-size: 2.5rem; /* 40px */
-    --type-primary-size: 1rem; /* 16px · 40/16 = 2.5× */
+    --type-dominant-size: 2.375rem; /* 38px · mono */
+    --type-primary-size: 1rem; /* 16px */
     --type-primary-wide: 1.125rem; /* 18px */
+    --type-plate-size: 1.5rem;
+    --type-plate-width: 110;
     --column-time: 116px;
     --row-grid-columns: 4px minmax(var(--column-time), max-content) minmax(0, 1fr);
     --row-grid-areas: "accent time platform" "accent center center";
@@ -668,7 +801,7 @@
   [data-board] * {
     --type-dominant-size: 2.5rem;
     --type-primary-size: 1rem;
-    --type-title-size: 2rem;
+    --type-plate-size: 1.75rem;
     --column-time: 116px;
     --row-grid-columns: 4px minmax(var(--column-time), max-content) minmax(0, 1fr);
     --row-grid-areas: "accent time platform" "accent center center";
@@ -705,106 +838,102 @@
   }
 }
 
-/* ═══ 6 · CANONICAL KEYFRAMES · one per transition ═══ */
+/* ═══ 6 · CANONICAL KEYFRAMES · one per transition ═══
+   Transform and opacity only, everywhere except the two that are information
+   rather than movement (ageing desaturates, cancelled drains its colour). */
 
-/* 6.1 row entry */
+/* 6.1 row entry · a train that was not on the board a moment ago is */
 @keyframes tab-row-entry {
   from {
     opacity: 0;
-    transform: translateY(var(--shift-entry));
+    transform: translate3d(0, var(--shift-entry), 0);
   }
   to {
     opacity: 1;
-    transform: none;
+    transform: translate3d(0, 0, 0);
   }
 }
 
-/* 6.2a exit · departed: holds opacity to mid-run, then accelerates upward */
+/* 6.2a exit · departed: holds its opacity through the first half, then leaves
+   upward under its own power */
 @keyframes tab-exit-departed {
   0% {
     opacity: 1;
-    transform: none;
+    transform: translate3d(0, 0, 0) scale(1);
   }
-  50% {
-    opacity: 0.9;
-    transform: translateY(calc(var(--shift-exit) * 0.3));
+  45% {
+    opacity: 0.92;
+    transform: translate3d(0, calc(var(--shift-exit) * 0.22), 0) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translateY(var(--shift-exit));
+    transform: translate3d(0, var(--shift-exit), 0) scale(0.985);
   }
 }
-/* 6.2b exit · cancelled: stays put, loses colour, collapses in place */
+/* 6.2b exit · cancelled: goes nowhere, loses its colour, collapses in place */
 @keyframes tab-exit-cancelled {
   0% {
     opacity: 1;
     filter: saturate(1);
+    transform: scaleY(1);
   }
-  55% {
-    opacity: 0.5;
-    filter: saturate(0.1);
+  50% {
+    opacity: 0.55;
+    filter: saturate(0.08);
+    transform: scaleY(1);
   }
   100% {
     opacity: 0;
     filter: saturate(0);
-    transform: scaleY(0.9);
+    transform: scaleY(0.88);
   }
 }
 
-/* 6.3 numeric value · up = worsens, down = improves */
-@keyframes tab-value-up {
-  from {
-    transform: translateY(var(--shift-value));
+/* 6.3 numeric value · worse climbs in from below with a firm shape; better
+   settles down from above. Asymmetric on purpose: bad news should not feel
+   like good news played backwards. */
+@keyframes tab-value-worse {
+  0% {
     opacity: 0;
+    transform: translate3d(0, var(--shift-value), 0);
   }
-  to {
-    transform: none;
+  60% {
     opacity: 1;
+    transform: translate3d(0, calc(var(--shift-value) * -0.08), 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
   }
 }
-@keyframes tab-value-down {
+@keyframes tab-value-better {
   from {
-    transform: translateY(calc(var(--shift-value) * -1));
     opacity: 0;
+    transform: translate3d(0, calc(var(--shift-value) * -1), 0);
   }
   to {
-    transform: none;
     opacity: 1;
+    transform: translate3d(0, 0, 0);
   }
 }
 
 /* 6.4 platform confirmation · the app's only overshoot */
 @keyframes tab-platform-confirm {
   0% {
-    transform: scale(0.82);
     opacity: 0;
+    transform: scale(0.84);
   }
   55% {
-    transform: scale(var(--confirm-scale));
     opacity: 1;
+    transform: scale(var(--confirm-scale));
   }
   100% {
-    transform: scale(1);
     opacity: 1;
+    transform: scale(1);
   }
 }
 
-/* 6.5 imminent pulse · only the halo breathes */
-@keyframes tab-imminent-pulse {
-  0%,
-  100% {
-    box-shadow:
-      inset var(--line-width-strong) 0 0 0 var(--state-departure),
-      0 0 0 0 var(--state-departure-halo);
-  }
-  50% {
-    box-shadow:
-      inset var(--line-width-strong) 0 0 0 var(--state-departure),
-      0 0 0 var(--halo-imminent) var(--state-departure-halo);
-  }
-}
-/* 6.5b pulse v3 · only the outer halo: the v3 row no longer has the inset
-   rule, so the imminent departure cannot use it. */
+/* 6.5 imminent departure · only the halo breathes */
 @keyframes tab-halo-pulse {
   0%,
   100% {
@@ -815,7 +944,7 @@
   }
 }
 
-/* 6.6 board aging */
+/* 6.6 board ageing */
 @keyframes tab-aging {
   from {
     filter: saturate(1);
@@ -827,7 +956,59 @@
   }
 }
 
-/* outside the six: data heartbeat */
+/* 6.7 board swap · the incoming list arrives from the side the toggle moved */
+@keyframes tab-swap-forward {
+  from {
+    opacity: 0;
+    transform: translate3d(var(--shift-swap), 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes tab-swap-back {
+  from {
+    opacity: 0;
+    transform: translate3d(calc(var(--shift-swap) * -1), 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* 6.8 screen entry · once per mount of the app shell */
+@keyframes tab-screen-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, calc(var(--shift-entry) * 0.6), 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* outside the events: data heartbeat, one beat per breath */
+@keyframes tab-data-beat {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  18% {
+    opacity: 1;
+    transform: scale(1.75);
+  }
+  40% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+}
+
+/* outside the events: placeholder. The block holds a low steady opacity and a
+   sweep travels across it, so the eye reads a direction rather than a throb. */
 @keyframes tab-skeleton {
   0%,
   100% {
@@ -837,41 +1018,18 @@
     opacity: var(--skeleton-opacity-high);
   }
 }
-
-/* outside the six: overflowing text scrolls to its end and comes back, still at both
-   ends so the beginning of the name is readable. --marquee-distance is the measured
-   overflow in px, set inline by the component. */
-@keyframes tab-marquee {
-  0%,
-  16% {
-    transform: translateX(0);
-  }
-  50%,
-  66% {
-    transform: translateX(calc(-1 * var(--marquee-distance, 0px)));
-  }
-  100% {
-    transform: translateX(0);
-  }
-}
-
-@keyframes tab-data-beat {
+@keyframes tab-skeleton-sweep {
   0% {
-    opacity: 0.45;
-    transform: scale(1);
-  }
-  25% {
-    opacity: 1;
-    transform: scale(1.6);
+    transform: translate3d(-100%, 0, 0);
   }
   100% {
-    opacity: 0.45;
-    transform: scale(1);
+    transform: translate3d(200%, 0, 0);
   }
 }
 
-/* outside the six: favourite star pop · the same single overshoot as 6.4, starting and
-   ending at rest because the star is already there — only its meaning changes. */
+/* outside the events: favourite star · the same single overshoot as 6.4,
+   starting and ending at rest because the star is already there — only its
+   meaning changes. */
 @keyframes tab-favourite-pop {
   0% {
     transform: scale(1);
@@ -884,25 +1042,45 @@
   }
 }
 
+/* outside the events: overflowing text scrolls to its end and comes back, still
+   at both ends so the beginning of the name is readable. --marquee-distance is
+   the measured overflow in px, set inline by the component. */
+@keyframes tab-marquee {
+  0%,
+  16% {
+    transform: translate3d(0, 0, 0);
+  }
+  50%,
+  66% {
+    transform: translate3d(calc(-1 * var(--marquee-distance, 0px)), 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 /* ═══ 6 · PREFERS-REDUCED-MOTION ═══
-   The keyframes are redefined with the same names: whatever component uses
-   them, the movement disappears but the information stays. Not one component
-   line to modify. The static substitutions, event by event:
+   The keyframes are redefined under the same names: whatever component uses
+   them, the movement disappears and the information stays. Not one component
+   line changes. The static substitution, event by event:
    1 row entry          → appearance, no displacement
-   2 row exit           → disappearance; departed/cancelled distinguished by
-                          the textual label, not by movement
+   2 row exit           → disappearance; departed and cancelled are told apart
+                          by the textual label, not by movement
    3 numeric value      → hard swap of the digit, no roll
-   4 platform confirm   → immediate inversion to solid block: still the
+   4 platform confirm   → immediate inversion to the solid block: still the
                           strongest event, because it is surface, not movement
-   5 imminent departure → permanent static ring instead of the breathing
-   6 aging              → final state applied at once: it is information */
+   5 imminent departure → a permanent static ring instead of the breath
+   6 ageing             → the final state applied at once: it is information
+   7 board swap         → appearance, no travel
+   8 screen entry       → nothing at all
+   9 skeleton           → a static placeholder, no sweep */
 @media (prefers-reduced-motion: reduce) {
   :root {
     --duration-instant: 1ms;
     --duration-value: 1ms;
     --duration-entry: 1ms;
-    --duration-confirm: 1ms;
     --duration-exit: 1ms;
+    --duration-confirm: 1ms;
     --duration-screen: 1ms;
     --duration-pulse: 1ms;
     --duration-aging: 1ms;
@@ -910,6 +1088,7 @@
     --shift-entry: 0px;
     --shift-exit: 0px;
     --shift-value: 0px;
+    --shift-swap: 0px;
     --confirm-scale: 1;
   }
   @keyframes tab-row-entry {
@@ -936,7 +1115,7 @@
       opacity: 0;
     }
   }
-  @keyframes tab-value-up {
+  @keyframes tab-value-worse {
     from {
       opacity: 1;
     }
@@ -944,7 +1123,7 @@
       opacity: 1;
     }
   }
-  @keyframes tab-value-down {
+  @keyframes tab-value-better {
     from {
       opacity: 1;
     }
@@ -960,15 +1139,31 @@
       opacity: 1;
     }
   }
-  /* static ring, not a pulse */
-  @keyframes tab-imminent-pulse {
-    0%,
-    100% {
-      box-shadow:
-        inset var(--line-width-strong) 0 0 0 var(--state-departure),
-        0 0 0 var(--halo-imminent) var(--state-departure-halo);
+  @keyframes tab-swap-forward {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 1;
     }
   }
+  @keyframes tab-swap-back {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes tab-screen-in {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  /* a static ring, not a pulse */
   @keyframes tab-halo-pulse {
     0%,
     100% {
@@ -989,8 +1184,9 @@
       transform: none;
     }
   }
-  /* the component already wraps the text instead of scrolling it; this only guarantees
-     that no movement survives if the animation is applied before that is known */
+  /* the component already wraps the text instead of scrolling it; this only
+     guarantees that no movement survives if the animation is applied before
+     that is known */
   @keyframes tab-marquee {
     0%,
     100% {
@@ -1004,7 +1200,13 @@
       opacity: var(--skeleton-opacity-low);
     }
   }
-  /* aging keeps the final state: information, not decoration */
+  @keyframes tab-skeleton-sweep {
+    0%,
+    100% {
+      transform: translate3d(-200%, 0, 0);
+    }
+  }
+  /* ageing keeps the final state: information, not decoration */
   @keyframes tab-aging {
     from {
       filter: saturate(var(--stale-desaturation));
@@ -1015,9 +1217,10 @@
       opacity: var(--stale-opacity);
     }
   }
-  /* The bottom sheet still appears and still leaves — it just stops travelling and stops
-     scaling the page behind it. vaul sets these transitions inline while it animates, so
-     this is the one place in the file that has to raise its voice to be heard. */
+  /* The bottom sheet still appears and still leaves — it just stops travelling
+     and stops scaling the page behind it. vaul sets these transitions inline
+     while it animates, so this is the one place in the file that has to raise
+     its voice to be heard. */
   /* biome-ignore-start lint/complexity/noImportantStyles: overriding a library's inline
      styles is the one case the cascade cannot express any other way */
   [data-vaul-drawer],

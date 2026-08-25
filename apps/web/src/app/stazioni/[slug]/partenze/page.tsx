@@ -3,13 +3,27 @@
  * route and `/stazioni/[slug]/arrivi`, mode fixed by the path segment instead of a query
  * param — this is the page search engines should index for departures.
  */
-import { findStationBySlug } from '@tabellone/core'
+import { findStationBySlug, listStations } from '@tabellone/core'
 import type { Metadata } from 'next'
 import { BoardScreen } from '@/components/board/board-screen'
 import { boardMetadata } from '../board-metadata'
+import { StationJsonLd } from '../station-jsonld'
 
 type Props = {
   params: Promise<{ slug: string }>
+}
+
+/**
+ * Prerendered at build time for the major stations only, then on demand for the rest
+ * (`dynamicParams`, on by default). The catalogue has ~2400 entries and each has two board
+ * routes: building all ~4900 shells up front costs minutes for pages whose content arrives
+ * from the client anyway, while leaving the list empty means the biggest stations pay a
+ * cold render on their first visit. The majors are the ones with traffic.
+ */
+export function generateStaticParams() {
+  return listStations()
+    .filter((station) => station.isMajor)
+    .map((station) => ({ slug: station.slug }))
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -19,7 +33,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function DeparturesPage({ params }: Props) {
   const { slug } = await params
+  const station = findStationBySlug(slug)
   return (
-    <BoardScreen slug={slug} initialMode="departures" catalogName={findStationBySlug(slug)?.name} />
+    <>
+      {station && <StationJsonLd station={station} mode="departures" />}
+      <BoardScreen slug={slug} initialMode="departures" catalogName={station?.name} />
+    </>
   )
 }

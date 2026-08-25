@@ -1,21 +1,36 @@
 'use client'
 
 /**
- * The board screen, purely presentational: `StationBoard` in, pixels out. Desktop layout
- * from sheet 10 (rich rows + "Più tardi"), mobile from sheet 11 (hero card + list),
- * split at 600px like the tokens. Fetching, polling and favourites live in the caller.
+ * The board screen, purely presentational: `StationBoard` in, pixels out. Fetching, polling
+ * and favourites live in the caller.
+ *
+ * The 2026 signage pass rebuilt the composition around the object it has always been: a
+ * board. A plate names the station in expanded caps over a heavy rule; under it the mode
+ * switch and the freshness reading; under that a single full-width column of bands, the
+ * next train first at plate scale and the rest below it. No cards, no panel floating beside
+ * a list, no radius. A departure board is rules and figures, and the two-column dashboard
+ * that was here before was a layout borrowed from a product this is not.
+ *
+ * One tree at every width. The composition is the same everywhere and only the grid inside
+ * a band changes, which is what lets a phone and a concourse screen show the same object.
+ *
+ * The board has exactly one heading (`h1`, the station) and one level under it (`h2`, each
+ * list), so the routes that are meant to rank have a document outline.
  */
+import { CaretDown, Star } from '@phosphor-icons/react'
 import type { BoardMode, BoardRow, StationBoard } from '@tabellone/core'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { iconSize } from '@/components/ui/icon'
 import { strings } from '@/strings'
+import { BoardRow as Row } from './board-row'
 import { BoardSkeleton } from './board-states'
 import { MarqueeText } from './marquee-text'
 import { FreshnessDot, ModeToggle, pressFeedback, pressScale } from './parts'
-import { CompactRow, HeroCard, LaterRow, RichRow } from './rows'
 import { rowExitClass, useDepartingRows } from './use-departing-rows'
 
-const RICH_ROW_COUNT = 5
+/** How many trains are listed before the rest are grouped under "Più tardi". */
+const SOON_ROW_COUNT = 6
 
 /**
  * The row's identity on the board, and therefore its React key: a train number alone is not
@@ -28,22 +43,23 @@ export type BoardViewProps = {
   board: StationBoard
   now: Date
   onSwitchMode: (mode: BoardMode) => void
-  /** Where the station name leads: the picker. Omit to render a static title (gallery). */
+  /** Where the station name leads: the picker. Omit to render a static title. */
   pickerHref?: string
   /**
-   * Mobile only: the station name opens the station-switch bottom sheet instead of
-   * navigating to `pickerHref`. On a phone leaving the board to change station throws away
-   * the board; desktop keeps the link, where the picker is a comfortable two-column page.
-   * Omit and mobile falls back to the same link as desktop.
+   * The station name opens the station-switch sheet instead of navigating. The sheet keeps
+   * the board underneath it at every width; the link is the fallback for a board rendered
+   * without one.
    */
   onOpenPicker?: () => void
   favourite?: { active: boolean; onToggle: () => void }
   /**
-   * A board for this mode is still being fetched — the caller is passing the previous
-   * board only for its header. Rows are replaced by placeholders and the freshness label
-   * is withheld, because it would describe the *other* mode's read.
+   * A board for this mode is still being fetched — the caller is passing the previous board
+   * only for its plate. Rows are replaced by placeholders and the freshness reading is
+   * withheld, because it would describe the *other* mode's read.
    */
   pending?: boolean
+  /** The board's own plate, so the app header can take the station name over from it. */
+  headingRef?: React.Ref<HTMLDivElement>
 }
 
 export function BoardView({
@@ -54,42 +70,43 @@ export function BoardView({
   onOpenPicker,
   favourite,
   pending = false,
+  headingRef,
 }: BoardViewProps) {
   const listLabel = board.mode === 'departures' ? strings.nextDepartures : strings.nextArrivals
-  const richRows = board.rows.slice(0, RICH_ROW_COUNT)
-  const laterRows = board.rows.slice(RICH_ROW_COUNT)
-  const [heroRow, ...restRows] = board.rows
+  const [leadRow, ...restRows] = board.rows
+  const soonRows = restRows.slice(0, SOON_ROW_COUNT)
+  const laterRows = restRows.slice(SOON_ROW_COUNT)
 
-  // Three independent lists, three independent holds: a train sliding out of the desktop
-  // rich block and into "Più tardi" is a departure from one list and an entry into the other,
-  // and each side animates it as such.
-  const richEntries = useDepartingRows(richRows, rowKey)
+  // Two independent lists, two independent holds: a train sliding out of the first block and
+  // into "Più tardi" is a departure from one list and an entry into the other, and each side
+  // animates it as such.
+  const soonEntries = useDepartingRows(soonRows, rowKey)
   const laterEntries = useDepartingRows(laterRows, rowKey)
-  const restEntries = useDepartingRows(restRows, rowKey)
 
   // Only the star pops, and only on off→on: gaining a favourite is the event worth
   // confirming, losing one is not.
   const [justFavourited, setJustFavourited] = useState(false)
 
-  const stationTitle = (
-    <span className="flex min-w-0 items-center gap-3 uppercase type-title leading-(--type-dominant-leading)">
-      {/* A long name scrolls instead of being clipped; the chevron stays put beside it. */}
+  // Which way the board swapped. Adjusted during render rather than in an effect, so the
+  // incoming pane is animated on the same commit that mounts it.
+  const seenMode = useRef(board.mode)
+  const [swapClass, setSwapClass] = useState('')
+  if (seenMode.current !== board.mode) {
+    seenMode.current = board.mode
+    setSwapClass(board.mode === 'arrivals' ? 'animate-swap-forward' : 'animate-swap-back')
+  }
+
+  const plate = (
+    <span className="flex min-w-0 items-center gap-3 type-plate">
+      {/* A long name scrolls instead of being clipped; the caret stays put beside it. */}
       <MarqueeText text={board.stationName} className="min-w-0" />
-      {pickerHref && (
-        <svg
+      {(pickerHref || onOpenPicker) && (
+        <CaretDown
+          size={iconSize.header}
+          color="var(--nav-affordance)"
           className="flex-none"
-          viewBox="0 0 16 16"
-          width="20"
-          height="20"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
           aria-hidden="true"
-        >
-          <path d="M3.5 6 8 10.5 12.5 6" />
-        </svg>
+        />
       )}
     </span>
   )
@@ -104,41 +121,29 @@ export function BoardView({
       }}
       aria-pressed={favourite.active}
       title={favourite.active ? strings.unfollow : strings.follow}
-      className={`inline-flex flex-none cursor-pointer items-center justify-center rounded-minimal border border-line text-text-secondary transition-[color,border-color,scale] min-h-(--touch-min) min-w-(--touch-min) ${pressScale}`}
+      className={`inline-flex flex-none cursor-pointer items-center justify-center rounded-control border border-line-strong bg-transparent text-text-secondary transition-[color,border-color,scale] min-h-(--touch-min) min-w-(--touch-min) ${pressScale}`}
       style={favourite.active ? { color: 'var(--state-on-time)' } : undefined}
     >
-      {/* The pop sits on the star rather than the whole button: it is the star that changes
-          meaning, and this also keeps the keyframe's `transform` clear of the button's
+      {/* The pop sits on the star rather than on the whole button: it is the star that
+          changes meaning, and this keeps the keyframe's `transform` clear of the button's
           `:active` `scale`, so a tap during the pop still presses. */}
-      <svg
-        className={justFavourited ? 'animate-favourite-pop' : undefined}
+      <span
+        className={justFavourited ? 'inline-flex animate-favourite-pop' : 'inline-flex'}
         onAnimationEnd={() => setJustFavourited(false)}
-        viewBox="0 0 16 16"
-        width="16"
-        height="16"
-        fill={favourite.active ? 'currentColor' : 'none'}
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-        aria-hidden="true"
       >
-        <path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z" />
-      </svg>
+        <Star
+          size={iconSize.control}
+          weight={favourite.active ? 'fill' : 'regular'}
+          aria-hidden="true"
+        />
+      </span>
       <span className="sr-only">{favourite.active ? strings.unfollow : strings.follow}</span>
     </button>
   )
 
   const freshness = pending ? (
-    <span className="flex items-center gap-1 text-text-tertiary type-tertiary">
-      <span
-        className="animate-data-beat"
-        style={{
-          width: '6px',
-          height: '6px',
-          borderRadius: '50%',
-          background: 'var(--data-absent)',
-        }}
-      />
+    <span className="flex items-center gap-2 text-text-tertiary type-figures type-tertiary">
+      <span className="animate-data-beat block size-1.5 bg-data-absent" />
       <span>{strings.loading}</span>
     </span>
   ) : (
@@ -146,8 +151,10 @@ export function BoardView({
   )
 
   const notices = board.notices.length > 0 && (
-    <section className="flex flex-col gap-2 rounded-minimal border border-line bg-surface-raised px-4 py-3">
-      <span className="text-text-tertiary type-label">{strings.notices}</span>
+    <section
+      aria-label={strings.notices}
+      className="flex flex-col gap-2 border-line-strong border-l-2 bg-surface-raised px-4 py-3"
+    >
       {board.notices.map((notice) => (
         <p key={notice} className="m-0 text-text-secondary type-reading">
           {notice}
@@ -157,185 +164,137 @@ export function BoardView({
   )
 
   const empty = board.rows.length === 0 && (
-    <section className="flex flex-col items-center gap-4 rounded-minimal border border-line bg-surface-raised px-4 py-12 text-center">
-      <span className="type-primary" style={{ fontWeight: 'var(--weight-strong)' }}>
+    <section className="flex flex-col gap-3 border-line border-y py-16">
+      <span
+        className="type-primary-wide type-wide uppercase"
+        style={{ fontWeight: 'var(--weight-max)', letterSpacing: '0.03em' }}
+      >
         {strings.emptyBoard}
       </span>
-      <p className="m-0 max-w-[36ch] text-text-secondary type-reading">{strings.emptyBoardHint}</p>
+      <p className="m-0 max-w-[46ch] text-text-secondary type-reading">{strings.emptyBoardHint}</p>
     </section>
   )
 
   return (
-    <div className={!pending && board.isStale ? 'animate-aging' : ''}>
-      {/* ── Desktop ≥ 600px (sheet 10) ─────────────────────────────────────── */}
-      <div className="mx-auto hidden max-w-(--content-max-width) flex-col gap-8 min-[600px]:flex">
-        <header className="flex flex-wrap items-end justify-between gap-8 border-b-2 border-line-strong pb-5">
-          <div className="flex min-w-0 flex-col gap-2">
-            <span className="flex items-center gap-2 text-text-tertiary">
-              <PinIcon />
-              <span className="whitespace-nowrap type-label">{strings.currentStation}</span>
-            </span>
-            <span className="flex min-w-0 items-center gap-3">
-              {pickerHref ? (
-                <Link href={pickerHref} className="min-w-0 text-text-primary no-underline">
-                  {stationTitle}
-                </Link>
-              ) : (
-                stationTitle
-              )}
-              {favouriteButton}
-            </span>
-          </div>
-          <div className="flex items-center gap-6">
-            {freshness}
-            <ModeToggle mode={board.mode} onChange={onSwitchMode} />
-          </div>
-        </header>
-
-        {!pending && notices}
-        {!pending && empty}
-        {pending && <BoardSkeleton variant="desktop" />}
-
-        {!pending && richRows.length > 0 && (
-          <section className="flex flex-col gap-3">
-            <div className="flex items-baseline justify-between gap-4 px-1">
-              <span className="whitespace-nowrap text-text-tertiary type-label">{listLabel}</span>
-              <span className="whitespace-nowrap text-text-tertiary type-tertiary">
-                {strings.listCount(board.rows.length)}
-              </span>
-            </div>
-            <div className="flex flex-col gap-3">
-              {richEntries.map((entry, index) => (
-                <RichRow
-                  key={entry.key}
-                  row={entry.row}
-                  mode={board.mode}
-                  originName={board.stationName}
-                  motion={{
-                    index,
-                    exitClass: entry.phase === 'leaving' ? rowExitClass(entry.row) : undefined,
-                  }}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {!pending && laterRows.length > 0 && (
-          <section className="flex flex-col gap-3">
-            <div className="border-t-2 border-line-strong px-1 pt-5">
-              <span className="text-text-tertiary type-label">{strings.later}</span>
-            </div>
-            <div className="flex flex-col gap-2">
-              {laterEntries.map((entry, index) => (
-                <LaterRow
-                  key={entry.key}
-                  row={entry.row}
-                  mode={board.mode}
-                  motion={{
-                    index,
-                    exitClass: entry.phase === 'leaving' ? rowExitClass(entry.row) : undefined,
-                  }}
-                />
-              ))}
-            </div>
-          </section>
-        )}
+    <div
+      data-board
+      className={`mx-auto flex w-full max-w-(--content-max-width) flex-col ${
+        !pending && board.isStale ? 'animate-aging' : ''
+      }`}
+    >
+      {/* THE PLATE. Expanded caps over a heavy rule: the one element on the screen that
+          names the place the reader is standing in. */}
+      <div
+        ref={headingRef}
+        className="flex items-end justify-between gap-4 border-line-strong border-b-2 pb-4"
+      >
+        <h1 className="m-0 min-w-0 flex-1">
+          {onOpenPicker ? (
+            <button
+              type="button"
+              onClick={onOpenPicker}
+              aria-haspopup="dialog"
+              className={`min-w-0 max-w-full cursor-pointer border-0 bg-transparent p-0 text-left text-text-primary ${pressFeedback}`}
+            >
+              {plate}
+              <span className="sr-only">{strings.changeStation}</span>
+            </button>
+          ) : pickerHref ? (
+            <Link
+              href={pickerHref}
+              className="inline-flex min-w-0 max-w-full text-text-primary no-underline"
+            >
+              {plate}
+            </Link>
+          ) : (
+            plate
+          )}
+        </h1>
+        {favouriteButton}
       </div>
 
-      {/* ── Mobile < 600px (sheet 11) ──────────────────────────────────────── */}
-      <div className="flex flex-col gap-5 min-[600px]:hidden">
-        <header className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2 border-b border-line pb-4">
-            <div className="flex items-center justify-between gap-3">
-              <span className="flex items-center gap-2 text-text-tertiary">
-                <PinIcon />
-                <span className="whitespace-nowrap type-label">{strings.currentStation}</span>
-              </span>
-              {freshness}
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              {onOpenPicker ? (
-                <button
-                  type="button"
-                  onClick={onOpenPicker}
-                  aria-haspopup="dialog"
-                  className={`min-w-0 flex-1 cursor-pointer border-0 bg-transparent p-0 text-left text-text-primary ${pressFeedback}`}
-                >
-                  {stationTitle}
-                  <span className="sr-only">{strings.changeStation}</span>
-                </button>
-              ) : pickerHref ? (
-                <Link href={pickerHref} className="min-w-0 flex-1 text-text-primary no-underline">
-                  {stationTitle}
-                </Link>
-              ) : (
-                stationTitle
-              )}
-              {favouriteButton}
-            </div>
+      {/* The reading strip: which board, and how fresh it is. */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-line border-b py-3">
+        <ModeToggle mode={board.mode} onChange={onSwitchMode} />
+        {freshness}
+      </div>
+
+      {/* One pane per mode. The key remounts it on the switch, which is what makes the
+          `both`-filled swap keyframe play; the class decides which side it comes from. */}
+      <div key={board.mode} className={`flex flex-col ${swapClass}`}>
+        {!pending && notices && <div className="pt-6">{notices}</div>}
+        {pending ? (
+          <div className="pt-6">
+            <BoardSkeleton />
           </div>
-          <ModeToggle mode={board.mode} onChange={onSwitchMode} />
-        </header>
+        ) : board.rows.length === 0 ? (
+          <div className="pt-6">{empty}</div>
+        ) : (
+          <>
+            {leadRow && (
+              // Keyed on the train, not on the slot: the lead is one position, so the only
+              // way a new train arriving in it can animate is by being a new node.
+              <Row
+                key={rowKey(leadRow)}
+                row={leadRow}
+                mode={board.mode}
+                originName={board.stationName}
+                variant="lead"
+              />
+            )}
 
-        {!pending && notices}
-        {!pending && empty}
-        {pending && <BoardSkeleton variant="mobile" />}
+            {soonRows.length > 0 && (
+              <section className="flex flex-col">
+                <ListHead label={listLabel} count={strings.listCount(board.rows.length)} />
+                {soonEntries.map((entry, index) => (
+                  <Row
+                    key={entry.key}
+                    row={entry.row}
+                    mode={board.mode}
+                    originName={board.stationName}
+                    motion={{
+                      index,
+                      exitClass: entry.phase === 'leaving' ? rowExitClass(entry.row) : undefined,
+                    }}
+                  />
+                ))}
+              </section>
+            )}
 
-        {/* Keyed on the train, not on the slot: the hero is one position, so the only way a
-            new train arriving in it can animate is by being a new node. */}
-        {!pending && heroRow && (
-          <HeroCard
-            key={rowKey(heroRow)}
-            row={heroRow}
-            mode={board.mode}
-            originName={board.stationName}
-          />
-        )}
-
-        {!pending && restRows.length > 0 && (
-          <section className="flex flex-col gap-3">
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="text-text-tertiary type-label">{listLabel}</span>
-              <span className="text-text-tertiary type-tertiary">
-                {strings.listCount(restRows.length)}
-              </span>
-            </div>
-            <div className="flex flex-col gap-2">
-              {restEntries.map((entry, index) => (
-                <CompactRow
-                  key={entry.key}
-                  row={entry.row}
-                  mode={board.mode}
-                  motion={{
-                    index,
-                    exitClass: entry.phase === 'leaving' ? rowExitClass(entry.row) : undefined,
-                  }}
-                />
-              ))}
-            </div>
-          </section>
+            {laterRows.length > 0 && (
+              <section className="flex flex-col">
+                <ListHead label={strings.later} />
+                {laterEntries.map((entry, index) => (
+                  <Row
+                    key={entry.key}
+                    row={entry.row}
+                    mode={board.mode}
+                    originName={board.stationName}
+                    motion={{
+                      index,
+                      exitClass: entry.phase === 'leaving' ? rowExitClass(entry.row) : undefined,
+                    }}
+                  />
+                ))}
+              </section>
+            )}
+          </>
         )}
       </div>
     </div>
   )
 }
 
-function PinIcon() {
+/**
+ * The band that names a block of the board. The one place the spaced-caps label style is
+ * used on this screen, which is exactly what theme.css rule 2 reserves it for: a label
+ * naming a region («PARTENZE», «PIÙ TARDI»), never a value and never a state.
+ */
+function ListHead({ label, count }: { label: string; count?: string }) {
   return (
-    <svg
-      viewBox="0 0 16 16"
-      width="13"
-      height="13"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.4"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M8 14.2s4.4-4.7 4.4-7.7a4.4 4.4 0 0 0-8.8 0c0 3 4.4 7.7 4.4 7.7Z" />
-      <circle cx="8" cy="6.4" r="1.7" />
-    </svg>
+    <div className="flex items-baseline justify-between gap-4 border-line-strong border-b bg-surface-pressed px-4 py-2">
+      <h2 className="m-0 text-text-secondary type-label">{label}</h2>
+      {count && <span className="text-text-tertiary type-figures type-tertiary">{count}</span>}
+    </div>
   )
 }

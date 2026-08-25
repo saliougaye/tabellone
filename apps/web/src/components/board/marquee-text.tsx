@@ -2,7 +2,7 @@
 
 /**
  * A single line of text that scrolls back and forth when it is wider than its container,
- * instead of being clipped. Used for the station name: "MILANO CENTRALE" at `type-title`
+ * instead of being clipped. Used for the station name: "MILANO CENTRALE" at `type-plate`
  * does not fit 375px, and a truncated station name is a wrong station name.
  *
  * The animation only exists when the text really overflows — measured, never assumed —

@@ -7,6 +7,8 @@
  */
 export const strings = {
   appName: 'Tabellone',
+  /** The mark in the app header is a link home, and its accessible name says where. */
+  appHome: 'Tabellone, torna alla scelta della stazione',
   departures: 'Partenze',
   arrivals: 'Arrivi',
   /** Empty board at night is a normal state, not an error (ARCHITECTURE 2.2). */
@@ -32,10 +34,12 @@ export const strings = {
   loading: 'Caricamento…',
 
   /* board header */
-  currentStation: 'Stazione corrente',
   platform: 'Binario',
   platformShort: 'Bin',
-  platformUnassigned: '—',
+  /* Absence, spelled. The board used to print an em-dash here; a dash is a typographic
+     mark standing in for a word, and at 48px in the platform box it reads as a decoration
+     rather than as "we do not know yet". */
+  platformUnassigned: 'n.d.',
   nextDepartures: 'Prossime partenze',
   nextArrivals: 'Prossimi arrivi',
   later: 'Più tardi',
@@ -88,6 +92,10 @@ export const strings = {
   stationCount: (count: number) => `${count} ${count === 1 ? 'stazione' : 'stazioni'}`,
   savedCount: (count: number) => `${count} salvate`,
   noResults: (query: string) => `Nessuna stazione per «${query}»`,
+  /* The A–Z list renders a bounded slice of a 2400-station catalogue: the rest are one
+     search away, and 2400 anchors in the DOM are not. */
+  resultsCapped: (shown: number, total: number) =>
+    `Mostrate ${shown} stazioni su ${total}. Cerca per nome per trovare le altre.`,
   noResultsHint:
     'Controlla il nome oppure cerca la città: molte stazioni sono elencate con il nome del capoluogo.',
   catalogueUnavailable: 'Catalogo non disponibile',

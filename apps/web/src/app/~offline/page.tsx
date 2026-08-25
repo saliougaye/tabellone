@@ -7,16 +7,26 @@
  * same fact — this one just has no station to name and no query to refetch, so retrying is
  * a plain reload.
  */
-import { BoardMessage, OfflineIcon } from '@/components/board/board-states'
+import { WifiSlash } from '@phosphor-icons/react'
+import { BoardMessage } from '@/components/board/board-states'
+import { AppHeader } from '@/components/shell/app-header'
 import { strings } from '@/strings'
 
 export default function OfflinePage() {
   return (
-    <BoardMessage
-      icon={<OfflineIcon />}
-      title={strings.offlineTitle}
-      hint={strings.offlineHint}
-      onRetry={() => window.location.reload()}
-    />
+    <>
+      <AppHeader />
+      <main
+        className="flex min-h-[calc(100dvh-4rem)] flex-col"
+        style={{ padding: 'var(--sp-6) var(--screen-margin) var(--sp-20)' }}
+      >
+        <BoardMessage
+          icon={WifiSlash}
+          title={strings.offlineTitle}
+          hint={strings.offlineHint}
+          onRetry={() => window.location.reload()}
+        />
+      </main>
+    </>
   )
 }

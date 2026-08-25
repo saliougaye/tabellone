@@ -1,10 +1,12 @@
 'use client'
 
 /**
- * Rolls the dominant time of a row when its delay changes, in the direction the news went:
- * up when the delay grew, down when it shrank. `--anim-value-up`/`-down` are `both`-filled
- * keyframes, so they only play on a fresh DOM node — the caller puts the returned `key` on
- * the span, which is what makes React mount one.
+ * Rolls the dominant time of a row when its delay changes, with the shape the news had:
+ * `--anim-value-worse` when the delay grew, `--anim-value-better` when it shrank. The two
+ * keyframes are deliberately asymmetric (theme.css §6.3) — bad news should not feel like
+ * good news played backwards — which is why they are named after the news rather than after
+ * a direction. Both are `both`-filled, so they only play on a fresh DOM node: the caller
+ * puts the returned `key` on the span, which is what makes React mount one.
  *
  * The previous delay is kept with the adjust-state-during-render pattern rather than an
  * effect: an effect would compare after the paint, so the roll would start one frame late
@@ -12,7 +14,7 @@
  */
 import { useState } from 'react'
 
-export type RollDirection = '' | 'animate-value-up' | 'animate-value-down'
+export type RollDirection = '' | 'animate-value-worse' | 'animate-value-better'
 
 export type RolledValue = {
   /** Changes exactly when `delayMinutes` does. Put it on the element that rolls. */
@@ -28,8 +30,8 @@ export type RolledValue = {
 function direction(previous: number | null, next: number | null): RollDirection {
   const from = previous ?? 0
   const to = next ?? 0
-  if (to > from) return 'animate-value-up'
-  if (to < from) return 'animate-value-down'
+  if (to > from) return 'animate-value-worse'
+  if (to < from) return 'animate-value-better'
   return ''
 }
 

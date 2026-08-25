@@ -15,7 +15,10 @@ export const operatorMark: Record<Operator, { sigla: string; colorVar: string }>
   TRENITALIA: { sigla: 'FS', colorVar: 'var(--identity-trenitalia)' },
   ITALO: { sigla: 'IT', colorVar: 'var(--identity-italo)' },
   TRENORD: { sigla: 'TN', colorVar: 'var(--identity-trenord)' },
-  OTHER: { sigla: '—', colorVar: 'var(--identity-neutral)' },
+  /* Unknown operator: "non disponibile", not a dash. ADR-008 says an unrecognised value
+     shows as OTHER and gets recorded; the tile should say so in letters, like every other
+     tile on the board. */
+  OTHER: { sigla: 'ND', colorVar: 'var(--identity-neutral)' },
 }
 
 export const categoryLabel: Record<TrainCategory, string> = {

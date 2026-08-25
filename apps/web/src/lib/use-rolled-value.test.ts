@@ -16,28 +16,28 @@ describe('useRolledValue', () => {
     expect(result.current.className).toBe('')
   })
 
-  it('rolls up when the delay grows', () => {
+  it('rolls with the worse shape when the delay grows', () => {
     const { result, rerender } = rolled(5)
     rerender({ delay: 12 })
-    expect(result.current.className).toBe('animate-value-up')
+    expect(result.current.className).toBe('animate-value-worse')
   })
 
-  it('rolls down when the delay shrinks', () => {
+  it('rolls with the better shape when the delay shrinks', () => {
     const { result, rerender } = rolled(12)
     rerender({ delay: 5 })
-    expect(result.current.className).toBe('animate-value-down')
+    expect(result.current.className).toBe('animate-value-better')
   })
 
-  it('rolls up when a delay appears where there was none', () => {
+  it('rolls worse when a delay appears where there was none', () => {
     const { result, rerender } = rolled(null)
     rerender({ delay: 3 })
-    expect(result.current.className).toBe('animate-value-up')
+    expect(result.current.className).toBe('animate-value-worse')
   })
 
-  it('rolls down when a delay is cleared', () => {
+  it('rolls better when a delay is cleared', () => {
     const { result, rerender } = rolled(9)
     rerender({ delay: null })
-    expect(result.current.className).toBe('animate-value-down')
+    expect(result.current.className).toBe('animate-value-better')
   })
 
   it('does not roll for no change', () => {
@@ -63,7 +63,7 @@ describe('useRolledValue', () => {
     rerender({ delay: 8 })
     const key = result.current.key
     rerender({ delay: 8 })
-    expect(result.current.className).toBe('animate-value-up')
+    expect(result.current.className).toBe('animate-value-worse')
     expect(result.current.key).toBe(key)
   })
 

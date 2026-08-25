@@ -125,12 +125,14 @@ export function ServiceMark({ row, cancelled = false }: { row: BoardRow; cancell
  */
 export function PlatformBox({ platform, large = false }: { platform: Platform; large?: boolean }) {
   const value = platform.actual ?? platform.scheduled
-  const base =
-    'inline-flex items-center justify-center rounded-minimal leading-none transition-[background-color,color,border-color]'
+  const base = 'inline-flex items-center justify-center type-figures leading-none'
   const sizeStyle = {
-    minWidth: large ? '56px' : 'var(--platform-min-width)',
+    // --motion-platform-confirm (§6.4): the outline-to-solid change is a state transition,
+    // and it is declared once in the token rather than re-listed per call site.
+    transition: 'var(--motion-platform-confirm)',
+    minWidth: large ? '72px' : 'var(--platform-min-width)',
     minHeight: large ? undefined : 'var(--platform-height)',
-    padding: large ? 'var(--sp-1) var(--sp-3)' : 'var(--sp-1) var(--sp-2)',
+    padding: large ? 'var(--sp-2) var(--sp-3)' : 'var(--sp-1) var(--sp-2)',
     fontSize: large ? 'var(--type-dominant-size)' : 'var(--type-primary-size)',
     fontWeight: 'var(--weight-max)',
     letterSpacing: large ? 'var(--type-dominant-tracking)' : 'var(--type-primary-tracking)',
@@ -139,7 +141,17 @@ export function PlatformBox({ platform, large = false }: { platform: Platform; l
 
   if (value === null) {
     return (
-      <span className={`${base} text-platform-absent-text`} style={sizeStyle}>
+      <span
+        className={`${base} text-platform-absent-text`}
+        // A platform digit is set at the level it is read from across a concourse; the words
+        // that stand for its absence are not, and at that size they would break the box.
+        style={{
+          ...sizeStyle,
+          fontSize: 'var(--type-secondary-size)',
+          letterSpacing: 'var(--type-secondary-tracking)',
+          fontWeight: 'var(--weight-medium)',
+        }}
+      >
         {strings.platformUnassigned}
       </span>
     )
@@ -177,13 +189,15 @@ export function FreshnessDot({
   now: Date
 }) {
   return (
-    <span className="flex items-center gap-1 text-text-tertiary type-tertiary">
+    // A square marker, not a dot: nothing on this board is round, and the beat reads the
+    // same either way. It stops beating when the data goes stale, which is the only reason
+    // the marker exists.
+    <span className="flex items-center gap-2 text-text-tertiary type-figures type-tertiary">
       <span
         className={isStale ? '' : 'animate-data-beat'}
         style={{
           width: '6px',
           height: '6px',
-          borderRadius: '50%',
           background: isStale ? 'var(--data-stale)' : 'var(--data-fresh)',
         }}
       />
@@ -192,17 +206,13 @@ export function FreshnessDot({
   )
 }
 
-const modeSegments: Array<{ mode: BoardMode; label: string; icon: string }> = [
-  {
-    mode: 'departures',
-    label: strings.departures,
-    icon: 'M1.8 14h12.4M2.6 11V5.2A1.6 1.6 0 0 1 4.2 3.6h4.2A1.6 1.6 0 0 1 10 5.2V11H2.6zM2.6 7.4h7.4M6.3 3.6V7.4M4.2 11l-.9 2M8.4 11l.9 2M11.6 5.6h2.6M11.6 8.2h2.6',
-  },
-  {
-    mode: 'arrivals',
-    label: strings.arrivals,
-    icon: 'M1.8 14h12.4M13.4 11V5.2A1.6 1.6 0 0 0 11.8 3.6H7.6A1.6 1.6 0 0 0 6 5.2V11h7.4zM6 7.4h7.4M9.7 3.6V7.4M7.8 11l-.9 2M11.8 11l.9 2M1.8 5.6h2.6M1.8 8.2h2.6',
-  },
+/**
+ * No icons. A real board names its two halves in words, in caps, and an arrow glyph beside
+ * «PARTENZE» adds nothing a reader of a departure board did not already know.
+ */
+const modeSegments: Array<{ mode: BoardMode; label: string }> = [
+  { mode: 'departures', label: strings.departures },
+  { mode: 'arrivals', label: strings.arrivals },
 ]
 
 /**
@@ -261,10 +271,7 @@ export function ModeToggle({
   }, [activeIndex])
 
   return (
-    <div
-      ref={container}
-      className="relative flex overflow-hidden rounded-minimal border border-line-strong"
-    >
+    <div ref={container} className="relative flex overflow-hidden border border-line-strong">
       {pill && (
         <span
           aria-hidden="true"
@@ -285,27 +292,14 @@ export function ModeToggle({
             aria-pressed={active}
             // `relative`: the pill is absolutely positioned, so it would otherwise paint over
             // the label instead of behind it.
-            className={`relative inline-flex flex-1 min-[600px]:flex-none cursor-pointer items-center justify-center gap-2 px-5 py-3 type-secondary transition-[color,scale] min-h-(--touch-min) ${pressScale} ${
+            className={`relative inline-flex flex-1 min-[600px]:flex-none cursor-pointer items-center justify-center gap-2 px-6 py-2.5 type-secondary uppercase tracking-(--track-label) transition-[color,scale] min-h-(--touch-min) ${pressScale} ${
               active
                 ? `text-text-inverse ${pill ? '' : 'bg-surface-inverse'}`
                 : 'text-text-secondary'
             }`}
             style={{ fontWeight: active ? 'var(--weight-max)' : 'var(--weight-medium)' }}
           >
-            <svg
-              viewBox="0 0 16 16"
-              width="14"
-              height="14"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d={segment.icon} />
-            </svg>
-            <span>{segment.label}</span>
+            <span className="type-wide">{segment.label}</span>
           </button>
         )
       })}
@@ -345,25 +339,27 @@ export function RouteStrip({
       <div className="relative flex items-start justify-between">
         {dots.map((dot) => (
           <span key={dot.id} className="flex flex-col items-center gap-2">
+            {/* Square ticks on the line, not dots: same rule as everywhere else on this
+                board. The origin is filled, the terminus and the origin are the wide ones,
+                the intermediate stops are small and outlined. */}
             <span
               style={{
-                width: dot.terminal || dot.origin ? '12px' : '8px',
-                height: dot.terminal || dot.origin ? '12px' : '8px',
-                borderRadius: '50%',
-                background:
-                  dot.origin && !cancelled ? 'var(--text-primary)' : 'var(--surface-raised)',
-                boxShadow: `0 0 0 ${dot.origin && !cancelled ? '0px' : '1.6px'} ${
+                width: dot.terminal || dot.origin ? '10px' : '6px',
+                height: dot.terminal || dot.origin ? '10px' : '6px',
+                background: dot.origin && !cancelled ? 'var(--text-primary)' : 'var(--surface)',
+                boxShadow: `0 0 0 ${dot.origin && !cancelled ? '0px' : '1.5px'} ${
                   cancelled
                     ? 'var(--state-cancelled)'
                     : dot.terminal || dot.origin
                       ? 'var(--text-primary)'
                       : 'var(--line-strong)'
-                }, 0 0 0 4px var(--surface-raised)`,
+                }, 0 0 0 4px var(--surface)`,
               }}
             />
             <span
-              className="type-label"
+              className="type-figures type-tertiary"
               style={{
+                letterSpacing: 'var(--track-label)',
                 fontWeight:
                   dot.terminal || dot.origin ? 'var(--weight-max)' : 'var(--weight-medium)',
                 color:
@@ -383,16 +379,21 @@ export function RouteStrip({
 export function StopsDetail({ viaStops, mode }: { viaStops: ViaStop[]; mode: BoardMode }) {
   const last = viaStops.at(-1)
   return (
-    <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-line px-4 py-4 min-[600px]:px-6">
+    <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-line border-t bg-surface-pressed px-4 py-4 min-[600px]:px-6">
       <span className="text-text-tertiary type-label">{strings.stopsAt}</span>
       {viaStops.map((stop) => (
-        <span key={`${stop.name}-${stop.time}`} className="text-text-secondary type-tertiary">
-          {stop.name} {stop.time}
+        <span
+          key={`${stop.name}-${stop.time}`}
+          className="flex items-baseline gap-2 text-text-secondary type-tertiary"
+        >
+          {stop.name}
+          <span className="text-text-tertiary type-figures">{stop.time}</span>
         </span>
       ))}
       {last && mode === 'departures' && (
-        <span className="ml-auto text-text-tertiary type-tertiary">
-          {strings.terminusArrival} {last.time}
+        <span className="ml-auto flex items-baseline gap-2 text-text-tertiary type-tertiary">
+          {strings.terminusArrival}
+          <span className="type-figures">{last.time}</span>
         </span>
       )}
     </div>

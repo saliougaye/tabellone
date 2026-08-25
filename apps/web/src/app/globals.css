@@ -13,6 +13,7 @@
      the @utility classes below or by component CSS. */
 @theme inline {
   --font-sans: var(--font-family);
+  --font-mono: var(--font-family-mono);
 
   /* surfaces and text */
   --color-surface: var(--surface);
@@ -26,6 +27,7 @@
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-focus: var(--focus);
+  --color-brand-mark: var(--brand-mark);
 
   /* row states */
   --color-state-on-time: var(--state-on-time);
@@ -66,27 +68,30 @@
   --radius-minimal: var(--corner-minimal);
   --radius-badge: var(--corner-badge);
   --radius-field: var(--corner-field);
+  --radius-control: var(--corner-control);
 
   /* named curves → ease-entry, ease-exit, … */
   --ease-entry: var(--curve-entry);
   --ease-exit: var(--curve-exit);
   --ease-standard: var(--curve-standard);
   --ease-snap: var(--curve-snap);
-  --ease-worsening: var(--curve-worsening);
   --ease-breath: var(--curve-breath);
 
-  /* the six transitions → animate-row-entry, animate-exit-departed, … */
+  /* the transitions of §6 → animate-row-entry, animate-exit-departed, … */
   --animate-row-entry: var(--anim-row-entry);
   --animate-exit-departed: var(--anim-exit-departed);
   --animate-exit-cancelled: var(--anim-exit-cancelled);
-  --animate-value-up: var(--anim-value-up);
-  --animate-value-down: var(--anim-value-down);
+  --animate-value-worse: var(--anim-value-worse);
+  --animate-value-better: var(--anim-value-better);
   --animate-platform-confirm: var(--anim-platform-confirm);
-  --animate-imminent-pulse: var(--anim-imminent-pulse);
   --animate-halo-pulse: var(--anim-halo-pulse);
   --animate-aging: var(--anim-aging);
+  --animate-swap-forward: var(--anim-swap-forward);
+  --animate-swap-back: var(--anim-swap-back);
+  --animate-screen-in: var(--anim-screen-in);
   --animate-data-beat: var(--anim-data-beat);
   --animate-skeleton: var(--anim-skeleton);
+  --animate-skeleton-sweep: var(--anim-skeleton-sweep);
   --animate-marquee: var(--anim-marquee);
   --animate-favourite-pop: var(--anim-favourite-pop);
 
@@ -97,11 +102,41 @@
 /* ── The four type levels (plus the declared extras) as single utilities.
    Named type-*, not text-*: text-primary/secondary/tertiary are colour
    utilities here, and a font-size namespace would collide with them. */
+/* Every figure on the board is mono (theme.css §0): a time, a delay, a
+   platform, a train number, a count. `type-figures` is that decision as one
+   utility, so no component has to remember it. */
+@utility type-figures {
+  font-family: var(--font-family-mono);
+  font-feature-settings: var(--digits-tabular);
+  font-variant-numeric: var(--digits-tabular-variant);
+}
+
+/* THE PLATE · the station name, and only the station name. Expanded width
+   through the variable font's own wdth axis, not a stretched normal cut. */
+@utility type-plate {
+  font-family: var(--font-family);
+  font-size: var(--type-plate-size);
+  font-weight: var(--type-plate-weight);
+  letter-spacing: var(--type-plate-tracking);
+  line-height: var(--type-plate-leading);
+  font-variation-settings: "wdth" var(--type-plate-width);
+  text-transform: uppercase;
+}
+
+/* The signage width, without the plate's size and case: the mode switch and
+   the section headings, which sit beside a plate and have to belong to it. */
+@utility type-wide {
+  font-variation-settings: "wdth" var(--width-plate);
+}
+
 @utility type-dominant {
+  font-family: var(--font-family-mono);
   font-size: var(--type-dominant-size);
   font-weight: var(--type-dominant-weight);
   letter-spacing: var(--type-dominant-tracking);
   line-height: var(--type-dominant-leading);
+  font-feature-settings: var(--digits-tabular);
+  font-variant-numeric: var(--digits-tabular-variant);
 }
 @utility type-primary {
   font-size: var(--type-primary-size);
@@ -130,11 +165,6 @@
 @utility type-reading {
   font-size: var(--type-reading-size);
   line-height: var(--type-reading-leading);
-}
-@utility type-title {
-  font-size: var(--type-title-size);
-  font-weight: var(--type-title-weight);
-  letter-spacing: var(--type-title-tracking);
 }
 /* the one spaced-caps style: only for labels naming a region (rule 2) */
 @utility type-label {

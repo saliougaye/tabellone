@@ -17,7 +17,11 @@ export function boardMetadata(slug: string, mode: BoardMode): Metadata {
   const stationName = station?.name ?? slug
   const modeLabel = mode === 'arrivals' ? strings.arrivals : strings.departures
   return {
-    title: `${strings.appName} · ${stationName} | ${modeLabel} `,
+    // Station first: it is what the reader searched for, and it is what survives the
+    // truncation of a result row. One separator of each kind, no trailing space — the
+    // previous form shipped both a `·` and a `|` around the app name and a stray space
+    // before the closing backtick, in every title tag on the site.
+    title: `${stationName} · ${modeLabel} | ${strings.appName}`,
     description:
       mode === 'arrivals'
         ? `Arrivi in tempo reale a ${stationName}: orari, binari e ritardi.`
