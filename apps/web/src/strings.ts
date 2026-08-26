@@ -44,9 +44,16 @@ export const strings = {
   nextArrivals: 'Prossimi arrivi',
   later: 'Più tardi',
   listCount: (count: number) => `${count} in elenco`,
+  /* the route ladder · the region label names which end of the journey this station is */
   stopsAt: 'Ferma a',
+  comesFrom: 'Proviene da',
+  /** This station's own rung, at the top of a departures ladder. */
+  routeOrigin: 'Partenza',
   terminusArrival: 'Arrivo',
   terminusDeparted: 'Partito alle',
+  /** The collapsed rung of a long route: the stops the ladder is not printing yet. */
+  routeHiddenStops: (count: number) => `+${count} ${count === 1 ? 'fermata' : 'fermate'}`,
+  routeShowAll: 'Mostra tutte le fermate',
   follow: 'Segui stazione',
   unfollow: 'Non seguire più',
   followed: 'seguita',

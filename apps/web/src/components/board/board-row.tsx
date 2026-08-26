@@ -25,7 +25,7 @@ import { displayedTime, statusPresentation } from '@/lib/presentation'
 import { staggerDelay } from '@/lib/stagger'
 import { useRolledValue } from '@/lib/use-rolled-value'
 import { strings } from '@/strings'
-import { PlatformBox, pressFeedback, RouteStrip, ServiceMark, StopsDetail } from './parts'
+import { PlatformBox, pressFeedback, RouteLadder, ServiceMark } from './parts'
 
 export type RowVariant = 'lead' | 'row'
 
@@ -102,7 +102,7 @@ export function BoardRow({
 }: {
   row: BoardRowData
   mode: BoardMode
-  /** This station: the origin dot of the route strip. Only read by the lead shape. */
+  /** This station: the rung of the route ladder the reader is standing on. */
   originName: string
   variant?: RowVariant
   motion?: RowMotion
@@ -191,15 +191,30 @@ export function BoardRow({
           <div style={{ gridArea: 'time' }} className="min-w-0">
             {time}
           </div>
-          <div style={{ gridArea: 'platform' }} className="self-start">
+          <div style={{ gridArea: 'platform' }} className="flex items-start gap-3 self-start">
             {platform}
+            {/* The lead band reserves the caret's column too, and takes the rows' horizontal
+                padding below, so its platform block lands on the same x as every platform in
+                the list under it. The lead shape is told apart by its type scale, not by
+                four pixels of padding. */}
+            <span
+              aria-hidden="true"
+              className="flex-none"
+              style={{ width: 'var(--affordance-width)' }}
+            />
           </div>
           <div style={{ gridArea: 'identity' }} className="min-w-0">
             {identity}
           </div>
           {expandable && (
             <div style={{ gridArea: 'route' }} className="min-w-0">
-              <RouteStrip originName={originName} viaStops={row.viaStops} cancelled={v.cancelled} />
+              <RouteLadder
+                originName={originName}
+                originTime={v.times.time}
+                viaStops={row.viaStops}
+                mode={mode}
+                cancelled={v.cancelled}
+              />
             </div>
           )}
         </>
@@ -209,18 +224,27 @@ export function BoardRow({
           {identity}
           <span className="flex items-center gap-3">
             {platform}
-            {expandable && (
-              <CaretDown
-                size={iconSize.meta}
-                color="var(--nav-affordance)"
-                aria-hidden="true"
-                className="flex-none"
-                style={{
-                  transition: 'var(--motion-header)',
-                  transform: open ? 'rotate(180deg)' : 'none',
-                }}
-              />
-            )}
+            {/* The caret's column is reserved on every row, not only the ones that expand.
+                It is the last thing on the band, so a row that skipped it pushed its
+                platform block right by the icon plus its gap, and a column of platforms
+                that does not line up is the one thing a board may not do. */}
+            <span
+              className="flex flex-none items-center justify-center"
+              style={{ width: 'var(--affordance-width)' }}
+            >
+              {expandable && (
+                <CaretDown
+                  size={iconSize.meta}
+                  color="var(--nav-affordance)"
+                  aria-hidden="true"
+                  className="flex-none"
+                  style={{
+                    transition: 'var(--motion-header)',
+                    transform: open ? 'rotate(180deg)' : 'none',
+                  }}
+                />
+              )}
+            </span>
           </span>
         </>
       )}
@@ -230,7 +254,7 @@ export function BoardRow({
   // `border-b` only: the rule below a row is the rule above the next one, and a list where
   // every row draws both is a list of boxes wearing a table's clothes.
   const padding = lead
-    ? 'var(--sp-5) var(--sp-5) var(--sp-6)'
+    ? 'var(--sp-5) var(--row-padding-x) var(--sp-6)'
     : 'var(--row-padding-y) var(--row-padding-x)'
   const edgeStyle = v.edge
     ? { boxShadow: `inset var(--identity-width) 0 0 0 ${v.edge}` }
@@ -254,7 +278,21 @@ export function BoardRow({
             {body}
           </div>
         )}
-        {open && expandable && <StopsDetail viaStops={row.viaStops} mode={mode} />}
+        {open && expandable && (
+          // On --surface, not on --surface-pressed: the ladder's own tertiary text and its
+          // accent-coloured fold both clear AA on the board's ground and neither does on the
+          // pressed one. A rule and the indent separate it, which is the same device the
+          // rows use on each other.
+          <div className="border-line border-t px-4 py-4 min-[600px]:px-6">
+            <RouteLadder
+              originName={originName}
+              originTime={v.times.time}
+              viaStops={row.viaStops}
+              mode={mode}
+              cancelled={v.cancelled}
+            />
+          </div>
+        )}
       </div>
     </MotionRow>
   )

@@ -179,11 +179,3 @@ export function freshnessLabel(generatedAt: string, isStale: boolean, now: Date)
   }
   return `${strings.updatedNow} · ${formatTime(generatedAt)}`
 }
-
-/** 3-letter sigla for the route strip dots, derived from the stop name for display only. */
-export function stopSigla(name: string): string {
-  return name
-    .replace(/[^\p{L}]/gu, '')
-    .slice(0, 3)
-    .toUpperCase()
-}

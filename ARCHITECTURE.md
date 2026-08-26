@@ -217,7 +217,7 @@ components):
 ```
 components/shell     AppHeader (sticky, 64px) + Wordmark — the persistent app shell
 components/board     BoardScreen → BoardView → BoardRow (variants: lead | row)
-                     parts.tsx (ServiceMark, PlatformBox, ModeToggle, RouteStrip, …)
+                     parts.tsx (ServiceMark, PlatformBox, ModeToggle, RouteLadder, …)
                      brand-logos.tsx (committed inline SVG service marks)
 components/picker    PickerScreen → StationPicker, StationSheet (the same picker in a sheet)
 components/ui        BottomSheet, SkeletonBlock, icon.tsx (the one icon family)
@@ -226,8 +226,10 @@ components/ui        BottomSheet, SkeletonBlock, icon.tsx (the one icon family)
 The visual language is station signage (the August 2026 signage pass): a plate names the
 station in expanded caps over a heavy rule, every figure is set in mono, rows are bands
 divided by 1px lines rather than cards, and nothing has a corner radius except the operator
-tile. The type stack is Archivo + IBM Plex Mono; `theme.css` §0 says which family carries
-which level and why.
+tile, and a train's stops are a vertical ladder with its times in a mono column rather than
+a horizontal rail of siglas. The type stack is Saira + JetBrains Mono and the single accent
+is sodium amber (the August 2026 sodium pass); `theme.css` §0 says which family carries
+which level and why, §5 the same for every colour.
 
 One tree per screen, not one per breakpoint: the board's composition is the same at every
 width and only its grid changes. Every icon that is not a brand mark comes from Phosphor

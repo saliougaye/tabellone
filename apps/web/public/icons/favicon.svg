@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Tabellone">
 <title>Tabellone</title>
 <style>
-  .piastra { fill: #161E25; }
-  .cella { fill: #00BDB7; }
-  .barra { fill: #FAF7F2; }
+  .piastra { fill: #111418; }
+  .cella { fill: #DF870A; }
+  .barra { fill: #F2F3F5; }
   @media (prefers-color-scheme: dark) {
     .piastra { fill: none; }
   }

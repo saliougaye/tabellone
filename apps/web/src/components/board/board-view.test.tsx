@@ -6,7 +6,7 @@
  */
 
 import type { BoardRow, StationBoard } from '@tabellone/core'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { BoardView } from './board-view'
 
@@ -93,6 +93,38 @@ describe('BoardView', () => {
     // The confirmed platform is the inverted block, and it is the actual platform, not the
     // scheduled one.
     expect(screen.getByText('5')).toBeTruthy()
+  })
+
+  it('folds the middle of a long route ladder and opens it on tap', () => {
+    // Nine rungs: this station plus eight stops. Two at each end stay printed, the five
+    // between them fold into one rung.
+    const stops = [
+      'Firenze S.M.N.',
+      'Prato Centrale',
+      'Bologna Centrale',
+      'Modena',
+      'Reggio Emilia',
+      'Parma',
+      'Piacenza',
+      'Milano Centrale',
+    ]
+    render(
+      <BoardView
+        board={board([row({ viaStops: stops.map((name, i) => ({ name, time: `1${i}:05` })) })])}
+        now={new Date('2026-08-26T14:31:00+02:00')}
+        onSwitchMode={() => {}}
+      />,
+    )
+    expect(screen.getByText('Ferma a')).toBeTruthy()
+    // The station the reader is standing in is a rung of its own, not just the heading.
+    expect(screen.getAllByText('Roma Termini').length).toBeGreaterThan(1)
+    expect(screen.queryByText('Modena')).toBeNull()
+    fireEvent.click(screen.getByText('+5 fermate'))
+    expect(screen.getByText('Modena')).toBeTruthy()
+    expect(screen.queryByText('+5 fermate')).toBeNull()
+    // Position names the ends of the journey, in either mode.
+    expect(screen.getByText('Partenza')).toBeTruthy()
+    expect(screen.getByText('Arrivo')).toBeTruthy()
   })
 
   it('renders an empty board', () => {

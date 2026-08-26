@@ -18,6 +18,11 @@
      scale --testo-micro…--testo-titanico, --spostamento-cancellato), the
      documentation-only --annotazione-* pair, and the alias keyframes
      (tab-rullo-su, tab-pulsazione-partenza, tab-desaturazione).
+   - §0 and §5 are no longer ports either. The 2026 signage pass re-authored
+     them once; the sodium pass re-authored them again — Saira and JetBrains
+     Mono in place of Archivo and IBM Plex Mono, a cool graphite neutral in
+     place of the warm one, and sodium amber in place of the mark's teal as
+     the single accent. Both sections document their own reasoning.
    - §6 (motion) is no longer a port. It was re-authored in the 2026 design
      pass: the duration scale, the curve set, the keyframes and the
      reduced-motion block are ours, and §6 documents why each one exists.
@@ -147,21 +152,25 @@
   /* ── 0 · TWO FAMILIES ────────────────────────────────────────────────────
      Wired to next/font in layout.tsx; the quoted names are the no-JS fallback.
 
-     --font-family   Archivo. The signage face. Carries a width axis, so a
-                     station plate is genuinely expanded rather than a normal
-                     grotesk stretched by letter-spacing.
-     --font-family-mono  IBM Plex Mono. Every number on the board. A board is a
+     --font-family   Saira. The signage face. Carries a width axis (wdth 50–125),
+                     so a station plate is genuinely expanded rather than a normal
+                     grotesk stretched by letter-spacing. Squared terminals and
+                     narrow apertures: the drawing of an enamel platform sign,
+                     where the grotesk it replaced was closer to a UI face.
+     --font-family-mono  JetBrains Mono. Every number on the board. A board is a
                      table of figures that change while you are reading them;
                      mono is what stops a changing digit from moving its
-                     neighbours.
+                     neighbours. Its zero is dotted, which matters here more than
+                     it looks: platform 0 and train CB710 put 0 and O in the same
+                     column.
      The width axis is addressed through font-variation-settings rather than
      font-stretch so it degrades to "no width change" instead of to a
      synthesised one where the variable font has not loaded. */
-  --font-family: var(--font-archivo, "Archivo"), system-ui, sans-serif;
+  --font-family: var(--font-saira, "Saira"), system-ui, sans-serif;
   /* named --font-family-mono, not --font-mono: globals.css maps it into the
      @theme namespace as --font-mono, and a token that shares its own mapped
      name resolves to itself. Same collision rule as curve→ease, raggio→corner. */
-  --font-family-mono: var(--font-plex-mono, "IBM Plex Mono"), ui-monospace, monospace;
+  --font-family-mono: var(--font-jetbrains-mono, "JetBrains Mono"), ui-monospace, monospace;
   --width-plate: 118; /* station plates, mode switch: signage-wide */
   --width-normal: 100;
 
@@ -608,132 +617,155 @@
 }
 
 /* ═══ 5 · THE TWO PALETTES · hand-written, verified separately ═══
-   Two grounds, re-pitched in the 2026 signage pass and re-verified value by
-   value. Light is paper: a warm off-white with almost no chroma (hue 95 at
-   0.004 — a whisper, not a cream) carrying near-black ink. Dark is a
-   concourse at night: deeper than the ported near-black, so the state
-   colours read as lit rather than printed.
+   Two grounds, re-pitched in the sodium pass and re-verified value by value.
+   Light is a cool sheet metal grey with almost no chroma (hue 255 at 0.003 —
+   the ground an enamel platform sign is screwed to, not paper). Dark is a
+   concourse after the lights come on: near-black at the same hue, deep enough
+   that the state colours read as lit rather than printed.
 
-   What did NOT change: every hue. The semantic vocabulary is the same
-   vocabulary, re-anchored to the new grounds and re-measured against them.
+   What changed from the paper/warm pitch: the neutral hue moved from 95 (warm)
+   to 258 (cool graphite), and the accent moved from the mark's teal to sodium
+   amber — the colour of the lamp over the platform, and the only accent this
+   product has. That move freed teal, so ON TIME took it: on a board the good
+   news should not be the same hue as the interactive chrome.
 
-   Each token holds both halves via light-dark(LIGHT, DARK). System
-   preference decides by default; [data-theme] overrides via color-scheme
-   below. Verified on --surface AND --surface-raised: text ≥ 4.5:1, rules,
-   marks and large digits ≥ 3:1. Ratio comments are on --surface,
-   "light · dark". */
+   Each token holds both halves via light-dark(LIGHT, DARK). System preference
+   decides by default; [data-theme] overrides via color-scheme below. Every
+   value below is inside the sRGB gamut as written — a clipped oklch would
+   render at a ratio other than the one commented. Verified on --surface AND
+   --surface-raised: text ≥ 4.5:1, rules, marks and large digits ≥ 3:1. Ratio
+   comments are on --surface, "light · dark". */
 :root {
   color-scheme: light dark;
 
-  /* paper #f6f6f3 · concourse #090b0e (not pure black: a board has depth) */
-  --surface: light-dark(oklch(0.972 0.004 95), oklch(0.15 0.008 250));
-  --surface-raised: light-dark(oklch(1 0 0), oklch(0.195 0.009 250));
-  --surface-pressed: light-dark(oklch(0.935 0.005 95), oklch(0.245 0.01 250));
-  --surface-inverse: light-dark(oklch(0.16 0.01 250), oklch(0.96 0.004 250));
+  /* sheet metal #f2f4f6 · concourse #080a0d (not pure black: a board has depth) */
+  --surface: light-dark(oklch(0.966 0.003 255), oklch(0.142 0.008 258));
+  --surface-raised: light-dark(oklch(1 0 0), oklch(0.19 0.009 258));
+  --surface-pressed: light-dark(oklch(0.928 0.004 255), oklch(0.242 0.01 258));
+  --surface-inverse: light-dark(oklch(0.175 0.009 258), oklch(0.955 0.003 255));
 
-  --text-primary: light-dark(oklch(0.18 0.01 95), oklch(0.97 0.003 250)); /* 17.3:1 · 18.0:1 */
-  --text-secondary: light-dark(oklch(0.42 0.012 95), oklch(0.75 0.006 250)); /* 7.8:1 · 8.8:1 */
-  --text-tertiary: light-dark(oklch(0.53 0.012 95), oklch(0.62 0.008 250)); /* 4.9:1 · 5.4:1 */
-  --text-inverse: light-dark(oklch(0.99 0.002 250), oklch(0.15 0.008 250));
+  --text-primary: light-dark(oklch(0.175 0.009 258), oklch(0.965 0.003 255)); /* 17.2:1 · 17.9:1 */
+  --text-secondary: light-dark(oklch(0.425 0.011 258), oklch(0.745 0.007 255)); /* 7.5:1 · 8.8:1 */
+  --text-tertiary: light-dark(oklch(0.535 0.011 258), oklch(0.615 0.008 255)); /* 4.7:1 · 5.3:1 */
+  --text-inverse: light-dark(oklch(0.99 0.002 255), oklch(0.142 0.008 258));
 
   /* The rule is the signage system's structural element, so it comes in two
      strengths and both are load-bearing here: --line divides rows, --line-strong
      divides regions and underlines the plate. */
-  --line: light-dark(oklch(0.87 0.006 95), oklch(0.27 0.009 250));
-  --line-strong: light-dark(oklch(0.62 0.01 95), oklch(0.5 0.01 250)); /* 3.4:1 · 3.3:1 */
+  --line: light-dark(oklch(0.875 0.005 258), oklch(0.265 0.009 258));
+  --line-strong: light-dark(oklch(0.625 0.009 258), oklch(0.495 0.01 258)); /* 3.2:1 · 3.2:1 */
 
   /* THE INTERACTIVE ACCENT. One accent for the whole app: focus rings, links, the active
-     control. It is the service mark's own teal (the cell of icons/favicon.svg, #00BDB7),
-     darkened on light and lightened on dark until it clears AA as text — a product whose
-     logo is teal and whose links are blue has two accents and therefore none.
-     #006d6d 5.7:1 · #67d2cc 11.0:1 on --surface; 6.2:1 · 10.2:1 on --surface-raised. */
-  --focus: light-dark(oklch(0.48 0.09 195), oklch(0.8 0.1 190)); /* 5.7:1 · 11.0:1 */
+     control. Sodium amber — the lamp over the platform, and the hue the service mark now
+     draws in — darkened on light and lightened on dark until it clears AA as text. A
+     product whose logo is one colour and whose links are another has two accents and
+     therefore none. #9f5e19 4.6:1 · #f3a951 10.0:1 on --surface. */
+  --focus: light-dark(oklch(0.545 0.115 62), oklch(0.79 0.135 68)); /* 4.6:1 · 10.0:1 */
 
-  /* THE SERVICE MARK. The logo's teal cell, drawn in the header wordmark. A mark is a
+  /* THE SERVICE MARK. The amber cell of the wordmark and of icons/favicon.svg. A mark is a
      graphical object (WCAG 1.4.11), so the bar is 3:1, not 4.5:1 — the same rule the
      operator brand logos are tuned against, and the same treatment: one hue, re-tuned in
-     lightness per theme. #009794 3.3:1 · #00beb9 8.5:1. */
-  --brand-mark: light-dark(oklch(0.6 0.13 192), oklch(0.72 0.13 192)); /* 3.3:1 · 8.5:1 */
+     lightness per theme. The committed raster icons cannot carry a theme, so they are drawn
+     in #df870a, which sits between these two halves. #c3760a 3.2:1 · #f5a33a 9.6:1. */
+  --brand-mark: light-dark(oklch(0.635 0.14 65), oklch(0.78 0.15 68)); /* 3.2:1 · 9.6:1 */
 
-  --state-on-time: light-dark(oklch(0.48 0.13 155), oklch(0.78 0.11 155)); /* 5.6:1 · 10.3:1 */
-  --state-delay-minor: light-dark(oklch(0.53 0.14 75), oklch(0.83 0.14 85)); /* 5.0:1 · 11.6:1 */
-  --state-delay-severe: light-dark(oklch(0.5 0.2 32), oklch(0.72 0.19 35)); /* 6.1:1 · 7.1:1 */
-  --state-cancelled: light-dark(oklch(0.5 0.21 20), oklch(0.68 0.2 20)); /* 6.0:1 · 6.2:1 */
+  /* THE STATE VOCABULARY, re-pitched around the accent. Six hues, spaced so that no two
+     states a traveller has to tell apart at a glance sit within reach of each other:
+     168 teal-green (on time) · 85 gold (a few minutes late) · 52 orange (partial) ·
+     32 vermilion (badly late) · 14 deep red (cancelled) · 255 slate blue (rerouted).
+     The accent's own 62 is deliberately absent from the list: nothing on a row is ever
+     the same colour as the chrome around it. */
+  --state-on-time: light-dark(oklch(0.49 0.095 168), oklch(0.79 0.1 168)); /* 5.4:1 · 10.7:1 */
+  --state-delay-minor: light-dark(oklch(0.54 0.11 85), oklch(0.85 0.14 90)); /* 4.6:1 · 12.5:1 */
+  --state-delay-severe: light-dark(oklch(0.53 0.19 32), oklch(0.74 0.16 38)); /* 5.3:1 · 8.1:1 */
+  --state-cancelled: light-dark(oklch(0.5 0.195 14), oklch(0.68 0.2 16)); /* 6.1:1 · 6.3:1 */
   --state-cancelled-partial: light-dark(
-    oklch(0.54 0.15 50),
-    oklch(0.78 0.13 55)
-  ); /* 4.9:1 · 9.5:1 */
-  --state-rerouted: light-dark(oklch(0.47 0.13 255), oklch(0.76 0.09 250)); /* 6.4:1 · 9.2:1 */
-  --state-departure: light-dark(oklch(0.2 0.02 240), oklch(0.98 0.02 200)); /* 16.4:1 · 18.6:1 */
-  --state-departure-halo: light-dark(oklch(0.2 0.02 240 / 0.14), oklch(0.98 0.02 200 / 0.18));
+    oklch(0.55 0.14 52),
+    oklch(0.8 0.135 58)
+  ); /* 4.6:1 · 10.3:1 */
+  --state-rerouted: light-dark(oklch(0.5 0.12 255), oklch(0.775 0.09 252)); /* 5.5:1 · 9.8:1 */
+  /* The imminent row is not a hue, it is maximum ink: the one row that has to win against
+     every other row on the board. The dark half carries a trace of the sodium hue so it
+     reads as lit filament rather than as a white LED. */
+  --state-departure: light-dark(oklch(0.19 0.015 250), oklch(0.975 0.015 90)); /* 16.7:1 · 18.5:1 */
+  --state-departure-halo: light-dark(oklch(0.19 0.015 250 / 0.13), oklch(0.975 0.015 90 / 0.16));
 
-  --platform-absent-text: light-dark(oklch(0.53 0.012 95), oklch(0.62 0.008 250));
-  --platform-scheduled-text: light-dark(oklch(0.42 0.012 95), oklch(0.75 0.006 250));
-  --platform-scheduled-line: light-dark(oklch(0.62 0.01 95), oklch(0.5 0.01 250));
-  --platform-confirmed-surface: light-dark(oklch(0.18 0.01 95), oklch(0.96 0.004 250));
-  /* on the solid block: 17.3:1 · 16.8:1 */
-  --platform-confirmed-text: light-dark(oklch(0.99 0.002 250), oklch(0.15 0.008 250));
+  --platform-absent-text: light-dark(oklch(0.535 0.011 258), oklch(0.615 0.008 255));
+  --platform-scheduled-text: light-dark(oklch(0.425 0.011 258), oklch(0.745 0.007 255));
+  --platform-scheduled-line: light-dark(oklch(0.625 0.009 258), oklch(0.495 0.01 258));
+  --platform-confirmed-surface: light-dark(oklch(0.175 0.009 258), oklch(0.955 0.003 255));
+  /* on the solid block: 18.4:1 · 17.4:1 */
+  --platform-confirmed-text: light-dark(oklch(0.99 0.002 255), oklch(0.142 0.008 258));
 
-  --bus-text: light-dark(oklch(0.48 0.12 85), oklch(0.86 0.12 95)); /* 6.1:1 · 12.9:1 */
-  --bus-line: light-dark(oklch(0.6 0.12 85), oklch(0.7 0.11 95));
+  /* BUS is the one row on the board that is not a train, and with the accent holding amber
+     the warm end of the wheel is spoken for by three delay states. So it moved to 305,
+     which nothing else on this board uses — the point of the colour is "read this row
+     differently", and it can only do that from a hue of its own. */
+  --bus-text: light-dark(oklch(0.5 0.17 305), oklch(0.77 0.13 305)); /* 5.9:1 · 9.2:1 */
+  --bus-line: light-dark(oklch(0.62 0.15 305), oklch(0.66 0.13 305)); /* 3.5:1 · 6.1:1 */
 
-  --data-fresh: light-dark(oklch(0.48 0.13 155), oklch(0.78 0.11 155));
-  --data-stale: light-dark(oklch(0.53 0.14 75), oklch(0.83 0.14 85));
-  --data-absent: light-dark(oklch(0.53 0.012 95), oklch(0.62 0.008 250));
-  --veil-empty: light-dark(oklch(0.945 0.005 95), oklch(0.195 0.009 250));
+  --data-fresh: light-dark(oklch(0.49 0.095 168), oklch(0.79 0.1 168));
+  --data-stale: light-dark(oklch(0.54 0.11 85), oklch(0.85 0.14 90));
+  --data-absent: light-dark(oklch(0.535 0.011 258), oklch(0.615 0.008 255));
+  --veil-empty: light-dark(oklch(0.94 0.004 255), oklch(0.19 0.009 258));
   /* modal veil: the alpha lives IN the colour, so the veil stays at opacity 1
      and cannot lower the verified contrast of the dialog above it. */
-  --veil-modal: light-dark(oklch(0.945 0.005 95 / 0.74), oklch(0.11 0.008 250 / 0.78));
+  --veil-modal: light-dark(oklch(0.94 0.004 255 / 0.74), oklch(0.105 0.008 258 / 0.78));
 
-  --identity-trenitalia: light-dark(oklch(0.52 0.19 25), oklch(0.66 0.17 25)); /* 5.7:1 · 5.6:1 */
-  --identity-italo: light-dark(oklch(0.52 0.16 350), oklch(0.66 0.13 350)); /* 5.7:1 · 5.7:1 */
-  --identity-trenord: light-dark(oklch(0.48 0.14 148), oklch(0.68 0.14 145)); /* 5.8:1 · 6.9:1 */
-  --identity-neutral: light-dark(oklch(0.55 0.02 250), oklch(0.7 0.02 250)); /* unknown operator */
-  --identity-mono: light-dark(oklch(0.42 0.012 95), oklch(0.75 0.006 250)); /* fallback sigla */
-  /* sigla on the solid tile: 5.5:1 · 8.8:1 min */
-  --mark-ink: light-dark(oklch(0.99 0.002 250), oklch(0.15 0.008 250));
-  --nav-affordance: light-dark(oklch(0.53 0.012 95), oklch(0.62 0.008 250));
+  /* Operator identity is brand, not palette: these three are the operators' own colours and
+     the sodium pass did not touch them. Only the neutral and the fallback sigla moved, from
+     the old warm neutral to the graphite hue the rest of the palette now sits on. */
+  --identity-trenitalia: light-dark(oklch(0.52 0.19 25), oklch(0.66 0.17 25)); /* 5.5:1 · 5.9:1 */
+  --identity-italo: light-dark(oklch(0.52 0.16 350), oklch(0.66 0.13 350)); /* 5.5:1 · 6.0:1 */
+  --identity-trenord: light-dark(oklch(0.48 0.135 148), oklch(0.68 0.135 145)); /* 5.6:1 · 7.3:1 */
+  --identity-neutral: light-dark(oklch(0.52 0.02 258), oklch(0.7 0.02 258)); /* unknown operator */
+  --identity-mono: light-dark(oklch(0.425 0.011 258), oklch(0.745 0.007 255)); /* fallback sigla */
+  /* sigla on the solid tile: 5.3:1 · 5.9:1 min */
+  --mark-ink: light-dark(oklch(0.99 0.002 255), oklch(0.142 0.008 258));
+  --nav-affordance: light-dark(oklch(0.535 0.011 258), oklch(0.615 0.008 255));
 
   /* BRAND LOGOS · the colour a mark in the logo slot is drawn in. The brand's own hue,
      one asset per brand carrying currentColor, each pair re-tuned in lightness for its
      theme — a fixed brand colour that reads on white does not read on --surface-raised
-     dark. Ratios below are against --surface-raised, and the bar is 3:1: a logo is a
-     graphical object (WCAG 1.4.11), not text. Never the operator tile's colour. */
-  --brand-frecciarossa: light-dark(oklch(0.605 0.244 26), oklch(0.68 0.2 26)); /* 4.4:1 · 5.5:1 */
+     dark. These are brand values and the sodium pass left every one of them alone; only the
+     dark-half ratios below were re-measured, against the deeper --surface-raised. Ratios
+     are against --surface-raised, and the bar is 3:1: a logo is a graphical object
+     (WCAG 1.4.11), not text. Never the operator tile's colour. */
+  --brand-frecciarossa: light-dark(oklch(0.605 0.244 26), oklch(0.68 0.2 26)); /* 4.4:1 · 5.8:1 */
   --brand-frecciargento: light-dark(
     oklch(0.55 0.012 255),
     oklch(0.74 0.01 255)
-  ); /* 4.9:1 · 7.5:1 */
+  ); /* 4.8:1 · 8.0:1 */
   --brand-frecciabianca: light-dark(
     oklch(0.52 0.006 255),
     oklch(0.82 0.004 255)
-  ); /* 5.5:1 · 9.9:1 */
+  ); /* 5.5:1 · 10.6:1 */
   /* Italo's crimson is the case the rule above exists for: the brand value itself reads
-     7.0:1 on white but collapses to 2.5:1 on --surface-raised dark, under the bar, so the
-     dark half is lightened rather than reused. */
-  --brand-italo: light-dark(oklch(0.488 0.192 19), oklch(0.66 0.17 19)); /* 7.0:1 · 5.1:1 */
+     7.0:1 on white but collapses on --surface-raised dark, near the bar, so the dark half
+     is lightened rather than reused. */
+  --brand-italo: light-dark(oklch(0.488 0.192 19), oklch(0.66 0.17 19)); /* 7.0:1 · 5.5:1 */
   /* Trenord is the two-tone case: -accent reaches the mark as --logo-ink-2. Both halves
      keep their brand lightness on light and are lifted together to L=0.70 on dark, so the
      pair stays balanced rather than one half drifting brighter than the other. */
-  --brand-trenord: light-dark(oklch(0.53 0.124 150), oklch(0.7 0.124 150)); /* 5.0:1 · 6.8:1 */
-  --brand-trenord-accent: light-dark(oklch(0.511 0.192 31), oklch(0.7 0.15 31)); /* 6.3:1 · 6.1:1 */
-  --brand-trenitalia: light-dark(oklch(0.472 0.08 195), oklch(0.7 0.08 195)); /* 6.5:1 · 6.7:1 */
+  --brand-trenord: light-dark(oklch(0.53 0.124 150), oklch(0.7 0.124 150)); /* 5.0:1 · 7.3:1 */
+  --brand-trenord-accent: light-dark(oklch(0.511 0.192 31), oklch(0.7 0.15 31)); /* 6.3:1 · 6.5:1 */
+  --brand-trenitalia: light-dark(oklch(0.472 0.08 195), oklch(0.7 0.08 195)); /* 6.5:1 · 7.2:1 */
   --brand-trenitalia-accent: light-dark(
     oklch(0.559 0.214 26),
     oklch(0.7 0.16 26)
-  ); /* 5.2:1 · 6.0:1 */
+  ); /* 5.2:1 · 6.4:1 */
   /* Intercity's blue is the one brand value that would have sat closest to the 3:1 floor on
      white (3.6:1), so the light half is darkened a step rather than taken as-is. */
-  --brand-intercity: light-dark(oklch(0.55 0.133 241), oklch(0.7 0.133 241)); /* 4.8:1 · 6.6:1 */
-  --brand-leonardo: light-dark(oklch(0.586 0.228 23), oklch(0.7 0.16 23)); /* 4.7:1 · 6.0:1 */
+  --brand-intercity: light-dark(oklch(0.55 0.133 241), oklch(0.7 0.133 241)); /* 4.8:1 · 7.0:1 */
+  --brand-leonardo: light-dark(oklch(0.586 0.228 23), oklch(0.7 0.16 23)); /* 4.7:1 · 6.4:1 */
   /* Regionale's two greens are both far too light as brand values (the lime reads 1.8:1 on
      white), so each half is darkened for light and lifted for dark while keeping the lime
      the lighter of the pair — that relationship is what the mark reads by. */
-  --brand-regionale: light-dark(oklch(0.5 0.17 141), oklch(0.68 0.17 141)); /* 5.6:1 · 6.4:1 */
+  --brand-regionale: light-dark(oklch(0.5 0.17 141), oklch(0.68 0.17 141)); /* 5.6:1 · 6.8:1 */
   --brand-regionale-accent: light-dark(
     oklch(0.62 0.17 128),
     oklch(0.78 0.17 128)
-  ); /* 3.5:1 · 9.0:1 */
+  ); /* 3.5:1 · 9.6:1 */
 }
 
 /* explicit override beats system preference; without the attribute the

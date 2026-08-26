@@ -3,8 +3,8 @@
  *
  * Same geometry as `public/icons/favicon.svg` (the plate is dropped — inside the app the
  * page already provides the ground the plate exists to give a favicon), drawn in
- * `--brand-mark` so it re-tunes per theme instead of being one fixed teal that reads on
- * white and disappears on near-black. The wordmark is set in the app's own family; there is
+ * `--brand-mark` so it re-tunes per theme instead of being one fixed amber that reads on
+ * paper and glares on near-black. The wordmark is set in the app's own family; there is
  * no separate logotype asset, and inventing one would be a brand change, not a redesign.
  */
 import { strings } from '@/strings'

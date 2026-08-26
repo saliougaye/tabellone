@@ -3,17 +3,16 @@
 /**
  * Small board parts, straight from design sheets 01–02: service mark (logo slot + operator
  * tile), platform box (the three states of ANCHOR C), freshness dot, mode toggle and the
- * route strip of the rich row.
+ * route ladder.
  */
 import type { BoardMode, BoardRow, Platform, ViaStop } from '@tabellone/core'
-import { type CSSProperties, useEffect, useRef, useState } from 'react'
+import { type CSSProperties, Fragment, useEffect, useRef, useState } from 'react'
 import {
   categoryStyle,
   freshnessLabel,
   operatorMark,
   serviceLabel,
   serviceMarkLabel,
-  stopSigla,
 } from '@/lib/presentation'
 import { strings } from '@/strings'
 import { brandLogoInk, brandLogos } from './brand-logos'
@@ -308,94 +307,223 @@ export function ModeToggle({
 }
 
 /**
- * The route strip of the rich row: this station as the filled origin dot, then the
- * remaining stops, the last one as terminus. Display siglas are derived from names —
- * pure presentation, never an identifier.
+ * THE ROUTE, as a ladder.
+ *
+ * This replaces the two things the board used to do with a train's stops, both of which
+ * were the same mistake made twice: the lead row drew a horizontal rail with three-letter
+ * siglas under it (a route only its author could read: BOL, FIR, MIL, and eleven stops
+ * crushed into a phone's width), and an expanded row printed the stops as a wrapping run of
+ * name-plus-time pairs, which is a paragraph pretending to be a timetable. Neither let you
+ * answer the one question a traveller actually has of a route: *when does it get to mine.*
+ *
+ * A ladder answers it. One rung per stop, top to bottom in the order the train runs them,
+ * names in the display face on the left and times in mono on the right — so the times form
+ * a column you can run a finger down, which a wrapping list can never do.
+ *
+ * Position, not mode, decides what a rung is called: the first rung is always the departure
+ * and the last is always the arrival, which is true on a departures board (this station,
+ * then the destination) and on an arrivals board (where it came from, then this station).
+ * `here` marks whichever of the two is the station you are standing in, and that rung is
+ * the only one set at full weight.
+ *
+ * Long routes collapse rather than scroll: a stopping regional service can call at twenty
+ * stations, and twenty rungs inside a row is a page, not a row. Beyond `LADDER_MAX_RUNGS`
+ * the middle folds into one rung that says how many it is hiding and opens on tap.
  */
-export function RouteStrip({
-  originName,
-  viaStops,
-  cancelled,
-}: {
-  originName: string
-  viaStops: ViaStop[]
-  cancelled: boolean
-}) {
-  const dots = [
-    { id: originName, sigla: stopSigla(originName), terminal: true, origin: true },
-    ...viaStops.map((stop, index) => ({
-      id: stop.name,
-      sigla: stopSigla(stop.name),
-      terminal: index === viaStops.length - 1,
-      origin: false,
-    })),
-  ]
-  return (
-    <div className="relative px-1 pt-2">
-      <span
-        className="absolute bg-line"
-        style={{ left: '6px', right: '6px', top: '13px', height: 'var(--line-width-strong)' }}
-      />
-      <div className="relative flex items-start justify-between">
-        {dots.map((dot) => (
-          <span key={dot.id} className="flex flex-col items-center gap-2">
-            {/* Square ticks on the line, not dots: same rule as everywhere else on this
-                board. The origin is filled, the terminus and the origin are the wide ones,
-                the intermediate stops are small and outlined. */}
-            <span
-              style={{
-                width: dot.terminal || dot.origin ? '10px' : '6px',
-                height: dot.terminal || dot.origin ? '10px' : '6px',
-                background: dot.origin && !cancelled ? 'var(--text-primary)' : 'var(--surface)',
-                boxShadow: `0 0 0 ${dot.origin && !cancelled ? '0px' : '1.5px'} ${
-                  cancelled
-                    ? 'var(--state-cancelled)'
-                    : dot.terminal || dot.origin
-                      ? 'var(--text-primary)'
-                      : 'var(--line-strong)'
-                }, 0 0 0 4px var(--surface)`,
-              }}
-            />
-            <span
-              className="type-figures type-tertiary"
-              style={{
-                letterSpacing: 'var(--track-label)',
-                fontWeight:
-                  dot.terminal || dot.origin ? 'var(--weight-max)' : 'var(--weight-medium)',
-                color:
-                  dot.terminal || dot.origin ? 'var(--text-secondary)' : 'var(--text-tertiary)',
-              }}
-            >
-              {dot.sigla}
-            </span>
-          </span>
-        ))}
-      </div>
-    </div>
+type RungKind = 'origin' | 'stop' | 'terminus'
+
+type Rung = {
+  key: string
+  name: string
+  time: string
+  kind: RungKind
+  /** The station the reader is standing in. Exactly one rung per ladder carries it. */
+  here: boolean
+}
+
+/** Beyond this many rungs the middle of the ladder folds. Six fits a phone without scroll. */
+const LADDER_MAX_RUNGS = 6
+/** Rung box height. The rail runs from the centre of the first tick to the centre of the last. */
+const RUNG_HEIGHT = 30
+/** Half the tick column, so the rail sits under the middle of every tick. */
+const RAIL_X = 6
+
+function buildRungs(originName: string, originTime: string, viaStops: ViaStop[], mode: BoardMode) {
+  const stops = viaStops.map((stop) => ({
+    key: `${stop.name}-${stop.time}`,
+    name: stop.name,
+    time: stop.time,
+    kind: 'stop' as RungKind,
+    here: false,
+  }))
+  const self = {
+    key: 'here',
+    name: originName,
+    time: originTime,
+    kind: 'stop' as RungKind,
+    here: true,
+  }
+  const rungs = mode === 'arrivals' ? [...stops, self] : [self, ...stops]
+  // Position, not mode, names the ends: first rung is the departure, last is the arrival.
+  return rungs.map(
+    (rung, index): Rung => ({
+      ...rung,
+      kind: index === 0 ? 'origin' : index === rungs.length - 1 ? 'terminus' : 'stop',
+    }),
   )
 }
 
-/** Expanded detail shared by rich and compact rows: the "Ferma a" list. */
-export function StopsDetail({ viaStops, mode }: { viaStops: ViaStop[]; mode: BoardMode }) {
-  const last = viaStops.at(-1)
+function Tick({ rung, cancelled }: { rung: Rung; cancelled: boolean }) {
+  const terminal = rung.kind !== 'stop'
+  const size = rung.here ? 12 : terminal ? 10 : 6
+  const ink = cancelled
+    ? 'var(--state-cancelled)'
+    : rung.here || terminal
+      ? 'var(--text-primary)'
+      : 'var(--line-strong)'
   return (
-    <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-line border-t bg-surface-pressed px-4 py-4 min-[600px]:px-6">
-      <span className="text-text-tertiary type-label">{strings.stopsAt}</span>
-      {viaStops.map((stop) => (
+    <span
+      aria-hidden="true"
+      className="flex-none"
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        // Filled for the ends of the journey, hollow for the stops between them. The outer
+        // ring is --surface, not a colour: it punches the rail out from behind the tick so
+        // the line does not draw through a hollow square.
+        background: terminal || rung.here ? ink : 'var(--surface)',
+        boxShadow: `0 0 0 ${terminal || rung.here ? 0 : 1.5}px ${ink}, 0 0 0 4px var(--surface)`,
+      }}
+    />
+  )
+}
+
+export function RouteLadder({
+  originName,
+  originTime,
+  viaStops,
+  mode,
+  cancelled,
+}: {
+  /** This station. The rung marked `here`. */
+  originName: string
+  /** This station's own time, already formatted: the ladder never does time arithmetic. */
+  originTime: string
+  viaStops: ViaStop[]
+  mode: BoardMode
+  cancelled: boolean
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const rungs = buildRungs(originName, originTime, viaStops, mode)
+  const folded = !expanded && rungs.length > LADDER_MAX_RUNGS
+  // Two rungs at each end when folded: one end alone reads as a truncation, two reads as a
+  // route with its middle put away.
+  const hidden = folded ? rungs.length - 4 : 0
+  const shown = folded ? [...rungs.slice(0, 2), ...rungs.slice(-2)] : rungs
+  const railInk = cancelled ? 'var(--state-cancelled)' : 'var(--line-strong)'
+  // One extra box for the collapsed rung, which sits between the second and third shown.
+  const boxes = shown.length + (folded ? 1 : 0)
+
+  return (
+    // Capped, not full-bleed: the name is on the left of a rung and the time on the right,
+    // and on a 1280px board an uncapped ladder puts a metre of nothing between the two
+    // halves of the same fact. 34rem is about as far as the eye tracks a dotted-leader line
+    // in a printed timetable before it needs the leader drawn in.
+    <div className="flex min-w-0 max-w-[34rem] flex-col gap-2">
+      <span className="text-text-tertiary type-label">
+        {mode === 'arrivals' ? strings.comesFrom : strings.stopsAt}
+      </span>
+      <ol className="relative m-0 list-none p-0" style={{ minHeight: `${boxes * RUNG_HEIGHT}px` }}>
         <span
-          key={`${stop.name}-${stop.time}`}
-          className="flex items-baseline gap-2 text-text-secondary type-tertiary"
-        >
-          {stop.name}
-          <span className="text-text-tertiary type-figures">{stop.time}</span>
-        </span>
-      ))}
-      {last && mode === 'departures' && (
-        <span className="ml-auto flex items-baseline gap-2 text-text-tertiary type-tertiary">
-          {strings.terminusArrival}
-          <span className="type-figures">{last.time}</span>
-        </span>
-      )}
+          aria-hidden="true"
+          className="absolute"
+          style={{
+            left: `${RAIL_X}px`,
+            top: `${RUNG_HEIGHT / 2}px`,
+            bottom: `${RUNG_HEIGHT / 2}px`,
+            width: 'var(--line-width-strong)',
+            background: railInk,
+            transform: 'translateX(-50%)',
+          }}
+        />
+        {shown.map((rung, index) => (
+          // The fold is a sibling of the rung it follows, not a child of it, so the pair has
+          // to share one key — the rung's own, which is unique across the ladder.
+          <Fragment key={rung.key}>
+            <li
+              className="relative grid items-center gap-x-3"
+              style={{
+                gridTemplateColumns: `${RAIL_X * 2}px minmax(0, 1fr) auto`,
+                minHeight: `${RUNG_HEIGHT}px`,
+              }}
+            >
+              <span className="flex justify-center">
+                <Tick rung={rung} cancelled={cancelled} />
+              </span>
+              <span className="flex min-w-0 items-baseline gap-2">
+                <span
+                  className={`overflow-hidden text-ellipsis whitespace-nowrap ${
+                    rung.here ? 'type-primary' : 'type-secondary'
+                  }`}
+                  style={{
+                    color: cancelled
+                      ? 'var(--text-tertiary)'
+                      : rung.here || rung.kind !== 'stop'
+                        ? 'var(--text-primary)'
+                        : 'var(--text-secondary)',
+                    fontWeight: rung.here
+                      ? 'var(--weight-max)'
+                      : rung.kind === 'stop'
+                        ? 'var(--weight-regular)'
+                        : 'var(--weight-strong)',
+                    textDecoration: cancelled ? 'line-through' : 'none',
+                  }}
+                >
+                  {rung.name}
+                </span>
+                {rung.kind !== 'stop' && (
+                  <span className="flex-none text-text-tertiary type-label">
+                    {rung.kind === 'origin' ? strings.routeOrigin : strings.terminusArrival}
+                  </span>
+                )}
+              </span>
+              <span
+                className="type-figures type-secondary"
+                style={{
+                  color: cancelled ? 'var(--text-tertiary)' : 'var(--text-secondary)',
+                  fontWeight: rung.here ? 'var(--weight-max)' : 'var(--weight-regular)',
+                  textDecoration: cancelled ? 'line-through' : 'none',
+                }}
+              >
+                {rung.time}
+              </span>
+            </li>
+            {folded && index === 1 && (
+              <li
+                className="relative grid items-center gap-x-3"
+                style={{
+                  gridTemplateColumns: `${RAIL_X * 2}px minmax(0, 1fr)`,
+                  minHeight: `${RUNG_HEIGHT}px`,
+                }}
+              >
+                {/* No tick: the fold is not a place, it is the absence of several. The rail
+                    runs through it uninterrupted, which is what says "the train still goes
+                    this way, we are just not printing it". */}
+                <span />
+                <button
+                  type="button"
+                  onClick={() => setExpanded(true)}
+                  aria-label={strings.routeShowAll}
+                  className={`cursor-pointer justify-self-start border-0 bg-transparent p-0 text-focus underline decoration-1 underline-offset-4 type-secondary ${pressFeedback}`}
+                  style={{ fontWeight: 'var(--weight-medium)' }}
+                >
+                  {strings.routeHiddenStops(hidden)}
+                </button>
+              </li>
+            )}
+          </Fragment>
+        ))}
+      </ol>
     </div>
   )
 }

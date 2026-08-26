@@ -22,22 +22,41 @@ components (`src/components`), live pages that poll the real API and honestly re
 failed-read state, and favourites/recents in `localStorage`. The dev-only scenario gallery
 at `/dev/scenari` and its fixtures are gone. The station catalogue holds 2435 real stations
 with real `rfiPlaceId`s, 3 of them flagged `isMajor`; slugs are final (ADR-007).
-The UI went through two design passes in August 2026. The first: `theme.css` §6 (motion)
+The UI went through three design passes in August 2026. The first: `theme.css` §6 (motion)
 re-authored rather than ported, the four row components collapsed into one `BoardRow` with
 two variants, the 600px markup fork removed, every non-brand icon moved to Phosphor
 (`components/ui/icon.tsx`). The second, the **signage pass**, committed the whole UI to the
 language of a station board — read `theme.css` §0 and the CORNERS block before touching any
 of it:
-- **Two families.** Archivo (variable, `wdth` axis) is the display face; IBM Plex Mono
-  carries every figure on the board. IBM Plex Sans is gone. `type-figures` is the utility
-  that makes a value mono; `type-plate` is the station name and nothing else.
+- **Two families.** `type-figures` is the utility that makes a value mono; `type-plate` is
+  the station name and nothing else. The faces themselves changed in the sodium pass below.
 - **Rules, not cards.** A row is a band with one `border-b`. No radius anywhere except the
   operator tile's 3px badge, which is a mark and not a surface. `--corner-*` are all 0.
-- **Both palettes re-pitched** and re-verified value by value: light is paper (a warm
-  off-white at chroma 0.004), dark is a deeper concourse black. Every hue survived; only the
-  grounds and the ink moved. Ratio comments in §5 are current.
-- The board is one full-width column of bands, not a two-column dashboard. Everything below about fetching and parsing is still the design
-contract to build against.
+- The board is one full-width column of bands, not a two-column dashboard.
+
+The third pass, the **sodium pass**, changed what the signage is made of, not what it is.
+`theme.css` §0 and §5 are the authority; both document their own reasoning:
+- **Saira** (variable, `wdth` 50–125) is the display face and **JetBrains Mono** carries
+  every figure. Both replaced in this pass; the width axis is what `type-plate` needs and
+  the dotted zero is what a column holding both `0` and `O` needs. The OG-card renderer
+  fetches Saira from Google Fonts at render time and the repo carries no font binaries at
+  all — `board-og-image.tsx` says why, and why its User-Agent is load-bearing.
+- **Both palettes re-pitched again** and re-verified value by value, in gamut as written:
+  the neutral hue moved from warm 95 to graphite 258, and the accent moved from the mark's
+  teal to **sodium amber**, which freed teal for ON TIME. Six state hues, spaced so no two a
+  traveller must tell apart sit near each other; BUS moved to 305 because the warm end of
+  the wheel is now spoken for. Operator and brand-logo colours are brand and did not move.
+  Ratio comments in §5 are current and were computed, not estimated.
+- **The service mark is amber**, so every committed icon asset was re-inked to match:
+  `favicon.svg`, `favicon.ico`, the six PNGs and `og-image.png`. The one fixed hex is
+  `#df870a` (mask-icon, raster icons), sitting between the two halves of `--brand-mark`.
+- **Stops are a ladder, not a strip.** `RouteLadder` replaced both `RouteStrip` (the
+  horizontal rail of three-letter siglas) and `StopsDetail` (the wrapping name/time run).
+  One rung per stop, times in a mono column on the right, first rung is always the departure
+  and last always the arrival in either mode, `here` marks this station, and past
+  `LADDER_MAX_RUNGS` the middle folds into one tappable rung. `stopSigla` is gone with it.
+
+Everything below about fetching and parsing is still the design contract to build against.
 
 `ARCHITECTURE.md` is the authoritative spec (11 ADRs in `adrs/`). Read it before any
 structural work, and **update it before a structural change, not after**. `CONTEXT.md`
