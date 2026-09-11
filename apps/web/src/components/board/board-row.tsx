@@ -17,15 +17,17 @@
  *
  * Nothing here fetches or polls: `BoardRow` in, pixels out.
  */
-import { CaretDown } from '@phosphor-icons/react'
+import { ArrowRight, CaretDown } from '@phosphor-icons/react'
 import type { BoardMode, BoardRow as BoardRowData } from '@tabellone/core'
+import Link from 'next/link'
 import { useState } from 'react'
 import { iconSize } from '@/components/ui/icon'
 import { displayedTime, statusPresentation } from '@/lib/presentation'
 import { staggerDelay } from '@/lib/stagger'
+import { trainDetailPath } from '@/lib/train-routes'
 import { useRolledValue } from '@/lib/use-rolled-value'
 import { strings } from '@/strings'
-import { PlatformBox, pressFeedback, RouteLadder, ServiceMark } from './parts'
+import { PlatformBox, pressScale, RouteLadder, ServiceMark } from './parts'
 
 export type RowVariant = 'lead' | 'row'
 
@@ -97,6 +99,7 @@ export function BoardRow({
   row,
   mode,
   originName,
+  stationSlug,
   variant = 'row',
   motion,
 }: {
@@ -104,6 +107,8 @@ export function BoardRow({
   mode: BoardMode
   /** This station: the rung of the route ladder the reader is standing on. */
   originName: string
+  /** This station's slug, for the link to the train's own page (ADR-012). */
+  stationSlug: string
   variant?: RowVariant
   motion?: RowMotion
 }) {
@@ -112,6 +117,27 @@ export function BoardRow({
   const rolled = useRolledValue(row.delayMinutes)
   const lead = variant === 'lead'
   const expandable = row.viaStops.length > 0
+  const detailHref = trainDetailPath(stationSlug, mode, row.trainNumber)
+
+  /**
+   * The way to the train's own page (ADR-012): a traveller who has found their train wants it
+   * alone on the screen, and wants it to still be there after switching apps.
+   *
+   * It sits *inside* what the row opens rather than on the band, because the band's tap is
+   * already spoken for by the expansion and a row cannot offer two whole-width gestures. A
+   * row with no stops has no expansion to put it in — for those the band itself is the link,
+   * which is also the only thing left for their tap to mean.
+   */
+  const detailLink = (
+    <Link
+      href={detailHref}
+      aria-label={strings.trainDetailFor(row.trainNumber, row.headsign)}
+      className={`inline-flex items-center gap-2 text-text-secondary no-underline transition-[color,scale] type-label uppercase tracking-(--track-label) hover:text-text-primary min-h-(--touch-min) ${pressScale}`}
+    >
+      {strings.trainDetail}
+      <ArrowRight size={iconSize.meta} aria-hidden="true" className="flex-none" />
+    </Link>
+  )
 
   const time = (
     <span className="flex min-w-0 flex-col gap-1">
@@ -206,8 +232,8 @@ export function BoardRow({
           <div style={{ gridArea: 'identity' }} className="min-w-0">
             {identity}
           </div>
-          {expandable && (
-            <div style={{ gridArea: 'route' }} className="min-w-0">
+          <div style={{ gridArea: 'route' }} className="flex min-w-0 flex-col gap-3">
+            {expandable && (
               <RouteLadder
                 originName={originName}
                 originTime={v.times.time}
@@ -215,8 +241,9 @@ export function BoardRow({
                 mode={mode}
                 cancelled={v.cancelled}
               />
-            </div>
-          )}
+            )}
+            {detailLink}
+          </div>
         </>
       ) : (
         <>
@@ -268,22 +295,43 @@ export function BoardRow({
             type="button"
             onClick={() => setOpen((value) => !value)}
             aria-expanded={open}
-            className={`w-full cursor-pointer border-0 bg-transparent text-left hover:bg-surface-pressed min-h-(--touch-min) ${pressFeedback}`}
-            style={{ padding, transition: 'var(--motion-state)' }}
+            className={`w-full cursor-pointer border-0 bg-transparent text-left hover:bg-surface-pressed min-h-(--touch-min) ${pressScale}`}
+            // `--motion-state` names colour properties only, so an element carrying it as an
+            // inline `transition` has no entry for `scale` — and an inline declaration
+            // replaces the utility's whole `transition-property` list. Spelled together here,
+            // which is the only form where both the hover and the press actually animate.
+            style={{
+              padding,
+              transition:
+                'var(--motion-state), scale var(--duration-instant) var(--curve-standard)',
+            }}
           >
             {body}
           </button>
-        ) : (
+        ) : lead ? (
           <div className="min-h-(--touch-min)" style={{ padding }}>
             {body}
           </div>
+        ) : (
+          <Link
+            href={detailHref}
+            aria-label={strings.trainDetailFor(row.trainNumber, row.headsign)}
+            className={`flex w-full no-underline hover:bg-surface-pressed min-h-(--touch-min) ${pressScale}`}
+            style={{
+              padding,
+              transition:
+                'var(--motion-state), scale var(--duration-instant) var(--curve-standard)',
+            }}
+          >
+            {body}
+          </Link>
         )}
         {open && expandable && (
           // On --surface, not on --surface-pressed: the ladder's own tertiary text and its
           // accent-coloured fold both clear AA on the board's ground and neither does on the
           // pressed one. A rule and the indent separate it, which is the same device the
           // rows use on each other.
-          <div className="border-line border-t px-4 py-4 min-[600px]:px-6">
+          <div className="flex flex-col gap-3 border-line border-t px-4 py-4 min-[600px]:px-6">
             <RouteLadder
               originName={originName}
               originTime={v.times.time}
@@ -291,6 +339,7 @@ export function BoardRow({
               mode={mode}
               cancelled={v.cancelled}
             />
+            {detailLink}
           </div>
         )}
       </div>

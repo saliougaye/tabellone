@@ -44,6 +44,22 @@ export const strings = {
   nextArrivals: 'Prossimi arrivi',
   later: 'Più tardi',
   listCount: (count: number) => `${count} in elenco`,
+
+  /* board filter · narrowing a board already in hand, never a second read of RFI */
+  filterOpen: 'Cerca e filtra',
+  filterClose: 'Chiudi la ricerca',
+  filterSearch: 'Cerca treno su questo tabellone',
+  filterPlaceholder: 'Destinazione o numero treno',
+  filterCategory: 'Tipo di treno',
+  filterClear: 'Azzera filtri',
+  /* Replaces the plain count in the list head while a filter is on: a count of what is shown
+     without the total would look like the board had emptied. */
+  filterCount: (shown: number, total: number) => `${shown} di ${total}`,
+  /* A filter finding nothing is not an empty board: the trains are there, the filter hides
+     them. The two states say different things and offer different ways out. */
+  filterNoMatch: 'Nessun treno corrisponde',
+  filterNoMatchHint:
+    'Prova con un\u2019altra destinazione o un altro numero, oppure togli il filtro per tipo.',
   /* the route ladder · the region label names which end of the journey this station is */
   stopsAt: 'Ferma a',
   comesFrom: 'Proviene da',
@@ -54,6 +70,17 @@ export const strings = {
   /** The collapsed rung of a long route: the stops the ladder is not printing yet. */
   routeHiddenStops: (count: number) => `+${count} ${count === 1 ? 'fermata' : 'fermate'}`,
   routeShowAll: 'Mostra tutte le fermate',
+  /* train detail page · one train, opened from its row (ADR-012) */
+  trainDetail: 'Dettaglio treno',
+  trainDetailFor: (trainNumber: string, headsign: string) =>
+    `Apri il dettaglio del treno ${trainNumber} per ${headsign}`,
+  backToBoard: 'Torna al tabellone',
+  trainDeparture: 'Partenza da',
+  trainArrival: 'Arrivo a',
+  /* Not an error and not an empty board: the train was on this board and is not any more. */
+  trainGone: 'Treno non più in tabellone',
+  trainGoneHint:
+    'Questo treno non compare più fra le corse in tempo reale di questa stazione. Può essere già partito, oppure non essere più previsto oggi.',
   follow: 'Segui stazione',
   unfollow: 'Non seguire più',
   followed: 'seguita',

@@ -404,6 +404,7 @@ export function RouteLadder({
   viaStops,
   mode,
   cancelled,
+  startExpanded = false,
 }: {
   /** This station. The rung marked `here`. */
   originName: string
@@ -412,8 +413,15 @@ export function RouteLadder({
   viaStops: ViaStop[]
   mode: BoardMode
   cancelled: boolean
+  /**
+   * Print every rung from the start. `LADDER_MAX_RUNGS` folds the middle because a board row
+   * is one of twenty and a long route would push the rest of the board off the screen; the
+   * train's own page is one train, so there is nothing to protect and the fold would be
+   * hiding the page's subject from itself (ADR-012).
+   */
+  startExpanded?: boolean
 }) {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(startExpanded)
   const rungs = buildRungs(originName, originTime, viaStops, mode)
   const folded = !expanded && rungs.length > LADDER_MAX_RUNGS
   // Two rungs at each end when folded: one end alone reads as a truncation, two reads as a

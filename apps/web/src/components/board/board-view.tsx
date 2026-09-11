@@ -20,9 +20,12 @@
 import { CaretDown, Star } from '@phosphor-icons/react'
 import type { BoardMode, BoardRow, StationBoard } from '@tabellone/core'
 import Link from 'next/link'
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { iconSize } from '@/components/ui/icon'
+import type { BoardFilter } from '@/lib/board-filter'
+import { chipCategories, emptyFilter, filterRows, isFilterActive } from '@/lib/board-filter'
 import { strings } from '@/strings'
+import { FilterPanel, FilterTrigger } from './board-filter'
 import { BoardRow as Row } from './board-row'
 import { BoardSkeleton } from './board-states'
 import { MarqueeText } from './marquee-text'
@@ -73,7 +76,30 @@ export function BoardView({
   headingRef,
 }: BoardViewProps) {
   const listLabel = board.mode === 'departures' ? strings.nextDepartures : strings.nextArrivals
-  const [leadRow, ...restRows] = board.rows
+
+  // Search and category, applied to the rows this poll already delivered. Never a request:
+  // the board in hand is the whole corpus.
+  const [filter, setFilter] = useState<BoardFilter>(emptyFilter)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const filtering = isFilterActive(filter)
+
+  // A filter is a statement about *this* station's board. Adjusted during render, like the
+  // swap direction below, so the first paint of the new station is already unfiltered rather
+  // than showing the previous station's constraints applied to it for one frame.
+  const seenStation = useRef(board.stationId)
+  if (seenStation.current !== board.stationId) {
+    seenStation.current = board.stationId
+    setFilter(emptyFilter)
+    setFilterOpen(false)
+  }
+
+  const visibleRows = useMemo(() => filterRows(board.rows, filter), [board.rows, filter])
+  const chips = useMemo(
+    () => chipCategories(board.rows, filter.categories),
+    [board.rows, filter.categories],
+  )
+
+  const [leadRow, ...restRows] = visibleRows
   const soonRows = restRows.slice(0, SOON_ROW_COUNT)
   const laterRows = restRows.slice(SOON_ROW_COUNT)
 
@@ -82,6 +108,26 @@ export function BoardView({
   // animates it as such.
   const soonEntries = useDepartingRows(soonRows, rowKey)
   const laterEntries = useDepartingRows(laterRows, rowKey)
+
+  // While a filter is on, the hold is bypassed. A row leaving the list because the reader
+  // typed a letter has not departed, and `useDepartingRows` would keep it on screen for the
+  // length of an exit animation whose meaning is "this train is gone" — the wrong sentence,
+  // 380ms late. The hook still runs (its state has to stay level with the rows), its output
+  // is simply not what the filtered board renders.
+  const held = (entries: typeof soonEntries, rows: BoardRow[]) =>
+    filtering ? rows.map((row) => ({ key: rowKey(row), row, phase: 'idle' as const })) : entries
+  const soonList = held(soonEntries, soonRows)
+  const laterList = held(laterEntries, laterRows)
+
+  // Nothing to narrow: a board still loading, or a station with no train on it at all. The
+  // control is withheld rather than disabled — a search box over an empty board is an offer
+  // of something that cannot happen.
+  const filterable = !pending && board.rows.length > 0
+  // Only while the panel is closed: with it open the reader is looking at the constraints
+  // themselves, and a badge counting what is on screen says nothing.
+  const activeConstraints = filterOpen
+    ? 0
+    : (filter.query.trim() === '' ? 0 : 1) + filter.categories.length
 
   // Only the star pops, and only on off→on: gaining a favourite is the event worth
   // confirming, losing one is not.
@@ -163,16 +209,36 @@ export function BoardView({
     </section>
   )
 
-  const empty = board.rows.length === 0 && (
+  const emptyState = (title: string, hint: string, action?: React.ReactNode) => (
     <section className="flex flex-col gap-3 border-line border-y py-16">
       <span
         className="type-primary-wide type-wide uppercase"
         style={{ fontWeight: 'var(--weight-max)', letterSpacing: '0.03em' }}
       >
-        {strings.emptyBoard}
+        {title}
       </span>
-      <p className="m-0 max-w-[46ch] text-text-secondary type-reading">{strings.emptyBoardHint}</p>
+      <p className="m-0 max-w-[46ch] text-text-secondary type-reading">{hint}</p>
+      {action}
     </section>
+  )
+
+  // The two emptinesses are different sentences and must not share a screen. No train at all
+  // is a normal state of a station at night (ARCHITECTURE 2.2) and there is nothing to do
+  // about it; no train *matching* is a state the reader created and can undo, so it says so
+  // and carries the way back.
+  const empty = emptyState(strings.emptyBoard, strings.emptyBoardHint)
+  const noMatch = emptyState(
+    strings.filterNoMatch,
+    strings.filterNoMatchHint,
+    <div className="flex">
+      <button
+        type="button"
+        onClick={() => setFilter(emptyFilter)}
+        className={`inline-flex cursor-pointer items-center border border-line-strong bg-transparent px-4 py-2 text-text-primary type-secondary uppercase tracking-(--track-label) min-h-(--touch-min) ${pressScale}`}
+      >
+        {strings.filterClear}
+      </button>
+    </div>,
   )
 
   return (
@@ -216,8 +282,32 @@ export function BoardView({
       {/* The reading strip: which board, and how fresh it is. */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-line border-b py-3">
         <ModeToggle mode={board.mode} onChange={onSwitchMode} />
-        {freshness}
+        <div className="flex items-center gap-3">
+          {freshness}
+          {filterable && (
+            <FilterTrigger
+              open={filterOpen}
+              activeCount={activeConstraints}
+              onToggle={() => setFilterOpen((value) => !value)}
+            />
+          )}
+        </div>
       </div>
+
+      {/* Outside the mode-keyed pane below: the filter is the reader's, not the board's, and
+          a swap animation replaying on the field they are typing into would be the board
+          taking the control away from them. */}
+      {filterable && filterOpen && (
+        <FilterPanel
+          filter={filter}
+          categories={chips}
+          active={filtering}
+          matchCount={visibleRows.length}
+          totalCount={board.rows.length}
+          onChange={setFilter}
+          onClose={() => setFilterOpen(false)}
+        />
+      )}
 
       {/* One pane per mode. The key remounts it on the switch, which is what makes the
           `both`-filled swap keyframe play; the class decides which side it comes from. */}
@@ -229,6 +319,8 @@ export function BoardView({
           </div>
         ) : board.rows.length === 0 ? (
           <div className="pt-6">{empty}</div>
+        ) : visibleRows.length === 0 ? (
+          <div className="pt-6">{noMatch}</div>
         ) : (
           <>
             {leadRow && (
@@ -239,19 +331,28 @@ export function BoardView({
                 row={leadRow}
                 mode={board.mode}
                 originName={board.stationName}
+                stationSlug={board.stationId}
                 variant="lead"
               />
             )}
 
             {soonRows.length > 0 && (
               <section className="flex flex-col">
-                <ListHead label={listLabel} count={strings.listCount(board.rows.length)} />
-                {soonEntries.map((entry, index) => (
+                <ListHead
+                  label={listLabel}
+                  count={
+                    filtering
+                      ? strings.filterCount(visibleRows.length, board.rows.length)
+                      : strings.listCount(board.rows.length)
+                  }
+                />
+                {soonList.map((entry, index) => (
                   <Row
                     key={entry.key}
                     row={entry.row}
                     mode={board.mode}
                     originName={board.stationName}
+                    stationSlug={board.stationId}
                     motion={{
                       index,
                       exitClass: entry.phase === 'leaving' ? rowExitClass(entry.row) : undefined,
@@ -264,12 +365,13 @@ export function BoardView({
             {laterRows.length > 0 && (
               <section className="flex flex-col">
                 <ListHead label={strings.later} />
-                {laterEntries.map((entry, index) => (
+                {laterList.map((entry, index) => (
                   <Row
                     key={entry.key}
                     row={entry.row}
                     mode={board.mode}
                     originName={board.stationName}
+                    stationSlug={board.stationId}
                     motion={{
                       index,
                       exitClass: entry.phase === 'leaving' ? rowExitClass(entry.row) : undefined,

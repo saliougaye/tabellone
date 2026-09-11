@@ -32,6 +32,9 @@ multiple sources.**
 - Per-station arrivals and departures board, updated in real time
 - Station search, favourite stations, nearest station
 - Next stops for a selected train, shown in a detail panel
+- Search and category filter **within** a board already fetched — client-side over the rows
+  the poll delivered, so it adds no request towards RFI (7). A filter finding nothing is a
+  state of its own, never the empty board of 2.2.
 - Shareable deep link per station
 
 ### Explicitly out of scope (v1)
@@ -211,6 +214,14 @@ unrecognised resolves to `departures` rather than 404, because a mangled shared 
 still show a board) and their `generateMetadata` sets `canonical` to the matching path route.
 The app's own links (mode toggle, station picker) always point at the path routes.
 
+One train has a page of its own under the board it is on: `/stazioni/:slug/partenze/:trainNumber`
+and `/stazioni/:slug/arrivi/:trainNumber` (ADR-012). It is a **second reader of the board**, not
+a second source — same React Query entry, same 20 s poll, no endpoint of its own and none
+possible, since RFI publishes station boards and not trains. The URL carries the train number
+because that is what is printed on the row and on the ticket; the number is not unique (a board
+spanning midnight carries it twice) and the page resolves it to the first, soonest match. These
+pages are `noindex, follow`: a board URL is permanent, a train URL is true for an hour.
+
 UI structure (all of it presentational; fetching and polling live in the two `*Screen`
 components):
 
@@ -219,6 +230,7 @@ components/shell     AppHeader (sticky, 64px) + Wordmark — the persistent app 
 components/board     BoardScreen → BoardView → BoardRow (variants: lead | row)
                      parts.tsx (ServiceMark, PlatformBox, ModeToggle, RouteLadder, …)
                      brand-logos.tsx (committed inline SVG service marks)
+components/train     TrainScreen → TrainView (one train, read out of the board's own cache)
 components/picker    PickerScreen → StationPicker, StationSheet (the same picker in a sheet)
 components/ui        BottomSheet, SkeletonBlock, icon.tsx (the one icon family)
 ```
@@ -485,6 +497,8 @@ lives in the files, and nowhere else.
 | [008](adrs/008-operator-category-status-from-attributes.md) | Operator, category and status come from attributes, with unknown-value logging |
 | [009](adrs/009-italian-only-in-v1.md) | Italian as the only language in v1 |
 | [010](adrs/010-view-query-param-instead-of-arrivals-route.md) | The mode is a query param on one page, not a second route |
+| [011](adrs/011-path-routes-for-board-mode-seo.md) | Canonical path routes for board mode, under `/stazioni` |
+| [012](adrs/012-train-detail-derives-from-the-board.md) | The train detail page derives from the board, and is not indexed |
 
 New ADRs are numbered by scanning `adrs/` for the highest number and incrementing. Three
 gates, all required: hard to reverse, surprising without context, the result of a real

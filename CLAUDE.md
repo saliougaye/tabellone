@@ -19,7 +19,15 @@ honest, not a stub 200, and this route does not need to change again once `fetch
 `parser` land. Local Redis: `pnpm redis` (docker compose, no volume, flush-safe).
 `apps/web` has the real UI: a persistent app shell (`components/shell`), presentational
 components (`src/components`), live pages that poll the real API and honestly render the
-failed-read state, and favourites/recents in `localStorage`. The dev-only scenario gallery
+failed-read state, and favourites/recents in `localStorage`. The board also carries a
+collapsible search-and-filter band (`components/board/board-filter.tsx`, pure matching in
+`lib/board-filter.ts`): it narrows the rows the poll already delivered — no request, no
+RFI traffic — and a filter matching nothing renders as its own state, never as the empty
+board of a quiet night. One train also has a page of its own nested under the board
+(`/stazioni/:slug/partenze/:trainNumber`, `components/train`, ADR-012): a second reader of
+the board's React Query entry, not a second fetch — there is no per-train endpoint and RFI
+has no per-train source. Its ladder never folds, it is `noindex`, and it has one state the
+board does not (the train left). The dev-only scenario gallery
 at `/dev/scenari` and its fixtures are gone. The station catalogue holds 2435 real stations
 with real `rfiPlaceId`s, 3 of them flagged `isMajor`; slugs are final (ADR-007).
 The UI went through three design passes in August 2026. The first: `theme.css` §6 (motion)

@@ -83,6 +83,11 @@ export type BoardRow = {
 }
 
 export type StationBoard = {
+  /**
+   * The station's **slug**, not RFI's place id (`store.ts` writes it that way): the public
+   * identifier, safe to put in a URL, which is exactly what the UI does with it when it
+   * builds a train's own page from a board (ADR-007, ADR-012).
+   */
   stationId: string
   stationName: string
   mode: BoardMode
