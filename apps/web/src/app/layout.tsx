@@ -1,6 +1,6 @@
 import { SerwistProvider } from '@serwist/turbopack/react'
 import type { Metadata, Viewport } from 'next'
-import { JetBrains_Mono, Saira } from 'next/font/google'
+import { Figtree } from 'next/font/google'
 import type { ReactNode } from 'react'
 import { IconProvider } from '@/components/ui/icon'
 import { QueryProvider } from '@/lib/query-provider'
@@ -10,34 +10,12 @@ import './globals.css'
 import { Analytics } from '@vercel/analytics/next'
 
 /**
- * Two families, two jobs (theme.css §1).
- *
- * Saira is the signage face: a neo-grotesque with squared-off terminals and a real width
- * axis (wdth 50–125), which is the reason it is here rather than any other grotesk — a
- * station name can be set genuinely expanded instead of being faked with letter-spacing on
- * a normal-width font. That is what makes a plate read as signage. Its narrow apertures and
- * flat joins are the drawing an enamel platform sign has, where Archivo's rounder,
- * bookish grotesque was closer to a UI face.
- *
- * JetBrains Mono carries every number on the board: times, delays, platforms, train
- * numbers, counts. A departure board is a table of figures that change while you read them,
- * and a proportional face makes a digit move its neighbours when it changes. Mono plus the
- * tabular-figure declarations in §3 means a column of times is a column, not an argument.
- * Its dotted zero is the second reason: on a board, 0 and O sit in the same string
- * (platform 0, train CB710) and must never be the same shape.
+ * One family: Figtree, a friendly geometric sans with tabular figures (the fifth pass's
+ * choice over the system face — a consumer app, not a settings screen). Variable weight,
+ * so heavy display and regular body come from one file. Figures are tabular through
+ * font-variant-numeric; theme.css reads it as --font-figtree.
  */
-const saira = Saira({
-  subsets: ['latin'],
-  axes: ['wdth'],
-  variable: '--font-saira',
-  display: 'swap',
-})
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  variable: '--font-jetbrains-mono',
-  display: 'swap',
-})
+const figtree = Figtree({ subsets: ['latin'], variable: '--font-figtree', display: 'swap' })
 
 const description = 'Arrivi e partenze in tempo reale per le stazioni italiane'
 
@@ -75,24 +53,20 @@ export const viewport: Viewport = {
   // sits above. These two and manifest.ts's pair are the only places in the app where a
   // token is duplicated as a literal. Change one, change all three.
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f2f4f6' },
-    { media: '(prefers-color-scheme: dark)', color: '#080a0d' },
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#131c18' },
   ],
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="it" className={`${saira.variable} ${jetbrainsMono.variable}`}>
+    <html lang="it" className={figtree.variable}>
       <body>
-        {/* data-vaul-drawer-wrapper: what the bottom sheet scales down behind itself
-            (`shouldScaleBackground`), the way a phone sheet pushes the screen back. */}
-        <div data-vaul-drawer-wrapper className="bg-surface">
-          <SerwistProvider swUrl="/serwist/sw.js">
-            <QueryProvider>
-              <IconProvider>{children}</IconProvider>
-            </QueryProvider>
-          </SerwistProvider>
-        </div>
+        <SerwistProvider swUrl="/serwist/sw.js">
+          <QueryProvider>
+            <IconProvider>{children}</IconProvider>
+          </QueryProvider>
+        </SerwistProvider>
         <Analytics />
       </body>
     </html>

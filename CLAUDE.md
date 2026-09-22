@@ -17,52 +17,54 @@ and today always ends by catching `fetchBoard`'s `NotImplementedError` and answe
 **503** (the same "RFI unreachable, nothing cached" slot the contract already reserved) —
 honest, not a stub 200, and this route does not need to change again once `fetcher` and
 `parser` land. Local Redis: `pnpm redis` (docker compose, no volume, flush-safe).
-`apps/web` has the real UI: a persistent app shell (`components/shell`), presentational
-components (`src/components`), live pages that poll the real API and honestly render the
-failed-read state, and favourites/recents in `localStorage`. The board also carries a
-collapsible search-and-filter band (`components/board/board-filter.tsx`, pure matching in
-`lib/board-filter.ts`): it narrows the rows the poll already delivered — no request, no
-RFI traffic — and a filter matching nothing renders as its own state, never as the empty
-board of a quiet night. One train also has a page of its own nested under the board
-(`/stazioni/:slug/partenze/:trainNumber`, `components/train`, ADR-012): a second reader of
-the board's React Query entry, not a second fetch — there is no per-train endpoint and RFI
-has no per-train source. Its ladder never folds, it is `noindex`, and it has one state the
-board does not (the train left). The dev-only scenario gallery
-at `/dev/scenari` and its fixtures are gone. The station catalogue holds 2435 real stations
-with real `rfiPlaceId`s, 3 of them flagged `isMajor`; slugs are final (ADR-007).
-The UI went through three design passes in August 2026. The first: `theme.css` §6 (motion)
-re-authored rather than ported, the four row components collapsed into one `BoardRow` with
-two variants, the 600px markup fork removed, every non-brand icon moved to Phosphor
-(`components/ui/icon.tsx`). The second, the **signage pass**, committed the whole UI to the
-language of a station board — read `theme.css` §0 and the CORNERS block before touching any
-of it:
-- **Two families.** `type-figures` is the utility that makes a value mono; `type-plate` is
-  the station name and nothing else. The faces themselves changed in the sodium pass below.
-- **Rules, not cards.** A row is a band with one `border-b`. No radius anywhere except the
-  operator tile's 3px badge, which is a mark and not a surface. `--corner-*` are all 0.
-- The board is one full-width column of bands, not a two-column dashboard.
+`apps/web` has the real UI, in its **sixth design pass (September 2026)**, laid over the
+fifth, **"Carta"**, and the fourth, **"Rotta"**. Rotta drew the board: a stack of flight
+cards — the brand's own logo, a status pill, the route drawn large (where and when it
+leaves · a dashed line with the train and the journey time · where and when it arrives),
+the platform and a countdown — with the next train as a bigger hero card and the rest
+grouped by how soon (within half an hour, within the hour, later, cancelled). Carta set it
+on paper (white ground, white cards told apart by a hairline, the green accent only where
+it means something) in **Figtree**. The sixth pass took every picture out (the city photos
+of the fifth were tried and dropped; there is no image anywhere in the UI now) and gave
+the station its **head**: the city and a labelled **"Segui" / "Seguita"** pill on the first
+row, the station name on the second as the **switcher** (a link home with a chevron in a
+disc). The home is **"Vetrina"** without pictures: greeting and question, the search, one
+chip that narrows to the favourites, one even grid of station cards (favourites, recents,
+majors, told apart by a tag). The catalogue carries `city` for the ~100 biggest stations
+(103 as of September 2026), shown as the head's first line; the rest have `city: ""`.
+Search and filters narrow the board in hand
+(`lib/board-filter.ts` for text, plus operator and train-type toggles in a sheet that
+carries the operators' logos); tapping a card opens the train's sheet (bottom on phones,
+centred dialog from 640px); the train's own page (`/stazioni/:slug/partenze/:trainNumber`,
+ADR-012) is the same card and rail, full page. Favourites and recents in `localStorage`;
+the home redirects once per session to the last board (`lib/last-station.ts`).
 
-The third pass, the **sodium pass**, changed what the signage is made of, not what it is.
-`theme.css` §0 and §5 are the authority; both document their own reasoning:
-- **Saira** (variable, `wdth` 50–125) is the display face and **JetBrains Mono** carries
-  every figure. Both replaced in this pass; the width axis is what `type-plate` needs and
-  the dotted zero is what a column holding both `0` and `O` needs. The OG-card renderer
-  fetches Saira from Google Fonts at render time and the repo carries no font binaries at
-  all — `board-og-image.tsx` says why, and why its User-Agent is load-bearing.
-- **Both palettes re-pitched again** and re-verified value by value, in gamut as written:
-  the neutral hue moved from warm 95 to graphite 258, and the accent moved from the mark's
-  teal to **sodium amber**, which freed teal for ON TIME. Six state hues, spaced so no two a
-  traveller must tell apart sit near each other; BUS moved to 305 because the warm end of
-  the wheel is now spoken for. Operator and brand-logo colours are brand and did not move.
-  Ratio comments in §5 are current and were computed, not estimated.
-- **The service mark is amber**, so every committed icon asset was re-inked to match:
-  `favicon.svg`, `favicon.ico`, the six PNGs and `og-image.png`. The one fixed hex is
-  `#df870a` (mask-icon, raster icons), sitting between the two halves of `--brand-mark`.
-- **Stops are a ladder, not a strip.** `RouteLadder` replaced both `RouteStrip` (the
-  horizontal rail of three-letter siglas) and `StopsDetail` (the wrapping name/time run).
-  One rung per stop, times in a mono column on the right, first rung is always the departure
-  and last always the arrival in either mode, `here` marks this station, and past
-  `LADDER_MAX_RUNGS` the middle folds into one tappable rung. `stopSigla` is gone with it.
+The design system is `app/theme.css`, read its header before touching it:
+- **Materials.** No images. White ground, white cards at 16px with a 1px hairline and a whisper of
+  shadow, 1px borders on controls, Figtree (`next/font`, `--font-figtree`) at heavy weights
+  with tight tracking, tabular figures through `font-variant-numeric`. Everything is
+  `light-dark()`; the system decides, no `data-theme`. The dark half keeps Rotta's grouped
+  dark green ground. Light is the face the app is judged by.
+- **Colour.** Neutrals `--bg / --card / --fg / --muted / --muted-fg / --border`; one accent
+  pair `--p / --pf` (green) read through `--primary / --primary-fg`, which is what the
+  platform block, "in partenza", the countdown, the route dots and the primary button
+  share; four state colours; brand and operator colours are brand and did not move.
+  `lib/presentation.ts` and `components/board/brand-logos.tsx` resolve against the
+  `--state-*`, `--identity-*` and `--brand-*` names the theme keeps.
+- **Vocabulary.** Component classes keep the shadcn names they were written in (`sh-btn`,
+  `sh-input`, `sh-tabs`, `sh-badge`, `sh-card`, `sh-alert`, `sh-sheet`, `sh-toggle`) plus
+  the flight card (`fl-card`, `fl-route`, `fl-pill`), the station head (`sh-head`,
+  `sh-switch`, `sh-follow`) and the home (`sh-chips`, `sh-grid`, `sh-tile`). Tailwind stays only for preflight and `sr-only`. The theme file is
+  layered in the order the passes happened; the last block on a token wins — the Carta
+  block at the end of the file is the last word on the neutrals, the accent and `--sans`.
+- **Motion.** Cards and station cards rise 10px and fade in on mount, staggered 40ms by position
+  (capped at 8) via `@starting-style`; the sheet rises, the veil fades; press feedback is
+  `scale(0.96)` at 90ms; nothing moves under `prefers-reduced-motion`.
+
+The earlier passes (signage, sodium, and the token-level redesigns before them) are gone
+from the tree; the brand logos (`brand-logos.tsx`, its README) and the pure
+presentation helpers survived them all. The station catalogue holds 2435 real stations
+with real `rfiPlaceId`s, 3 of them flagged `isMajor`; slugs are final (ADR-007).
 
 Everything below about fetching and parsing is still the design contract to build against.
 

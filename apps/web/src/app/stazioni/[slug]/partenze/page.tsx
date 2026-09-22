@@ -37,7 +37,12 @@ export default async function DeparturesPage({ params }: Props) {
   return (
     <>
       {station && <StationJsonLd station={station} mode="departures" />}
-      <BoardScreen slug={slug} initialMode="departures" catalogName={station?.name} />
+      <BoardScreen
+        slug={slug}
+        initialMode="departures"
+        catalogName={station?.name}
+        city={station?.city}
+      />
     </>
   )
 }

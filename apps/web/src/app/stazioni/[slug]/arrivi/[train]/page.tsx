@@ -23,5 +23,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ArrivingTrainPage({ params }: Props) {
   const { slug, train } = await params
   const station = findStationBySlug(slug)
-  return <TrainScreen slug={slug} mode="arrivals" trainNumber={train} catalogName={station?.name} />
+  return (
+    <TrainScreen
+      slug={slug}
+      mode="arrivals"
+      trainNumber={train}
+      catalogName={station?.name}
+      city={station?.city}
+    />
+  )
 }

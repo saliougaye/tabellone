@@ -270,7 +270,7 @@
     "rfiPlaceId": "384",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Agrigento",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -578,7 +578,7 @@
     "rfiPlaceId": "193",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Alessandria",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -787,7 +787,7 @@
     "rfiPlaceId": "429",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Ancona",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -974,7 +974,7 @@
     "rfiPlaceId": "442",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Aosta",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -1194,7 +1194,7 @@
     "rfiPlaceId": "458",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Arezzo",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -1414,7 +1414,7 @@
     "rfiPlaceId": "475",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Asti",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -1458,7 +1458,7 @@
     "rfiPlaceId": "483",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Avellino",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -1865,7 +1865,7 @@
     "rfiPlaceId": "595",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Bari",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -2250,7 +2250,7 @@
     "rfiPlaceId": "625",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Belluno",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -2283,7 +2283,7 @@
     "rfiPlaceId": "626",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Benevento",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -2349,7 +2349,7 @@
     "rfiPlaceId": "632",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Bergamo",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -2514,7 +2514,7 @@
     "rfiPlaceId": "649",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Biella",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -2657,7 +2657,7 @@
     "rfiPlaceId": "683",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Bologna",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -2723,7 +2723,7 @@
     "rfiPlaceId": "685",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Bolzano",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -3328,7 +3328,7 @@
     "rfiPlaceId": "734",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Brescia",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -3757,7 +3757,7 @@
     "rfiPlaceId": "787",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Cagliari",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -4175,7 +4175,7 @@
     "rfiPlaceId": "827",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Campobasso",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -5000,7 +5000,7 @@
     "rfiPlaceId": "915",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Carrara",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -5209,7 +5209,7 @@
     "rfiPlaceId": "945",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Caserta",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -5935,7 +5935,7 @@
     "rfiPlaceId": "1032",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Catania",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -5957,7 +5957,7 @@
     "rfiPlaceId": "40",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Catanzaro",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -6573,7 +6573,7 @@
     "rfiPlaceId": "1091",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Chieti",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -7233,7 +7233,7 @@
     "rfiPlaceId": "1158",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Como",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -7497,7 +7497,7 @@
     "rfiPlaceId": "50",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Cosenza",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -7607,7 +7607,7 @@
     "rfiPlaceId": "1202",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Cremona",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -7673,7 +7673,7 @@
     "rfiPlaceId": "52",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Crotone",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -7706,7 +7706,7 @@
     "rfiPlaceId": "1211",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Cuneo",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -8586,7 +8586,7 @@
     "rfiPlaceId": "1309",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Ferrara",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -8740,7 +8740,7 @@
     "rfiPlaceId": "1312",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Firenze",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -8762,7 +8762,7 @@
     "rfiPlaceId": "1315",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Firenze",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -8784,7 +8784,7 @@
     "rfiPlaceId": "1325",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Firenze",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -8872,7 +8872,7 @@
     "rfiPlaceId": "1327",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Fiumicino",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -8905,7 +8905,7 @@
     "rfiPlaceId": "1334",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Foggia",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -9367,7 +9367,7 @@
     "rfiPlaceId": "1377",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Frosinone",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -9785,7 +9785,7 @@
     "rfiPlaceId": "245",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Genova",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -9851,7 +9851,7 @@
     "rfiPlaceId": "257",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Genova",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -10280,7 +10280,7 @@
     "rfiPlaceId": "1446",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Gorizia",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -10467,7 +10467,7 @@
     "rfiPlaceId": "1468",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Grosseto",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -10676,7 +10676,7 @@
     "rfiPlaceId": "4501",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Imperia",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -10742,7 +10742,7 @@
     "rfiPlaceId": "1497",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Isernia",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -10885,7 +10885,7 @@
     "rfiPlaceId": "1510",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "L'Aquila",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -11006,7 +11006,7 @@
     "rfiPlaceId": "275",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "La Spezia",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -11127,7 +11127,7 @@
     "rfiPlaceId": "75",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Lamezia Terme",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -11270,7 +11270,7 @@
     "rfiPlaceId": "1539",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Latina",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -11369,7 +11369,7 @@
     "rfiPlaceId": "1549",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Lecce",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -11380,7 +11380,7 @@
     "rfiPlaceId": "1550",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Lecco",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -11677,7 +11677,7 @@
     "rfiPlaceId": "1582",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Livorno",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -11842,7 +11842,7 @@
     "rfiPlaceId": "1591",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Lucca",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -12216,7 +12216,7 @@
     "rfiPlaceId": "1639",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Mantova",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -12590,7 +12590,7 @@
     "rfiPlaceId": "1670",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Massa",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -12898,7 +12898,7 @@
     "rfiPlaceId": "1700",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Messina",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -13063,7 +13063,7 @@
     "rfiPlaceId": "1715",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Milano",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -13129,7 +13129,7 @@
     "rfiPlaceId": "1720",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Milano",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -13360,7 +13360,7 @@
     "rfiPlaceId": "1747",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Modena",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -14240,7 +14240,7 @@
     "rfiPlaceId": "1841",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Monza",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -14537,7 +14537,7 @@
     "rfiPlaceId": "4020",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Napoli",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -14977,7 +14977,7 @@
     "rfiPlaceId": "1917",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Novara",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -15120,7 +15120,7 @@
     "rfiPlaceId": "1931",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Olbia",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -15769,7 +15769,7 @@
     "rfiPlaceId": "2000",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Padova",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -15978,7 +15978,7 @@
     "rfiPlaceId": "2018",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Palermo",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -16286,7 +16286,7 @@
     "rfiPlaceId": "2035",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Parma",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -16374,7 +16374,7 @@
     "rfiPlaceId": "2046",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Pavia",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -16539,7 +16539,7 @@
     "rfiPlaceId": "2092",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Perugia",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -16627,7 +16627,7 @@
     "rfiPlaceId": "2096",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Pescara",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -16781,7 +16781,7 @@
     "rfiPlaceId": "2111",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Piacenza",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -17265,7 +17265,7 @@
     "rfiPlaceId": "2156",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Pisa",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -18156,7 +18156,7 @@
     "rfiPlaceId": "2244",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Pordenone",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -18365,7 +18365,7 @@
     "rfiPlaceId": "2266",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Potenza",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -18915,7 +18915,7 @@
     "rfiPlaceId": "2327",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Ravenna",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -19003,7 +19003,7 @@
     "rfiPlaceId": "116",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Reggio Calabria",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -19091,7 +19091,7 @@
     "rfiPlaceId": "2331",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Reggio Emilia",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -19102,7 +19102,7 @@
     "rfiPlaceId": "4054",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Reggio Emilia",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -19245,7 +19245,7 @@
     "rfiPlaceId": "2352",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Rieti",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -19300,7 +19300,7 @@
     "rfiPlaceId": "2358",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Rimini",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -19806,7 +19806,7 @@
     "rfiPlaceId": "2379",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Roma",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -19861,7 +19861,7 @@
     "rfiPlaceId": "2385",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Roma",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -20202,7 +20202,7 @@
     "rfiPlaceId": "2445",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Rovigo",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -21775,7 +21775,7 @@
     "rfiPlaceId": "2617",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Salerno",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -22248,7 +22248,7 @@
     "rfiPlaceId": "2658",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Sassari",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -22325,7 +22325,7 @@
     "rfiPlaceId": "323",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Savona",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -22930,7 +22930,7 @@
     "rfiPlaceId": "2730",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Siena",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -23062,7 +23062,7 @@
     "rfiPlaceId": "2742",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Siracusa",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -23216,7 +23216,7 @@
     "rfiPlaceId": "2760",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Sondrio",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -23777,7 +23777,7 @@
     "rfiPlaceId": "2811",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Taranto",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -23920,7 +23920,7 @@
     "rfiPlaceId": "2827",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Teramo",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -23997,7 +23997,7 @@
     "rfiPlaceId": "2834",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Terni",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -24316,7 +24316,7 @@
     "rfiPlaceId": "2876",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Torino",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -24327,7 +24327,7 @@
     "rfiPlaceId": "3163",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Torino",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -24635,7 +24635,7 @@
     "rfiPlaceId": "2903",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Trapani",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -24778,7 +24778,7 @@
     "rfiPlaceId": "2912",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Trento",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -24888,7 +24888,7 @@
     "rfiPlaceId": "2922",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Treviso",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -24932,7 +24932,7 @@
     "rfiPlaceId": "2925",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Trieste",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -25075,7 +25075,7 @@
     "rfiPlaceId": "2956",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Udine",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -25449,7 +25449,7 @@
     "rfiPlaceId": "2994",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Varese",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -25548,7 +25548,7 @@
     "rfiPlaceId": "3002",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Venezia",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -25603,7 +25603,7 @@
     "rfiPlaceId": "3009",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Venezia",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -25658,7 +25658,7 @@
     "rfiPlaceId": "3014",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Vercelli",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -25779,7 +25779,7 @@
     "rfiPlaceId": "3025",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Verona",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -25911,7 +25911,7 @@
     "rfiPlaceId": "3043",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Vicenza",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },
@@ -26604,7 +26604,7 @@
     "rfiPlaceId": "3116",
     "lat": 0,
     "lon": 0,
-    "city": "",
+    "city": "Viterbo",
     "isMajor": false,
     "checkedAt": "2026-08-18"
   },

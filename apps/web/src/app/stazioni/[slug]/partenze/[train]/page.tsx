@@ -24,6 +24,12 @@ export default async function DepartingTrainPage({ params }: Props) {
   const { slug, train } = await params
   const station = findStationBySlug(slug)
   return (
-    <TrainScreen slug={slug} mode="departures" trainNumber={train} catalogName={station?.name} />
+    <TrainScreen
+      slug={slug}
+      mode="departures"
+      trainNumber={train}
+      catalogName={station?.name}
+      city={station?.city}
+    />
   )
 }

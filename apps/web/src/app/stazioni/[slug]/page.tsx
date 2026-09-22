@@ -37,11 +37,13 @@ export default async function BoardPage({ params, searchParams }: Props) {
   const { view } = await searchParams
   // The catalogue is imported at build time, so the real station name is free here — the
   // screen never has to fall back to the raw slug while the first board is in flight.
+  const station = findStationBySlug(slug)
   return (
     <BoardScreen
       slug={slug}
       initialMode={resolveMode(view)}
-      catalogName={findStationBySlug(slug)?.name}
+      catalogName={station?.name}
+      city={station?.city}
     />
   )
 }

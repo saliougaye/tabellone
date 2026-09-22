@@ -1,86 +1,79 @@
 'use client'
 
 /**
- * Live wiring of the train page. It subscribes to **the board's** query — same key, same
- * 20 s poll, same hidden-suspension (ADR-006) — and picks one row out of it (ADR-012).
- * Arriving from the board that row is already in the cache, so the page paints with no
- * request at all; arriving cold, it triggers exactly the read the board route would have
- * made. There is no per-train fetch anywhere, and there must not be one: RFI has no
- * per-train source.
- *
- * The states are the board's, read in the same order and for the same reasons — offline
- * before loading, because React Query pauses rather than fails while the browser reports no
- * connection — plus one of its own: the board is here and the train is not (`TrainGone`).
+ * One train's own page (ADR-012): a second reader of the board's React Query entry, never a
+ * second fetch. The station banner, the train as a hero flight card, its stops as a rail,
+ * and the way back to the board. One state the board does not have: the train has left.
  */
+import { ArrowLeft } from '@phosphor-icons/react'
 import type { BoardMode } from '@tabellone/core'
-import { useEffect, useRef } from 'react'
-import { BoardError, BoardLoading, BoardOffline } from '@/components/board/board-states'
-import { AppHeader } from '@/components/shell/app-header'
+import Link from 'next/link'
 import { canonicalBoardPath } from '@/lib/board-routes'
-import { recordLastStation } from '@/lib/last-station'
+import { useNow } from '@/lib/format'
 import { findRowByTrainNumber } from '@/lib/train-routes'
 import { useBoard } from '@/lib/use-board'
-import { useOnline } from '@/lib/use-online'
-import { useScrolledPast } from '@/lib/use-scrolled-past'
-import { TrainGone } from './train-states'
-import { TrainView } from './train-view'
+import { strings } from '@/strings'
+import { FlightCard, Message } from '../board/parts'
+import { StationBanner } from '../board/station-banner'
+import { StopsRail } from '../board/train-sheet'
 
 export function TrainScreen({
   slug,
   mode,
   trainNumber,
   catalogName,
+  city,
 }: {
   slug: string
   mode: BoardMode
   trainNumber: string
   catalogName?: string
+  city?: string
 }) {
-  const { board, error, loading, refresh } = useBoard(slug, mode)
-  const online = useOnline()
-
-  const heading = useRef<HTMLDivElement>(null)
-  const headingGone = useScrolledPast(heading)
-
+  const { board, loading, error, refresh } = useBoard(slug, mode)
+  const now = useNow(30_000)
+  const stationName = board?.stationName ?? catalogName ?? slug
   const row = board ? findRowByTrainNumber(board.rows, trainNumber) : null
-  const stationName = board?.stationName ?? catalogName
-  const boardPath = canonicalBoardPath(slug, mode)
-
-  // Leaving from a train page, the session's last station is still this station's board:
-  // that is what "take me back where I was" means here too.
-  useEffect(() => {
-    recordLastStation(slug, mode)
-  }, [slug, mode])
-
-  const content =
-    board && row ? (
-      <TrainView
-        board={error || !online ? { ...board, isStale: true } : board}
-        row={row}
-        now={new Date()}
-        headingRef={heading}
-      />
-    ) : !online ? (
-      <BoardOffline stationLabel={stationName} onRetry={refresh} />
-    ) : loading ? (
-      <BoardLoading stationLabel={stationName} />
-    ) : board ? (
-      <TrainGone trainNumber={trainNumber} stationLabel={stationName} boardPath={boardPath} />
-    ) : (
-      <BoardError stationLabel={stationName} onRetry={refresh} />
-    )
+  const back = canonicalBoardPath(slug, mode)
 
   return (
-    <>
-      {/* The header takes over the *train*, not the station: on this page the headsign is
-          what the reader scrolled away from. */}
-      <AppHeader condensedTitle={row?.headsign} condensed={headingGone} />
-      <main
-        className="flex min-h-[calc(100dvh-4rem)] animate-screen-in flex-col"
-        style={{ padding: 'var(--sp-6) var(--screen-margin) var(--sp-20)' }}
-      >
-        {content}
-      </main>
-    </>
+    <main className="sh">
+      <div className="sh-col">
+        <StationBanner stationName={stationName} city={city} />
+        <Link href={back} className="sh-btn ghost" style={{ alignSelf: 'flex-start' }}>
+          <ArrowLeft size={16} />
+          {strings.backToBoard}
+        </Link>
+        {loading && !board && <Message title={strings.loading} />}
+        {error && !board && (
+          <Message
+            title={strings.fetchFailed}
+            hint={strings.fetchFailedHint}
+            action={{ label: strings.retry, onClick: refresh }}
+          />
+        )}
+        {board && !row && <Message title={strings.trainGone} hint={strings.trainGoneHint} />}
+        {row && (
+          <>
+            <ul className="fl-cards">
+              <FlightCard
+                row={row}
+                mode={mode}
+                now={now}
+                stationName={stationName}
+                hero
+                onOpen={() => {}}
+              />
+            </ul>
+            <section className="sh-card" style={{ padding: '8px 16px 12px' }}>
+              <h2 className="sh-sec-h" style={{ margin: '8px 0 4px' }}>
+                {mode === 'departures' ? strings.stopsAt : strings.comesFrom}
+              </h2>
+              <StopsRail row={row} mode={mode} stationName={stationName} />
+            </section>
+          </>
+        )}
+      </div>
+    </main>
   )
 }
