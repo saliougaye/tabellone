@@ -3,7 +3,7 @@
 > Project architecture document. It describes structural decisions, component boundaries
 > and the constraints to respect. Update it **before** a structural change, not after.
 
-**Status:** draft (POC) · **Last revised:** August 2026
+**Status:** draft (POC) · **Last revised:** November 2026
 
 ---
 
@@ -214,44 +214,73 @@ unrecognised resolves to `departures` rather than 404, because a mangled shared 
 still show a board) and their `generateMetadata` sets `canonical` to the matching path route.
 The app's own links (mode toggle, station picker) always point at the path routes.
 
-One train has a page of its own under the board it is on: `/stazioni/:slug/partenze/:trainNumber`
-and `/stazioni/:slug/arrivi/:trainNumber` (ADR-012). It is a **second reader of the board**, not
-a second source — same React Query entry, same 20 s poll, no endpoint of its own and none
-possible, since RFI publishes station boards and not trains. The URL carries the train number
-because that is what is printed on the row and on the ticket; the number is not unique (a board
-spanning midnight carries it twice) and the page resolves it to the first, soonest match. These
-pages are `noindex, follow`: a board URL is permanent, a train URL is true for an hour.
+One train has a URL of its own under the board it is on: `/stazioni/:slug/partenze/:trainNumber`
+and `/stazioni/:slug/arrivi/:trainNumber` (ADR-012). It renders **the board of that station and
+mode with that train's ticket sheet open** — there is no separate train screen. The open sheet
+lives in the URL: tapping a ticket pushes the train URL, Back closes the sheet, closing from the
+sheet itself goes back (or `replaceState`s to the board URL on a cold visit), and a train that is
+no longer on the board gets a small "Non è più sul tabellone" sheet. It reads the board
+it is on: same React Query entry, same 20 s poll, no endpoint of its own and none possible,
+since RFI publishes station boards and not trains. The URL carries the train number because that
+is what is printed on the row and on the ticket; the number is not unique (a board spanning
+midnight carries it twice) and the sheet resolves it to the first, soonest match. These pages
+are `noindex, follow`: a board URL is permanent, a train URL is true for an hour.
+
+**Following a train** ("Segui questo treno", November 2026) is client-side only, like favourites:
+`localStorage` holds up to five `{ slug, mode, trainNumber, scheduledAt, headsign, stationName }`
+entries (`lib/followed-trains.ts`) that drop themselves three hours after the train's time. A
+followed train carries a star on the board and is listed first under "I tuoi treni"; on the home
+it comes first under "I tuoi prossimi treni" (budget in 7.2). No notification, no account, no
+server state.
+
+**Board states** (`st-*` in the theme): the board always says whether it can be trusted — a
+live dot beside the clock (green *dal vivo*, amber *dati di N min fa*, grey *offline*), a strip
+in the sticky bar while the data is old or the device is offline (the platform tiles dim: a
+platform is what may have changed), ticket-shaped skeletons while loading, a moon card for an
+empty board (a normal night, deliberately not red), "RFI non risponde" when nothing is cached,
+and a separate "Sei offline" card when the device has no network and no data.
 
 UI structure (all of it presentational; fetching and polling live in the two `*Screen`
 components):
 
 ```
-components/shell     AppHeader (sticky, 64px) + Wordmark — the persistent app shell
-components/board     BoardScreen → BoardView → BoardRow (variants: lead | row)
-                     parts.tsx (ServiceMark, PlatformBox, ModeToggle, RouteLadder, …)
-                     brand-logos.tsx (committed inline SVG service marks)
-components/train     TrainScreen → TrainView (one train, read out of the board's own cache)
-components/picker    PickerScreen → StationPicker, StationSheet (the same picker in a sheet)
-components/ui        BottomSheet, SkeletonBlock, icon.tsx (the one icon family)
+components/board     BoardScreen → BoardHeader (station bar, search, Partenze/Arrivi tabs,
+                                   operator chips, StationSwitcher sheet)
+                                 → NoticeTickets (a strike as the first ticket + its sheet,
+                                   other notices as one quiet line)
+                                 → BoardStates (live dot, stale strip, skeleton, empty, error)
+                                 → TicketList (followed group, groups, Ticket, Stub, Flaps)
+                                   + TicketSheet (the open train, from the URL; follow, share)
+                     parts.tsx (Logo, Message), brand-logos.tsx (committed inline SVG
+                     service marks)
+components/home      HomeScreen → followed-train mini tickets + StationCard (the next three
+                                  departures of a station, live) + search + own-station pills
+components/ui        Sheet (veil + bottom sheet / centred dialog), icon.tsx (the one icon family)
 ```
 
-The visual language is station signage (the August 2026 signage pass): a plate names the
-station in expanded caps over a heavy rule, every figure is set in mono, rows are bands
-divided by 1px lines rather than cards, and nothing has a corner radius except the operator
-tile, and a train's stops are a vertical ladder with its times in a mono column rather than
-a horizontal rail of siglas. The type stack is Saira + JetBrains Mono and the single accent
-is sodium amber (the August 2026 sodium pass); `theme.css` §0 says which family carries
-which level and why, §5 the same for every colour.
+The visual language is the **seventh pass** (November 2026, "Biglietti"): every train is a
+perforated **ticket** whose stub carries the time and is coloured by who runs it
+(Trenitalia red, Italo bordeaux, Trenord green); the platform is a black split-flap tile;
+the station is a small bar over a large search field that sticks to the top while the board
+scrolls. Colour is an operator code, never decoration. `theme.css` §0 and its last block say
+which face carries which level and why.
+
+The header answers "where is my train" before "which station is this": the station name and
+the clock are one small line (tapping the name opens the *Cambia stazione* sheet, which owns
+search in the catalogue, favourites, recents and the follow toggle), the search field is the
+largest control and sticks, and Partenze/Arrivi are two equal tabs. Operator filter chips
+appear only once the board has rows. Search and chips narrow the rows already in hand
+(`lib/board-filter.ts`) and never trigger a read.
 
 One tree per screen, not one per breakpoint: the board's composition is the same at every
-width and only its grid changes. Every icon that is not a brand mark comes from Phosphor
-through `components/ui/icon.tsx` (one family, one weight, sizes named after the type level
-they sit beside); `brand-logos.tsx` is the deliberate exception, because those are real
-service marks and no library has them.
+width and only its grid changes (one ticket column on a phone, three from desktop width).
+Every icon that is not a brand mark comes from Phosphor through `components/ui/icon.tsx` (one
+family, one weight, sizes named after the type level they sit beside); `brand-logos.tsx` is
+the deliberate exception, because those are real service marks and no library has them.
 
 ### 4.2 `packages/core` — domain
 
-Four modules with a one-way dependency:
+Five modules with a one-way dependency (`notices` is a sibling of `parser`, both pure):
 
 ```
 catalog → fetcher → parser → store
@@ -262,6 +291,7 @@ catalog → fetcher → parser → store
 | `catalog` | `slug → rfiPlaceId` mapping, station metadata | Static JSON in the repo, not in Redis |
 | `fetcher` | The only function that speaks HTTP to RFI | `fetchBoard(placeId, mode): Promise<RawHtml>` |
 | `parser` | HTML → `BoardRow[]` | **Pure function**, zero I/O (see ADR-003) |
+| `notices` | Raw board notice text → `BoardNotice` | **Pure function** (ADR-013). Strike windows resolved in `Europe/Rome` with Luxon |
 | `store` | Redis reads/writes, TTL, lock, refresh-on-read | The only place that knows the key schema |
 
 > **Hard rule:** `packages/core` never imports anything from Next. No `next/headers`, no
@@ -292,8 +322,19 @@ type StationBoard = {
   generatedAt: string      // ISO 8601, when the data was read from RFI
   isStale: boolean         // served from expired cache, refresh in flight
   rows: BoardRow[]
-  notices: string[]        // board-level announcements
+  notices: BoardNotice[]   // board-level announcements, already read (ADR-013)
 }
+
+type BoardNotice =
+  | {
+      kind: 'strike'
+      from: string         // ISO 8601 with offset, Europe/Rome
+      to: string           // ISO 8601 with offset, Europe/Rome
+      national: boolean
+      who: string | null   // "Gruppo FS Italiane, Italo e Trenord"
+      text: string         // RFI's Italian text, sentence-cased, English copy dropped
+    }
+  | { kind: 'info'; text: string }
 
 type BoardRow = {
   operator: 'TRENITALIA' | 'ITALO' | 'TRENORD' | 'OTHER'
@@ -323,7 +364,7 @@ type TrainStatus =
   | 'REROUTED' | 'IMMINENT'
 ```
 
-Three non-negotiable rules:
+Four non-negotiable rules:
 
 1. **All time arithmetic happens on the server.** The client receives absolute timestamps
    and merely renders "in 7 min". No date arithmetic in the browser.
@@ -331,6 +372,12 @@ Three non-negotiable rules:
    crosses the API boundary.
 3. **`generatedAt` is always present and always truthful.** It is what lets the client
    show "data from 3 minutes ago" instead of feigning freshness.
+4. **A notice crosses the boundary read, not raw.** RFI's board notices are free uppercase
+   text, sometimes with an English copy after ` / `. The server turns a strike into
+   `{ kind: 'strike', from, to, … }` with absolute instants and anything it cannot read into
+   `{ kind: 'info', text }`; it never throws. The client only compares those instants with
+   "now" to choose a phase (announced > 24 h before, imminent < 24 h, under way, over for
+   3 h, then hidden) and formats them (ADR-013).
 
 ### 5.1 Timestamp reconstruction
 
@@ -345,6 +392,11 @@ serviceDate + HH:MM, interpreted in Europe/Rome
 At the two annual DST transitions one local hour exists twice and another does not exist
 at all: in the first case pick the earlier occurrence, in the second shift forward. These
 cases are rare and low-impact, but must be handled explicitly because they fail silently.
+
+Notices follow the same rule: a strike window ("dalle 21:00 del 20 novembre alle 20:00 del
+21 novembre") carries no year, so the year is the one that puts the start nearest to *now*
+(a window that crosses New Year's Eve ends the year after it starts), and both ends are
+resolved in `Europe/Rome` the same way as a row's time.
 
 ---
 
@@ -369,6 +421,10 @@ same.
 | No cache | 200 after the synchronous fetch |
 | RFI unreachable, old cache available | 200, `isStale: true`, old `generatedAt` |
 | RFI unreachable, no cache | 503 |
+
+`StationBoard.notices` is `BoardNotice[]` (section 5): since the November 2026 pass it is
+no longer a list of strings. Boards cached before that deploy carry the old shape for at
+most the Redis key TTL (90 s) and are re-read after it.
 
 **There is no streaming endpoint.** The client polls.
 
@@ -410,6 +466,31 @@ This is the one that matters: it protects the project's sustainability.
 
 > Without the single-flight lock, the first traffic spike produces a thundering herd. It
 > is the most important component in the system.
+
+**The home reads boards too.** Since the November 2026 pass the home shows live cards: up to
+**three** stations (first the stations of the trains the reader follows, then the nearest one
+within 30 km if the device position is granted, then favourites, then recents; the major
+stations when the reader has none), each with its next three departures. That is up to three
+boards (`departures` or `arrivals`) read from `/api/board/:slug` per home open, **once** (no polling on the home — the 20 s poll belongs to the board page), cached
+by React Query for 60 s. What it costs RFI:
+
+- Load stays proportional to **active stations**, not to reads: each read lands on the same
+  `board:{placeId}:departures` entry, behind the same lock, rate ceiling and backoff as a
+  board page. A station on the home that someone else just read is a cache hit.
+- A cold cache is the worst case: three first reads at once, each taking its own lock — three
+  RFI requests, well under the 5 req/s ceiling. A read that meets a held lock answers 503
+  while the lock holder fetches; the home retries up to 3 times at 2.5 s × n, and those
+  retries hit **our** cache, not RFI.
+- Home opens are bounded by readers, not by time: an idle tab on the home makes no further
+  request. Returning to the tab does not refetch inside the 60 s window.
+- A station card reads `departures`. A *followed train* is read from its own station and mode,
+  which is `arrivals` when that is the board the train was followed on: one read per
+  (station, mode), however many followed trains it holds, and followed trains' reads come
+  **first within the same three** — they never add a fourth. The planner is
+  `lib/home-plan.ts`.
+
+If the home is ever given polling, or more than three cards, this section has to be revised
+first.
 
 ### 7.3 Inbound protection
 
@@ -474,6 +555,9 @@ The strategy depends entirely on the parser's purity.
   milliseconds. Mandatory cases: empty station, cancelled train, partial cancellation,
   unassigned platform, three-digit delay, rerouted train, board-level notices,
   unrecognised operator.
+- **`notices`** — unit tests on the four real RFI notices below (three strikes in three
+  spellings, one works notice) plus DST (both transitions), year roll-over, invalid dates
+  and unparseable strike text, which must degrade to `info` and never throw.
 - **`store`** — integration tests against an ephemeral Redis. Verify in particular the
   lock's behaviour under concurrency and the stale-while-revalidate logic.
 - **`fetcher`** — not tested in CI (network-dependent); covered by the canary.
@@ -499,6 +583,7 @@ lives in the files, and nowhere else.
 | [010](adrs/010-view-query-param-instead-of-arrivals-route.md) | The mode is a query param on one page, not a second route |
 | [011](adrs/011-path-routes-for-board-mode-seo.md) | Canonical path routes for board mode, under `/stazioni` |
 | [012](adrs/012-train-detail-derives-from-the-board.md) | The train detail page derives from the board, and is not indexed |
+| [013](adrs/013-board-notices-are-read-on-the-server.md) | Board notices are read on the server: a strike is a window, not a string |
 
 New ADRs are numbered by scanning `adrs/` for the highest number and incrementing. Three
 gates, all required: hard to reverse, surprising without context, the result of a real

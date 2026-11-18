@@ -1,14 +1,15 @@
 /**
  * One arriving train, from the arrivals board it is on (ADR-012). Nested under the
  * canonical board route on purpose: the page reads that board's cache and makes no request
- * of its own.
+ * of its own — and is the board of that station and mode, with this train's ticket sheet open:
+ * the sheet reads the train number from the URL on the client (`useTrainSheet`).
  *
  * No `generateStaticParams`: a train number is only a valid path for as long as the train is
  * on the board, so there is nothing to prerender.
  */
 import { findStationBySlug } from '@tabellone/core'
 import type { Metadata } from 'next'
-import { TrainScreen } from '@/components/train/train-screen'
+import { BoardScreen } from '@/components/board/board-screen'
 import { trainMetadata } from '../../train-metadata'
 
 type Props = {
@@ -21,15 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ArrivingTrainPage({ params }: Props) {
-  const { slug, train } = await params
+  const { slug } = await params
   const station = findStationBySlug(slug)
-  return (
-    <TrainScreen
-      slug={slug}
-      mode="arrivals"
-      trainNumber={train}
-      catalogName={station?.name}
-      city={station?.city}
-    />
-  )
+  return <BoardScreen slug={slug} initialMode="arrivals" catalogName={station?.name} />
 }

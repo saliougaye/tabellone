@@ -101,12 +101,3 @@ export function minutesUntil(row: BoardRow, now: Date): number {
   const expected = new Date(row.scheduledTime).getTime() + (row.delayMinutes ?? 0) * 60_000
   return Math.round((expected - now.getTime()) / 60_000)
 }
-
-/** "adesso" · "tra 7 min" · "tra 1 h 12 min" — the countdown as a phrase. */
-export function countdownLabel(minutes: number): string {
-  if (minutes <= 0) return strings.now
-  if (minutes < 60) return strings.inMinutes(minutes)
-  const h = Math.floor(minutes / 60)
-  const m = minutes % 60
-  return strings.inHours(h, m)
-}

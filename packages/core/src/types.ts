@@ -97,8 +97,28 @@ export type StationBoard = {
   isStale: boolean
   rows: BoardRow[]
   /** Board-level announcements, addressed to the station rather than to one train. */
-  notices: string[]
+  notices: BoardNotice[]
 }
+
+/**
+ * A board notice, **read** (ADR-013): RFI's free uppercase text turned into something the UI can
+ * place in time. A strike is a window of two absolute instants; anything else, or a strike the
+ * reader could not make sense of, is `info` with RFI's own words. Never throws, never raw.
+ */
+export type BoardNotice =
+  | {
+      kind: 'strike'
+      /** ISO 8601 with offset, reconstructed in `Europe/Rome` (ARCHITECTURE 5.1). */
+      from: string
+      to: string
+      /** The text says "nazionale". */
+      national: boolean
+      /** Who strikes, sentence-cased: "Gruppo FS Italiane, Italo e Trenord". `null` if not said. */
+      who: string | null
+      /** RFI's Italian text, sentence-cased, English copy dropped. */
+      text: string
+    }
+  | { kind: 'info'; text: string }
 
 export type Station = {
   /** Public identifier. Immutable once published (ADR-007). */

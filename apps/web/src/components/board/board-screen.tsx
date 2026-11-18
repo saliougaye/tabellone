@@ -1,314 +1,214 @@
 'use client'
 
 /**
- * The board (ARCHITECTURE 4.1), in the Rotta pass: the station head (city, follow pill, the
- * name as the switcher), the departures/arrivals switch, search and filters over the board in hand, the next
- * train as a big flight card, then every other train as a card grouped by how soon it
- * leaves. Tapping a card opens the train's sheet. Polls `/api/board/:slug` every 20 s
+ * The board (ARCHITECTURE 4.1), seventh pass: a header that answers "where is my train" before
+ * "which station is this" (`BoardHeader`), strike notices as the first ticket, then every train
+ * as a ticket grouped by how soon it goes (`TicketList`). Polls `/api/board/:slug` every 20 s
  * through `useBoard` (ADR-006) and records the visit for the home.
  *
- * Rows are ordered by expected time, not by RFI's scheduled order: a countdown-first screen
- * must put the train that actually leaves next at the top.
+ * This component owns the data and what the header, the list and the sheet share: the search
+ * text, the operator chip, the mode, the open train and the followed trains. Search and chips
+ * narrow the rows in hand — they never trigger a read.
+ *
+ * The train page is this board with that train's sheet open (ADR-012): `useTrainSheet` reads
+ * the train number from the URL. The board's states (loading, empty, RFI down, offline, stale)
+ * are `board-states.tsx`.
  */
-import { CaretDown, Funnel, Info, MagnifyingGlass, X } from '@phosphor-icons/react'
-import type { BoardMode, Operator } from '@tabellone/core'
+import type { BoardMode, BoardRow } from '@tabellone/core'
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import {
-  type BoardFilter,
-  chipCategories,
-  emptyFilter,
-  filterRows,
-  isFilterActive,
-} from '@/lib/board-filter'
+import { useEffect, useMemo, useState } from 'react'
+import { Sheet } from '@/components/ui/sheet'
 import { canonicalBoardPath } from '@/lib/board-routes'
-import { countdownLabel, MODE_LABEL, minutesUntil, useNow } from '@/lib/format'
+import { countByOperator, type OperatorFilter } from '@/lib/board-view'
+import { followedFromRow, syncExpectedTimes, toggleFollowed } from '@/lib/followed-trains'
+import { useNow } from '@/lib/format'
 import { recordLastStation } from '@/lib/last-station'
-import { categoryLabel, freshnessLabel } from '@/lib/presentation'
+import { boardTrust } from '@/lib/presentation'
 import { isFavourite, recordVisit, toggleFavourite } from '@/lib/saved-stations'
 import { useBoard } from '@/lib/use-board'
+import { useFollowedTrains } from '@/lib/use-followed-trains'
+import { useOnline } from '@/lib/use-online'
 import { strings } from '@/strings'
-import { FiltersSheet, OPERATORS } from './filters-sheet'
-import { FlightCard, Message, rowKey } from './parts'
-import { StationBanner } from './station-banner'
-import { TrainSheet } from './train-sheet'
+import { BoardHeader } from './board-header'
+import { BoardError, BoardSkeleton, EmptyBoard } from './board-states'
+import { InfoNotices, StrikeDetail, StrikeTicket, useNotices } from './notices'
+import { rowKey } from './parts'
+import { StationSwitcher } from './station-switcher'
+import { TicketList } from './ticket-list'
+import { TicketSheet } from './ticket-sheet'
+import { useTrainSheet } from './use-train-sheet'
 
 export function BoardScreen({
   slug,
   initialMode,
   catalogName,
-  city,
 }: {
   slug: string
   initialMode: BoardMode
-  /** The station's catalogue name, free at build time, so the banner never shows a slug. */
+  /** The station's catalogue name, free at build time, so the header never shows a slug. */
   catalogName?: string
-  city?: string
 }) {
   const router = useRouter()
   const [mode, setMode] = useState<BoardMode>(initialMode)
   const { board, loading, error, refresh } = useBoard(slug, mode)
+  const online = useOnline()
   const stationName = board?.stationName ?? catalogName ?? slug
   const now = useNow(30_000)
-  const [fav, setFav] = useState(false)
-  const [filter, setFilter] = useState<BoardFilter>(emptyFilter)
-  const [operators, setOperators] = useState<Operator[]>([])
-  const [filtersOpen, setFiltersOpen] = useState(false)
-  const [open, setOpen] = useState<string | null>(null)
-  const searchRef = useRef<HTMLInputElement>(null)
+  const [favourite, setFavourite] = useState(false)
+  const [query, setQuery] = useState('')
+  const [operator, setOperator] = useState<OperatorFilter>('all')
+  const [switcher, setSwitcher] = useState(false)
+  const [strikeOpen, setStrikeOpen] = useState<string | null>(null)
 
   useEffect(() => {
     recordVisit(slug, stationName)
-    setFav(isFavourite(slug))
+    setFavourite(isFavourite(slug))
   }, [slug, stationName])
   // The mode is part of the URL (ADR-011): switching it moves to the canonical path, and the
   // home's session redirect remembers where the reader was.
   useEffect(() => {
     recordLastStation(slug, mode)
   }, [slug, mode])
-  const switchMode = (next: BoardMode) => {
+
+  const rows = useMemo(() => board?.rows ?? [], [board?.rows])
+  const sheet = useTrainSheet(slug, mode, rows, board !== null)
+
+  // A train URL belongs to its mode, so the open sheet closes first — and the navigation waits
+  // for the history to settle, or the pending `back()` would undo it.
+  const switchMode = async (next: BoardMode) => {
     if (next === mode) return
+    await sheet.close()
     setMode(next)
-    setOpen(null)
     router.replace(canonicalBoardPath(slug, next), { scroll: false })
   }
 
-  const allRows = board?.rows ?? []
-  const activeCount = filter.categories.length + operators.length
-  const filtering = isFilterActive(filter) || operators.length > 0
-  const chips = useMemo(
-    () => chipCategories(allRows, filter.categories),
-    [allRows, filter.categories],
-  )
-  const presentOperators = useMemo(() => {
-    const present = new Set([...allRows.map((r) => r.operator), ...operators])
-    return OPERATORS.filter((o) => present.has(o.id))
-  }, [allRows, operators])
-  const rows = useMemo(
-    () =>
-      filterRows(allRows, filter)
-        .filter((r) => operators.length === 0 || operators.includes(r.operator))
-        .sort((a, b) => minutesUntil(a, now) - minutesUntil(b, now)),
-    [allRows, filter, operators, now],
-  )
-  const [hero, ...rest] = rows.filter((r) => r.status !== 'CANCELLED')
-  const cancelled = rows.filter((r) => r.status === 'CANCELLED')
-  const openRow = rows.find((r) => rowKey(r) === open) ?? null
-  const toggle = <T,>(list: T[], item: T) =>
-    list.includes(item) ? list.filter((x) => x !== item) : [...list, item]
-  const reset = () => {
-    setFilter(emptyFilter)
-    setOperators([])
-  }
+  const followed = useFollowedTrains(now)
+  const followedKeys = useMemo(() => {
+    const keys = new Set<string>()
+    for (const entry of followed) {
+      if (entry.slug !== slug || entry.mode !== mode) continue
+      const row = rows.find(
+        (r) => r.trainNumber === entry.trainNumber && r.scheduledTime === entry.scheduledAt,
+      )
+      if (row) keys.add(rowKey(row))
+    }
+    return keys
+  }, [followed, rows, slug, mode])
+  // The board knows when a followed train is really due: keep it, so a late train outlives its
+  // timetable time (the follow drops itself three hours after).
+  useEffect(() => {
+    if (rows.length > 0) syncExpectedTimes(slug, mode, rows)
+  }, [slug, mode, rows])
+  const toggleFollow = (row: BoardRow) =>
+    toggleFollowed(followedFromRow(row, slug, mode, stationName))
 
-  // What follows the hero, by how soon; cancelled trains close the list.
-  const soon = rest.filter((r) => minutesUntil(r, now) <= 30)
-  const hour = rest.filter((r) => minutesUntil(r, now) > 30 && minutesUntil(r, now) <= 60)
-  const later = rest.filter((r) => minutesUntil(r, now) > 60)
-  const groups = [
-    { label: filtering ? strings.otherFound : strings.withinHalfHour, rows: soon },
-    { label: strings.withinHour, rows: hour },
-    { label: strings.later, rows: later },
-    { label: strings.cancelledTrains, rows: cancelled },
-  ].filter((g) => g.rows.length > 0)
+  const counts = useMemo(() => countByOperator(rows, now, query), [rows, now, query])
+  // A board cached before ADR-013 still carries plain strings for up to the key TTL.
+  const notices = useMemo(
+    () => (board?.notices ?? []).filter((n) => typeof n === 'object' && n !== null),
+    [board?.notices],
+  )
+  const { strikes, infos } = useNotices(notices, now)
+  const openStrike = strikes.find((placed) => placed.key === strikeOpen) ?? null
+
+  // Can the data on screen be trusted? A poll that failed while a board is in hand keeps the
+  // board and says so; with no board at all it is the loading, error or offline card.
+  const trust = boardTrust(board, { online, pollFailed: error }, now)
+  const other: BoardMode = mode === 'departures' ? 'arrivals' : 'departures'
+  const emptyBoard = board !== null && rows.length === 0
 
   return (
-    <main className="sh" data-sheet={Boolean(openRow || filtersOpen)}>
-      <div className="sh-col">
-        <StationBanner
+    <main className="sh bt">
+      <div className="bt-wrap hd-wrap">
+        <BoardHeader
           stationName={stationName}
-          city={city}
-          favourite={{ active: fav, onToggle: () => setFav(toggleFavourite(slug, stationName)) }}
+          onOpenSwitcher={() => setSwitcher(true)}
+          query={query}
+          onQuery={setQuery}
+          mode={mode}
+          onMode={switchMode}
+          counts={counts}
+          operator={operator}
+          onOperator={setOperator}
+          hasRows={rows.length > 0}
+          trust={trust}
+          generatedAt={board?.generatedAt ?? null}
+          onRetry={refresh}
         />
+        <InfoNotices infos={infos} />
 
-        <fieldset className="sh-tabs">
-          <legend className="sr-only">{strings.appName}</legend>
-          {(['departures', 'arrivals'] as BoardMode[]).map((m) => (
-            <button key={m} type="button" aria-pressed={mode === m} onClick={() => switchMode(m)}>
-              {MODE_LABEL[m]}
-            </button>
-          ))}
-        </fieldset>
-
-        {allRows.length > 0 && (
-          <>
-            <div className="sh-find">
-              <label className="sh-input">
-                <MagnifyingGlass size={16} />
-                <span className="sr-only">{strings.filterSearch}</span>
-                <input
-                  ref={searchRef}
-                  type="search"
-                  value={filter.query}
-                  onChange={(event) => setFilter((f) => ({ ...f, query: event.target.value }))}
-                  placeholder={strings.filterPlaceholder}
-                  autoComplete="off"
-                  enterKeyHint="search"
-                />
-                {filter.query && (
-                  <button
-                    type="button"
-                    className="clear"
-                    aria-label={strings.clearSearch}
-                    onClick={() => {
-                      setFilter((f) => ({ ...f, query: '' }))
-                      searchRef.current?.focus()
-                    }}
-                  >
-                    <X size={14} />
-                  </button>
-                )}
-              </label>
-              <button
-                type="button"
-                className="sh-btn outline"
-                aria-expanded={filtersOpen}
-                onClick={() => setFiltersOpen(true)}
-              >
-                <Funnel size={16} />
-                {strings.filters}
-                {activeCount > 0 && <span className="count">{activeCount}</span>}
-              </button>
-            </div>
-            {activeCount > 0 && (
-              <div className="sh-active">
-                {filter.categories.map((category) => (
-                  <button
-                    key={category}
-                    type="button"
-                    className="sh-toggle"
-                    aria-pressed="true"
-                    onClick={() =>
-                      setFilter((f) => ({ ...f, categories: toggle(f.categories, category) }))
-                    }
-                  >
-                    {categoryLabel[category]}
-                    <X size={12} />
-                  </button>
-                ))}
-                {operators.map((operator) => (
-                  <button
-                    key={operator}
-                    type="button"
-                    className="sh-toggle"
-                    aria-pressed="true"
-                    onClick={() => setOperators((list) => toggle(list, operator))}
-                  >
-                    {OPERATORS.find((o) => o.id === operator)?.label}
-                    <X size={12} />
-                  </button>
-                ))}
-                <button type="button" className="sh-btn ghost" onClick={reset}>
-                  {strings.filterClear}
-                </button>
-              </div>
-            )}
-          </>
+        {!board && !online && (
+          <BoardError stationName={stationName} online={false} onRetry={refresh} />
+        )}
+        {!board && online && loading && <BoardSkeleton />}
+        {!board && online && !loading && error && (
+          <BoardError stationName={stationName} online onRetry={refresh} />
+        )}
+        {board && emptyBoard && (
+          <EmptyBoard
+            mode={mode}
+            stationName={stationName}
+            generatedAt={board.generatedAt}
+            onOther={() => switchMode(other)}
+          />
         )}
 
-        {board?.notices.map((notice) => (
-          <details className="sh-alert" key={notice}>
-            <summary>
-              <Info size={16} />
-              <span>{notice}</span>
-              <CaretDown size={16} />
-            </summary>
-            <p>{notice}</p>
-          </details>
+        {strikes.map((placed) => (
+          <StrikeTicket
+            key={placed.key}
+            placed={placed}
+            now={now}
+            rows={rows}
+            onOpen={() => setStrikeOpen(placed.key)}
+          />
         ))}
-
-        {loading && !board && <Message title={strings.loading} />}
-        {error && !board && (
-          <Message
-            title={strings.fetchFailed}
-            hint={strings.fetchFailedHint}
-            action={{ label: strings.retry, onClick: refresh }}
-          />
-        )}
-        {board && allRows.length === 0 && (
-          <Message title={strings.emptyBoard} hint={strings.emptyBoardHint} />
-        )}
-        {board && allRows.length > 0 && rows.length === 0 && (
-          <Message
-            title={strings.filterNoMatch}
-            hint={strings.filterNoMatchHint}
-            action={{ label: strings.filterClear, onClick: reset }}
-          />
-        )}
-
-        {hero && (
-          <ul className="fl-cards">
-            <FlightCard
-              row={hero}
+        {rows.length > 0 && (
+          <div className="bt-body" key={mode} data-trust={trust?.kind ?? 'live'}>
+            <TicketList
+              rows={rows}
               mode={mode}
               now={now}
-              stationName={stationName}
-              hero
-              onOpen={() => setOpen(rowKey(hero))}
+              query={query}
+              operator={operator}
+              followedKeys={followedKeys}
+              onOpen={sheet.open}
+              onReset={() => {
+                setQuery('')
+                setOperator('all')
+              }}
             />
-          </ul>
+          </div>
         )}
-        {groups.map((group) => (
-          <section key={group.label}>
-            <h2 className="sh-sec-h">
-              {group.label}
-              <span>
-                {filtering && group === groups[0]
-                  ? strings.filterCount(rows.length, allRows.length)
-                  : strings.listCount(group.rows.length)}
-              </span>
-            </h2>
-            <ul className="fl-cards" style={{ marginTop: 10 }}>
-              {group.rows.map((row, index) => (
-                <FlightCard
-                  key={rowKey(row)}
-                  row={row}
-                  mode={mode}
-                  now={now}
-                  stationName={stationName}
-                  index={index + 1}
-                  onOpen={() => setOpen(rowKey(row))}
-                />
-              ))}
-            </ul>
-          </section>
-        ))}
 
-        {board && (
-          <p className="sh-fresh">
-            {freshnessLabel(board.generatedAt, board.isStale, now)}
-            {board.isStale &&
-              ` · ${countdownLabel(0) === strings.now ? strings.staleDataFresh : ''}`}
-          </p>
-        )}
-      </div>
-
-      {openRow && (
-        <TrainSheet
-          row={openRow}
+        <TicketSheet
+          row={sheet.row}
+          missing={sheet.missing}
           mode={mode}
+          now={now}
+          stationName={stationName}
+          followed={sheet.row ? followedKeys.has(rowKey(sheet.row)) : false}
+          onToggleFollow={toggleFollow}
+          onClose={sheet.close}
+        />
+        <Sheet
+          open={openStrike !== null}
+          onClose={() => setStrikeOpen(null)}
+          label={strings.strikeSheetLabel}
+        >
+          {openStrike && <StrikeDetail placed={openStrike} now={now} rows={rows} />}
+        </Sheet>
+        <StationSwitcher
+          open={switcher}
+          onClose={() => setSwitcher(false)}
           slug={slug}
           stationName={stationName}
-          now={now}
-          onClose={() => setOpen(null)}
+          mode={mode}
+          favourite={{
+            active: favourite,
+            onToggle: () => setFavourite(toggleFavourite(slug, stationName)),
+          }}
         />
-      )}
-      {filtersOpen && (
-        <FiltersSheet
-          categories={chips}
-          operators={presentOperators}
-          filter={filter}
-          selectedOperators={operators}
-          matches={rows.length}
-          total={allRows.length}
-          onCategory={(category) =>
-            setFilter((f) => ({ ...f, categories: toggle(f.categories, category) }))
-          }
-          onOperator={(operator) => setOperators((list) => toggle(list, operator))}
-          onReset={reset}
-          onClose={() => setFiltersOpen(false)}
-        />
-      )}
+      </div>
     </main>
   )
 }

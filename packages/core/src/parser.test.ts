@@ -7,7 +7,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { parseBoard, parseNotices, parseUnknownValues } from './parser'
+import { cleanPlaceName, parseBoard, parseNotices, parseUnknownValues } from './parser'
 
 function fixture(name: string): string {
   return readFileSync(join(__dirname, 'fixtures', name), 'utf-8')
@@ -23,6 +23,27 @@ function nth<T>(items: T[], index: number): T {
   }
   return item
 }
+
+describe('place names — repeated apostrophes', () => {
+  it('collapses a run of apostrophes to one', () => {
+    expect(cleanPlaceName("PONTE D''''ADDA")).toBe("PONTE D'ADDA")
+    expect(cleanPlaceName("  SANT''ANGELO ")).toBe("SANT'ANGELO")
+    expect(cleanPlaceName("L'AQUILA")).toBe("L'AQUILA")
+  })
+
+  it('cleans the headsign and the stops the parser returns', () => {
+    const html = fixture('multi-operator-board.html').replace('TRIESTE CENTRALE', "PONTE D''''ADDA")
+    const row = nth(parseBoard(html, 'departures'), 0)
+    expect(row.headsign).toBe("PONTE D'ADDA")
+  })
+
+  it('cleans the stops too (real fixture: S.DONA&#39;&#39;&#39;&#39; DI PIAVE)', () => {
+    const row = nth(parseBoard(fixture('blinking-imminent.html'), 'departures'), 0)
+    const names = row.viaStops.map((stop) => stop.name)
+    expect(names).toContain("S.DONA' DI PIAVE")
+    expect(names.some((name) => name.includes("''"))).toBe(false)
+  })
+})
 
 describe('parseBoard — cell binding', () => {
   it('reads operator, category and train number by id/headers, not column position', () => {

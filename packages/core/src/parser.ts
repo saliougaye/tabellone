@@ -135,7 +135,7 @@ function extractRows(
 
   for (const tr of trs) {
     const trainNumber = tr.getAttribute('id')?.trim() ?? ''
-    const headsign = tr.querySelector('[headers="HStazione"]')?.text.trim() ?? ''
+    const headsign = cleanPlaceName(tr.querySelector('[headers="HStazione"]')?.text ?? '')
     const time = tr.querySelector('[headers="HOrario"]')?.text.trim() ?? ''
     if (isFillerRow({ trainNumber, headsign, time })) {
       continue
@@ -204,6 +204,15 @@ function extractRows(
  * departures capture — one real train, fourteen fillers). They carry no train, so they are not
  * rows; rendered, they read as a `00:00` departure to nowhere. An empty board is still a normal
  * state (ARCHITECTURE 2.2) — it just means every row was a filler. */
+/**
+ * RFI escapes apostrophes by repeating them, and the repetition compounds: "PONTE D''''ADDA"
+ * for Ponte d'Adda. A run of apostrophes (straight or curly) is one apostrophe; done here, on
+ * the server, so no client ever sees the noise (CLAUDE.md: raw RFI values never cross the API).
+ */
+export function cleanPlaceName(raw: string): string {
+  return raw.trim().replace(/['\u2019]{2,}/g, "'")
+}
+
 function isFillerRow(row: { trainNumber: string; headsign: string; time: string }): boolean {
   return row.trainNumber === '' && row.headsign === '' && row.time === ''
 }
@@ -259,7 +268,7 @@ function parseViaStops(popup: HTMLElement | null): ViaStop[] {
     const name = match?.[1]
     const time = match?.[2]
     if (name && time) {
-      stops.push({ name: name.trim(), time })
+      stops.push({ name: cleanPlaceName(name), time })
     }
   }
   return stops

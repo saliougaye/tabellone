@@ -9,78 +9,26 @@ export const strings = {
   appName: 'Tabellone',
   /** The mark in the app header is a link home, and its accessible name says where. */
   appHome: 'Tabellone, torna alla scelta della stazione',
+  /** The back link at the top left of a board. */
+  backHome: 'Torna alla home',
   departures: 'Partenze',
   arrivals: 'Arrivi',
-  /** Empty board at night is a normal state, not an error (ARCHITECTURE 2.2). */
-  emptyBoard: 'Nessun treno in questo momento',
-  emptyBoardHint:
-    'Di notte, o nelle stazioni piccole, un tabellone vuoto è normale. I treni compariranno qui appena programmati.',
-  fetchFailed: 'Dati non disponibili',
-  fetchFailedHint:
-    'Il tabellone non riesce a leggere i dati della stazione. Riproviamo automaticamente ogni 20 secondi.',
   retry: 'Riprova ora',
   /* offline is its own state, not a failed read: the request never left the device */
   offlineTitle: 'Sei offline',
   offlineHint: 'Nessuna connessione. Riprova quando la rete torna disponibile.',
-  offlineBoardHint:
-    'Senza connessione il tabellone non può leggere gli orari in tempo reale. Si aggiorna da solo appena la rete torna.',
   catalogueOffline: 'Sei offline',
   catalogueOfflineHint:
     'Senza connessione l\u2019elenco delle stazioni non è raggiungibile. Le stazioni salvate restano disponibili.',
-  staleData: (minutes: number) => `Dati di ${minutes} min fa`,
-  /** Stale but less than a minute old: "Dati di 0 min fa" says nothing true. */
-  staleDataFresh: 'Dati non aggiornati',
-  updatedNow: 'aggiornato ora',
   loading: 'Caricamento…',
 
   /* board header */
   platform: 'Binario',
   platformShort: 'Bin',
-  /* Absence, spelled. The board used to print an em-dash here; a dash is a typographic
-     mark standing in for a word, and at 48px in the platform box it reads as a decoration
-     rather than as "we do not know yet". */
-  platformUnassigned: 'n.d.',
   nextDepartures: 'Prossime partenze',
   nextArrivals: 'Prossimi arrivi',
   later: 'Più tardi',
-  listCount: (count: number) => `${count} in elenco`,
 
-  /* board filter · narrowing a board already in hand, never a second read of RFI */
-  filterOpen: 'Cerca e filtra',
-  filterClose: 'Chiudi la ricerca',
-  filterSearch: 'Cerca treno su questo tabellone',
-  filterPlaceholder: 'Destinazione o numero treno',
-  filterCategory: 'Tipo di treno',
-  filterClear: 'Azzera filtri',
-  /* Replaces the plain count in the list head while a filter is on: a count of what is shown
-     without the total would look like the board had emptied. */
-  filterCount: (shown: number, total: number) => `${shown} di ${total}`,
-  /* A filter finding nothing is not an empty board: the trains are there, the filter hides
-     them. The two states say different things and offer different ways out. */
-  filterNoMatch: 'Nessun treno corrisponde',
-  filterNoMatchHint:
-    'Prova con un\u2019altra destinazione o un altro numero, oppure togli il filtro per tipo.',
-  /* the route ladder · the region label names which end of the journey this station is */
-  stopsAt: 'Ferma a',
-  comesFrom: 'Proviene da',
-  /** This station's own rung, at the top of a departures ladder. */
-  routeOrigin: 'Partenza',
-  terminusArrival: 'Arrivo',
-  terminusDeparted: 'Partito alle',
-  /** The collapsed rung of a long route: the stops the ladder is not printing yet. */
-  routeHiddenStops: (count: number) => `+${count} ${count === 1 ? 'fermata' : 'fermate'}`,
-  routeShowAll: 'Mostra tutte le fermate',
-  /* train detail page · one train, opened from its row (ADR-012) */
-  trainDetail: 'Dettaglio treno',
-  trainDetailFor: (trainNumber: string, headsign: string) =>
-    `Apri il dettaglio del treno ${trainNumber} per ${headsign}`,
-  backToBoard: 'Torna al tabellone',
-  trainDeparture: 'Partenza da',
-  trainArrival: 'Arrivo a',
-  /* Not an error and not an empty board: the train was on this board and is not any more. */
-  trainGone: 'Treno non più in tabellone',
-  trainGoneHint:
-    'Questo treno non compare più fra le corse in tempo reale di questa stazione. Può essere già partito, oppure non essere più previsto oggi.',
   follow: 'Segui stazione',
   unfollow: 'Non seguire più',
   followed: 'seguita',
@@ -89,9 +37,6 @@ export const strings = {
   /* row states — our own vocabulary, never RFI's raw text */
   statusOnTime: 'In orario',
   statusDelay: (minutes: number) => `+${minutes} min`,
-  statusCancelled: 'Cancellato',
-  statusPartial: 'Cancellazione parziale',
-  statusRerouted: 'Deviato',
   statusImminentDeparture: 'In partenza',
   statusImminentArrival: 'In arrivo',
 
@@ -120,9 +65,7 @@ export const strings = {
   clearSearch: 'Azzera la ricerca',
   suggestedStations: 'Stazioni suggerite',
   recentStations: 'Stazioni recenti',
-  favouriteStations: 'Preferite',
   allStations: 'Tutte le stazioni',
-  searchResults: 'Risultati',
   stationCount: (count: number) => `${count} ${count === 1 ? 'stazione' : 'stazioni'}`,
   savedCount: (count: number) => `${count} salvate`,
   noResults: (query: string) => `Nessuna stazione per «${query}»`,
@@ -141,50 +84,169 @@ export const strings = {
   changeStation: 'Cambia stazione',
   closeSheet: 'Chiudi',
 
-  /* the Rotta pass · flight cards, city banner, filters sheet */
-  stationLabel: 'Stazione',
-  /* the follow pill in the station head: its label, not its accessible name (follow/unfollow) */
-  followLabel: 'Segui',
-  followingLabel: 'Seguita',
-  greetingMorning: 'Buongiorno',
-  greetingAfternoon: 'Buon pomeriggio',
-  greetingEvening: 'Buonasera',
-  homeTitle: 'Dove vai oggi?',
-  tagFavourite: 'Preferita',
-  tagRecent: 'Recente',
-  tagSuggested: 'Suggerita',
-  nextDeparting: 'Il prossimo treno che parte',
-  nextArriving: 'Il prossimo treno che arriva',
-  /** "Per Roma Termini" · "Da Roma Termini" — the card's headline. */
-  toPrefix: 'Per ',
-  fromPrefix: 'Da ',
-  now: 'adesso',
+  /* countdowns and platforms, shared by the tickets */
   inMinutes: (minutes: number) => `tra ${minutes} min`,
-  inHours: (hours: number, minutes: number) =>
-    minutes === 0 ? `tra ${hours} h` : `tra ${hours} h ${minutes} min`,
-  departsNow: 'Parte adesso',
-  arrivesNow: 'Arriva adesso',
-  departsIn: (countdown: string) => `Parte ${countdown}`,
-  arrivesIn: (countdown: string) => `Arriva ${countdown}`,
-  scheduledAt: (time: string) => `previsto ${time}`,
-  platformScheduled: 'Binario previsto',
   platformToAssign: 'Da assegnare',
-  withinHalfHour: 'Entro mezz’ora',
-  withinHour: 'Nella prossima ora',
-  cancelledTrains: 'Cancellati',
-  otherFound: 'Altri treni trovati',
-  filters: 'Filtri',
-  filtersActive: (count: number) => `${count} attivi`,
-  filtersNone: 'Nessun filtro attivo',
-  operator: 'Operatore',
   operatorOther: 'Altri',
-  showAll: (total: number) => `Mostra tutti i ${total} treni`,
-  showMatches: (shown: number, total: number) => `Mostra ${shown} di ${total}`,
-  departingFrom: 'In partenza da ',
-  arrivingAt: 'In arrivo a ',
-  timeHead: 'Orario',
-  stopHead: 'Fermata',
-  journeyHours: (hours: number, minutes: string) => `${hours}h ${minutes}m`,
-  journeyMinutes: (minutes: number) => `${minutes} min`,
-  otherStops: (count: number) => `e altre ${count}`,
+
+  /* board states · "can I trust what I see?" (ARCHITECTURE 4.1) */
+  liveLabel: 'dal vivo',
+  offlineLabel: 'offline',
+  /** Stale but under a minute old: "dati di 0 min fa" says nothing true. */
+  staleLabel: (minutes: number) => (minutes < 1 ? 'non aggiornati' : `dati di ${minutes} min fa`),
+  staleStripTitle: (minutes: number) =>
+    minutes < 1 ? 'Dati non aggiornati' : `Dati di ${minutes} min fa`,
+  staleStripBody: 'RFI non risponde, riprovo ogni 20 s.',
+  offlineStripTitle: 'Sei offline',
+  offlineStripBody: (time: string) =>
+    `dati delle ${time}. Binari e ritardi possono essere cambiati.`,
+  loadingBoard: 'Carico il tabellone',
+  slowRfi: 'RFI risponde lentamente: ancora qualche secondo.',
+  /** Empty board at night is a normal state, not an error (ARCHITECTURE 2.2). */
+  emptyDepartures: 'Nessuna partenza in questo momento',
+  emptyArrivals: 'Nessun arrivo in questo momento',
+  emptyHint: (station: string) =>
+    `Di notte, o nelle stazioni piccole, è normale: i treni di ${station} compaiono qui appena RFI li programma.`,
+  seeArrivals: 'Vedi gli arrivi',
+  seeDepartures: 'Vedi le partenze',
+  boardReadAt: (time: string) => `Tabellone letto alle ${time} \u00b7 si aggiorna da solo`,
+  rfiDownTitle: 'RFI non risponde',
+  rfiDownBody: (station: string) =>
+    `Non riusciamo a leggere il tabellone di ${station}. La tua connessione funziona: \u00e8 il sito di RFI a non rispondere. Riproviamo da soli ogni 20 secondi.`,
+  retryShort: 'Riprova',
+  retrying: 'Riprovo\u2026',
+  offlineCardTitle: 'Sei offline',
+  offlineCardBody: (station: string) =>
+    `Senza connessione non possiamo leggere il tabellone di ${station}. Si aggiorna da solo appena la rete torna.`,
+
+  /* the seventh pass · tickets, the "Cerca prima" header, notices as tickets, the home cards */
+  homeTitle: 'I tuoi prossimi treni',
+  homeSearchPlaceholder: 'Cerca una stazione o una città',
+  filterAll: 'Tutti',
+  filterSearchAria: 'Cerca destinazione, fermata o numero di treno',
+  filterSearchPlaceholder: 'Dove vai? Città, fermata, n°',
+  operatorFilterAria: 'Filtra per operatore',
+  modeAria: 'Partenze o arrivi',
+  switchToArrivals: 'Passa agli arrivi',
+  switchToDepartures: 'Passa alle partenze',
+  clockAria: (time: string) => `Ora ${time}`,
+  stationChangeAria: (name: string) => `${name}, cambia stazione`,
+  /* tickets */
+  withinThirtyMinutes: 'Entro 30 minuti',
+  withinAnHour: 'Entro un\u2019ora',
+  trainCount: (count: number) => `${count} ${count === 1 ? 'treno' : 'treni'}`,
+  ticketSuppressed: 'Soppresso',
+  /* RFI drops a train once it has left: one still listed after its time has not gone yet */
+  ticketNowDeparting: 'in partenza',
+  ticketNowArriving: 'in arrivo',
+  ticketNight: 'Notte',
+  inHoursShort: (hours: number, minutes: string) => `tra ${hours} h ${minutes}`,
+  durationHours: (hours: number, minutes: string) => `${hours} h ${minutes}`,
+  minutesShort: (minutes: number) => `${minutes} min`,
+  hoursShort: (hours: number) => `${hours} h`,
+  daysLong: (days: number) => `${days} giorni`,
+  fromPlace: (name: string) => `da ${name}`,
+  fromPlaceLead: 'da ',
+  stopsAtVia: (name: string, time: string) => `Ferma a ${name} \u00b7 ${time}`,
+  platformAria: (platform: string) => `Binario ${platform}`,
+  platformToAssignLower: 'da assegnare',
+  ticketAria: (
+    service: string,
+    number: string,
+    departures: boolean,
+    place: string,
+    time: string,
+    platform: string | null,
+  ) =>
+    `${service} ${number}, ${departures ? 'per' : 'da'} ${place}, ore ${time}, binario ${platform ?? 'da assegnare'}`,
+  noTrainFor: (query: string) => `Nessun treno per \u201c${query}\u201d`,
+  noTrainForHint: 'Prova con una citt\u00e0 o una fermata intermedia.',
+  noTrainInCategory: 'Nessun treno per questo operatore',
+  noTrainInCategoryHint: 'Nessun treno di questo operatore nelle prossime ore.',
+  showAllShort: 'Mostra tutti',
+  /* the opened ticket */
+  stateHead: 'Stato',
+  departsHead: 'Parte',
+  arrivesHead: 'Arriva',
+  stopsHead: (count: number) => `Fermate \u00b7 ${count}`,
+  noStopsDepartures: 'RFI non elenca le fermate di questo treno.',
+  noStopsArrivals: 'Per gli arrivi RFI non elenca le fermate precedenti.',
+  /* following a train, and the train URL's sheet */
+  followTrain: 'Segui questo treno',
+  followingTrain: 'Seguito',
+  followTrainToast: (number: string) => `Segui il ${number}: binario e ritardo restano in vista`,
+  unfollowTrainToast: 'Non segui pi\u00f9 questo treno',
+  yourTrains: 'I tuoi treni',
+  followedAria: 'Treno seguito',
+  trainLabel: (number: string) => `Treno ${number}`,
+  trainGoneTitle: 'Non \u00e8 pi\u00f9 sul tabellone',
+  trainGoneBody: (number: string, departures: boolean, station: string) =>
+    `Il ${number} non compare pi\u00f9 fra ${departures ? 'le partenze' : 'gli arrivi'} di ${station}:${departures ? ' probabilmente \u00e8 gi\u00e0 partito,' : ' probabilmente \u00e8 gi\u00e0 arrivato,'} oppure oggi non \u00e8 pi\u00f9 previsto.`,
+  seeAllDepartures: 'Vedi tutte le partenze',
+  seeAllArrivals: 'Vedi tutti gli arrivi',
+  share: 'Condividi',
+  linkCopied: 'Link copiato',
+  /* the station switcher */
+  stationsHead: 'Stazioni',
+  yourStations: 'Le tue stazioni',
+  recentsHead: 'Recenti',
+  hereTag: 'Qui',
+  followHint: 'Aggiungila alle tue stazioni',
+  followedHint: '\u00c8 tra le tue stazioni: la ritrovi in cima',
+  followingLabel: 'Seguita',
+  followAdd: 'Aggiungi',
+  loadingCatalogue: 'Carico il catalogo\u2026',
+  switcherEmptyHint: 'Scrivi il nome di una stazione o di una citt\u00e0.',
+  /* notices */
+  strikeSheetLabel: 'Avviso di sciopero',
+  strike: 'Sciopero',
+  strikeNational: 'Sciopero nazionale',
+  strikeStart: 'Inizio',
+  strikeEnd: 'Fine',
+  strikeWhoLead: 'Sciopera il personale di',
+  rfiNoticeText: 'Testo dell\u2019avviso RFI',
+  today: 'oggi',
+  tonight: 'stasera',
+  tomorrow: 'domani',
+  tomorrowCap: 'Domani',
+  dayAt: (day: string, time: string) => `${day} alle ${time}`,
+  inDays: (days: number) => `Tra ${days} giorni`,
+  inWords: (span: string) => `Tra ${span}`,
+  until: (when: string) => `Fino a ${when}`,
+  strikeWindow: (fromDay: string, fromTime: string, toDay: string, toTime: string) =>
+    `Da ${fromDay}, ${fromTime} a ${toDay}, ${toTime}`,
+  strikeFrom: (when: string) => `Sciopero da ${when}`,
+  strikeOngoingKicker: 'In corso',
+  strikeOngoing: 'Sciopero in corso',
+  strikeUntilEnds: (when: string, span: string) => `Fino a ${when} \u00b7 finisce tra ${span}`,
+  strikeOverKicker: 'Finito',
+  strikeOver: (time: string) => `Sciopero finito alle ${time}`,
+  strikeOverHint: 'Possono restare ritardi sui treni in viaggio.',
+  strikeStubUntil: 'fino alle',
+  strikeImpactHere: 'Qui ora:',
+  strikeNoImpact: 'Su questo tabellone, per ora, nessun ritardo.',
+  strikeNoImpactTicket: 'Per ora nessun ritardo qui',
+  strikeImpactTicket: (late: number, cancelled: number) =>
+    `Qui ora: ${late} in ritardo${cancelled ? ` \u00b7 ${cancelled} soppressi` : ''}`,
+  trainsLate: (count: number) => (count === 1 ? 'treno in ritardo' : 'treni in ritardo'),
+  trainsSuppressed: (count: number) => (count === 1 ? 'soppresso' : 'soppressi'),
+  /* the home */
+  locate: 'Mostra la stazione pi\u00f9 vicina',
+  locating: 'Cerco la stazione pi\u00f9 vicina\u2026',
+  locatePrivacy: 'Usiamo la posizione solo su questo telefono, non la salviamo.',
+  nothingNear: 'Nessuna stazione nota entro 30 km: qui sotto le tue.',
+  nearYou: (distance: string) => `Vicino a te \u00b7 ${distance}`,
+  bigStations: 'Grandi stazioni',
+  bigStation: (city?: string) => `Grande stazione${city ? ` \u00b7 ${city}` : ''}`,
+  savedTag: (favourite: boolean, city?: string) =>
+    `${favourite ? 'Preferita' : 'Recente'}${city ? ` \u00b7 ${city}` : ''}`,
+  otherYourStations: 'Altre tue stazioni',
+  followedTrainsHead: 'Treni che segui',
+  followedTrainsSub: 'Binario e ritardo, dal loro tabellone',
+  followedFromStation: (station: string) => `Da ${station}`,
+  followedAtStation: (station: string) => `A ${station}`,
+  followedGone: 'Non pi\u00f9 sul tabellone',
+  followedRemove: (number: string) => `Non seguire pi\u00f9 il ${number}`,
+  cardUnavailable: 'Dati non disponibili ora. Riprova tra poco.',
+  cardNoDepartures: 'Nessuna partenza nelle prossime ore.',
 } as const

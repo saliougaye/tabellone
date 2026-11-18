@@ -7,7 +7,7 @@
  * arithmetic allowed here is instant + delay minutes and "minutes since", both
  * timezone-safe because they operate on instants, not on wall-clock fields.
  */
-import type { BoardMode, BoardRow, Operator, TrainCategory } from '@tabellone/core'
+import type { BoardRow, Operator, TrainCategory } from '@tabellone/core'
 import { strings } from '@/strings'
 
 /** Operator mark: solid tile with a 2–3 letter monochrome sigla. Never a fetched logo. */
@@ -73,70 +73,6 @@ export function serviceMarkLabel(row: Pick<BoardRow, 'brand' | 'category' | 'ope
   return `${service} · ${operator}`
 }
 
-export type StatusPresentation = {
-  label: string
-  colorVar: string
-  weightVar: string
-  /** Cancelled rows strike through time and headsign. */
-  struck: boolean
-}
-
-const SEVERE_DELAY_MINUTES = 10
-
-export function statusPresentation(
-  row: Pick<BoardRow, 'status' | 'delayMinutes'>,
-  mode: BoardMode,
-): StatusPresentation {
-  switch (row.status) {
-    case 'CANCELLED':
-      return {
-        label: strings.statusCancelled,
-        colorVar: 'var(--state-cancelled)',
-        weightVar: 'var(--weight-max)',
-        struck: true,
-      }
-    case 'PARTIAL':
-      return {
-        label: strings.statusPartial,
-        colorVar: 'var(--state-cancelled-partial)',
-        weightVar: 'var(--weight-max)',
-        struck: false,
-      }
-    case 'REROUTED':
-      return {
-        label: strings.statusRerouted,
-        colorVar: 'var(--state-rerouted)',
-        weightVar: 'var(--weight-max)',
-        struck: false,
-      }
-    case 'IMMINENT':
-      return {
-        label:
-          mode === 'departures' ? strings.statusImminentDeparture : strings.statusImminentArrival,
-        colorVar: 'var(--state-departure)',
-        weightVar: 'var(--weight-max)',
-        struck: false,
-      }
-    case 'DELAYED': {
-      const minutes = row.delayMinutes ?? 0
-      const severe = minutes >= SEVERE_DELAY_MINUTES
-      return {
-        label: strings.statusDelay(minutes),
-        colorVar: severe ? 'var(--state-delay-severe)' : 'var(--state-delay-minor)',
-        weightVar: severe ? 'var(--weight-max)' : 'var(--weight-strong)',
-        struck: false,
-      }
-    }
-    default:
-      return {
-        label: strings.statusOnTime,
-        colorVar: 'var(--state-on-time)',
-        weightVar: 'var(--weight-medium)',
-        struck: false,
-      }
-  }
-}
-
 const timeFormat = new Intl.DateTimeFormat('it-IT', {
   hour: '2-digit',
   minute: '2-digit',
@@ -169,13 +105,32 @@ export function minutesSince(iso: string, now: Date): number {
   return Math.max(0, Math.round((now.getTime() - new Date(iso).getTime()) / 60_000))
 }
 
-/** Freshness caption next to the data dot: "aggiornato ora · 14:22" or the stale form. */
-export function freshnessLabel(generatedAt: string, isStale: boolean, now: Date): string {
-  if (isStale) {
-    // Going offline flags the board stale straight away, when it is still seconds old:
-    // "Dati di 0 min fa" would be a number saying nothing.
-    const minutes = minutesSince(generatedAt, now)
-    return minutes < 1 ? strings.staleDataFresh : strings.staleData(minutes)
-  }
-  return `${strings.updatedNow} · ${formatTime(generatedAt)}`
+/** How far the data on screen can be trusted: the live dot, the stale strip and the dimmed platforms. */
+export type BoardTrust = {
+  kind: 'live' | 'stale' | 'offline'
+  /** Whole minutes since RFI was last read. */
+  minutes: number
+}
+
+/** The board is "live" until it is this old, or flagged stale by the server. */
+export const STALE_AFTER_MINUTES = 2
+
+/**
+ * Whether the board in hand can be trusted. Offline wins over everything (the device has no
+ * route, whatever the board says); then the server's own `isStale`, a poll that failed while a
+ * board is in hand, or a board two minutes old. `null` only when there is no board and the
+ * device is online — nothing to say yet (it is loading, or it is the error state).
+ */
+export function boardTrust(
+  board: { generatedAt: string; isStale: boolean } | null,
+  context: { online: boolean; pollFailed: boolean },
+  now: Date,
+): BoardTrust | null {
+  if (!board) return context.online ? null : { kind: 'offline', minutes: 0 }
+  // Whole minutes, floored: "two minutes old" means two, not a minute and a half.
+  const minutes = Math.max(0, Math.floor((now.getTime() - Date.parse(board.generatedAt)) / 60_000))
+  if (!context.online) return { kind: 'offline', minutes }
+  if (board.isStale || context.pollFailed || minutes >= STALE_AFTER_MINUTES)
+    return { kind: 'stale', minutes }
+  return { kind: 'live', minutes }
 }

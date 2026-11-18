@@ -20,8 +20,17 @@
  */
 import { BoardUnavailableError } from './errors'
 import type { FetchBoardResult } from './fetcher'
+import { readNotices } from './notices'
 import { parseBoard, parseNotices, parseUnknownValues } from './parser'
-import type { BoardMode, BoardRow, BoardStore, Clock, Station, StationBoard } from './types'
+import type {
+  BoardMode,
+  BoardNotice,
+  BoardRow,
+  BoardStore,
+  Clock,
+  Station,
+  StationBoard,
+} from './types'
 
 /** TTLs in seconds, straight from ARCHITECTURE 7.1/7.2. One place, no magic numbers elsewhere. */
 export const TTL = {
@@ -117,10 +126,10 @@ async function tryRefresh(
     }
 
     let rows: BoardRow[]
-    let notices: string[]
+    let notices: BoardNotice[]
     try {
       rows = parseBoard(fetched.html, mode)
-      notices = parseNotices(fetched.html)
+      notices = readNotices(parseNotices(fetched.html), deps.clock())
     } catch {
       return null
     }

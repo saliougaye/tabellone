@@ -8,11 +8,11 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Arrivi e partenze in tempo reale per le stazioni italiane',
     start_url: '/',
     display: 'standalone',
-    // --surface in the light theme, resolved to hex. A manifest cannot read a var, so this
-    // is the third and last place the token is written out as a literal, beside the two in
-    // layout.tsx's viewport.themeColor. Change one, change all three.
-    background_color: '#ffffff',
-    theme_color: '#ffffff',
+    // --bg of the seventh pass's `.bt` block in the light theme, resolved to hex. A manifest
+    // cannot read a var, so this is the third and last place the token is written out as a
+    // literal, beside the two in layout.tsx's viewport.themeColor. Change one, change all three.
+    background_color: '#eff1f4',
+    theme_color: '#eff1f4',
     icons: [
       { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },

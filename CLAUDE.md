@@ -17,52 +17,80 @@ and today always ends by catching `fetchBoard`'s `NotImplementedError` and answe
 **503** (the same "RFI unreachable, nothing cached" slot the contract already reserved) —
 honest, not a stub 200, and this route does not need to change again once `fetcher` and
 `parser` land. Local Redis: `pnpm redis` (docker compose, no volume, flush-safe).
-`apps/web` has the real UI, in its **sixth design pass (September 2026)**, laid over the
-fifth, **"Carta"**, and the fourth, **"Rotta"**. Rotta drew the board: a stack of flight
-cards — the brand's own logo, a status pill, the route drawn large (where and when it
-leaves · a dashed line with the train and the journey time · where and when it arrives),
-the platform and a countdown — with the next train as a bigger hero card and the rest
-grouped by how soon (within half an hour, within the hour, later, cancelled). Carta set it
-on paper (white ground, white cards told apart by a hairline, the green accent only where
-it means something) in **Figtree**. The sixth pass took every picture out (the city photos
-of the fifth were tried and dropped; there is no image anywhere in the UI now) and gave
-the station its **head**: the city and a labelled **"Segui" / "Seguita"** pill on the first
-row, the station name on the second as the **switcher** (a link home with a chevron in a
-disc). The home is **"Vetrina"** without pictures: greeting and question, the search, one
-chip that narrows to the favourites, one even grid of station cards (favourites, recents,
-majors, told apart by a tag). The catalogue carries `city` for the ~100 biggest stations
-(103 as of September 2026), shown as the head's first line; the rest have `city: ""`.
-Search and filters narrow the board in hand
-(`lib/board-filter.ts` for text, plus operator and train-type toggles in a sheet that
-carries the operators' logos); tapping a card opens the train's sheet (bottom on phones,
-centred dialog from 640px); the train's own page (`/stazioni/:slug/partenze/:trainNumber`,
-ADR-012) is the same card and rail, full page. Favourites and recents in `localStorage`;
-the home redirects once per session to the last board (`lib/last-station.ts`).
+`apps/web` has the real UI, in its **seventh design pass (November 2026), "Biglietti"**, laid
+over the sixth ("Vetrina"), the fifth ("Carta") and the fourth ("Rotta"). The board and the home
+carry `.bt` on their `<main>` and are drawn entirely by the last block of `app/theme.css`. Every
+train is a perforated **ticket**: a stub coloured by who runs it (Trenitalia red, Italo bordeaux,
+Trenord green) carries the time (the old one struck and the new in yellow when late, "tra X min"
+under it), then the destination, the service mark and number, a pill only when late or cancelled,
+and the platform as a black split-flap tile (a dashed box while unassigned). Tickets are grouped
+"I tuoi treni / Entro 30 minuti / Entro un'ora / Più tardi" (one column on a phone, three from
+desktop width); tapping one opens its sheet (bottom sheet on phones with drag-down to close,
+centred dialog from 640px) with the route, platform, state, countdown, stops, **"Segui questo
+treno"** and share. **The train page is the board with that sheet open** (ADR-012):
+`/stazioni/:slug/partenze/:trainNumber` (and `/arrivi/…`) renders `BoardScreen`, and the open
+sheet lives in the URL (`lib/train-url.ts`: a ticket tap `pushState`s the train URL with a `null`
+state — never `history.state`, Next's router would rewrite it back —, Back closes, X/drag/veil go
+back or `replaceState` to the board on a cold visit, the mode tabs close it first). A train no
+longer on the board gets a small "Non è più sul tabellone" sheet. **Following a train** is
+client-only (`lib/followed-trains.ts`, `localStorage`, at most 5, each drops 3 h after its
+scheduled/expected time): followed tickets carry a star and sit first under "I tuoi treni", and
+the home lists them first as mini tickets with live platform and delay (muted "Non più sul
+tabellone" with × when the board dropped it). The header is **"Cerca prima"**: station name (a
+button — it opens "Cambia stazione": catalogue search, favourites, recents and the "Segui"
+toggle) and the clock with a live dot ("dal vivo / dati di N min fa / offline") on one small line,
+a large search field that sticks while scrolling (with an "⇄ Arrivi/Partenze" button appearing
+inside it once stuck, and the stale/offline strip while the data is old), Partenze/Arrivi as two
+equal tabs, and operator chips with coloured dots once there are rows. **Board states** are
+`components/board/board-states.tsx` (`st-*`): ticket-shaped skeletons (after 4 s "RFI risponde
+lentamente"), a moon card for an empty board — a normal night, never red —, "RFI non risponde"
+(nothing cached; retries itself) and its own "Sei offline" card; platform tiles dim while stale.
+**Notices are tickets too** ("Biglietto"): `packages/core/src/notices.ts` reads RFI's text on the
+server (ADR-013) into `{ kind: 'strike', from, to, national, who, text }` or `{ kind: 'info', text }`;
+the client (`lib/strike.ts`) only compares those instants with now — announced (> 24 h before) /
+imminent (< 24 h) / ongoing / over (shown 3 h, then hidden) — to colour a strike ticket at the top
+of the list, whose sheet shows the window, who strikes, "Qui ora: N in ritardo · N soppressi" while
+under way and RFI's original words; any other notice is one quiet collapsible line. The home is
+**"Vicino e tue"**: "I tuoi prossimi treni", the search, the followed trains, then up to three live
+cards (the next three departures each, as mini tickets, with Partenze/Arrivi links) — the nearest
+station within 30 km (`lib/nearest-station.ts`, automatic when geolocation is already granted, else
+a dashed "Mostra la stazione più vicina" row), then favourites, then recents, else the major
+stations under "Grandi stazioni"; the reader's other stations are pills. The home's **read budget is
+three boards per open, once, no polling** (ARCHITECTURE 7.2): `lib/home-plan.ts` gives the
+followed trains' stations (departures or arrivals, one read per station and mode) the first
+slots and the cards what is left. Search and chips narrow the board in hand (`lib/board-filter.ts`,
+`lib/board-view.ts`), never a second read. Favourites, recents and followed trains live in
+`localStorage`; the home redirects once per session to the last board (`lib/last-station.ts`).
+The catalogue carries `city` for the ~100 biggest stations (shown in search results and on the
+home cards). Runs of apostrophes in RFI names (D followed by four quotes, "Ponte d'Adda") are
+collapsed to one in the parser.
 
 The design system is `app/theme.css`, read its header before touching it:
-- **Materials.** No images. White ground, white cards at 16px with a 1px hairline and a whisper of
-  shadow, 1px borders on controls, Figtree (`next/font`, `--font-figtree`) at heavy weights
-  with tight tracking, tabular figures through `font-variant-numeric`. Everything is
-  `light-dark()`; the system decides, no `data-theme`. The dark half keeps Rotta's grouped
-  dark green ground. Light is the face the app is judged by.
-- **Colour.** Neutrals `--bg / --card / --fg / --muted / --muted-fg / --border`; one accent
-  pair `--p / --pf` (green) read through `--primary / --primary-fg`, which is what the
-  platform block, "in partenza", the countdown, the route dots and the primary button
-  share; four state colours; brand and operator colours are brand and did not move.
-  `lib/presentation.ts` and `components/board/brand-logos.tsx` resolve against the
-  `--state-*`, `--identity-*` and `--brand-*` names the theme keeps.
-- **Vocabulary.** Component classes keep the shadcn names they were written in (`sh-btn`,
-  `sh-input`, `sh-tabs`, `sh-badge`, `sh-card`, `sh-alert`, `sh-sheet`, `sh-toggle`) plus
-  the flight card (`fl-card`, `fl-route`, `fl-pill`), the station head (`sh-head`,
-  `sh-switch`, `sh-follow`) and the home (`sh-chips`, `sh-grid`, `sh-tile`). Tailwind stays only for preflight and `sr-only`. The theme file is
-  layered in the order the passes happened; the last block on a token wins — the Carta
-  block at the end of the file is the last word on the neutrals, the accent and `--sans`.
-- **Motion.** Cards and station cards rise 10px and fade in on mount, staggered 40ms by position
-  (capped at 8) via `@starting-style`; the sheet rises, the veil fades; press feedback is
-  `scale(0.96)` at 90ms; nothing moves under `prefers-reduced-motion`.
+- **Materials.** No images. White tickets (16px-ish radius, perforation notches cut with a CSS mask)
+  on a grey ground (`--bg`), Figtree (`next/font`, `--font-figtree`) at heavy weights with tight
+  tracking, tabular figures through `font-variant-numeric`. Everything is `light-dark()`; the
+  system decides, no `data-theme`.
+- **Colour.** Neutrals `--bg / --card / --fg / --muted / --muted-fg / --border`; the accent is ink
+  (`--p` = `--fg`), not green; colour is an **operator code**: `--f-trenitalia / --f-italo /
+  --f-trenord / --f-other` fill the stubs and chip dots, `--tk-*` the pills, `--nt-red / --nt-amber`
+  the strike phases. Brand and operator colours are brand and did not move;
+  `lib/presentation.ts` and `components/board/brand-logos.tsx` resolve against the `--state-*`,
+  `--identity-*` and `--brand-*` names the theme keeps.
+- **Vocabulary.** The seventh-pass block is scoped under `.bt` and uses its own families: `tk-*`
+  (stub, pill, ticket sheet, the "gone" sheet), `mx-*` (the list of tickets), `bt-*` (frame, flap
+  tiles, rows skeleton), `hd-*` (header and its sheets), `ho-*` (home, incl. `ho-fol` followed
+  trains), `nt-*` (notices), `st-*` (board states: live dot, stale strip, skeleton, cards). The
+  older shadcn-named classes (`sh-btn`, `sh-card`, `sh-badge`, …) remain only for `Message` and the
+  offline page. Tailwind stays only for preflight and `sr-only`. The theme file
+  is layered in the order the passes happened; the last block on a token wins.
+- **Motion.** Tickets and cards rise 10px and fade in on mount, staggered 40ms by position (capped
+  at 8) via `@starting-style`; platform figures roll in once and flip when RFI changes them; sheets
+  slide, the veil fades; press feedback is `scale(0.96–0.98)`; nothing moves under
+  `prefers-reduced-motion`.
 
 The earlier passes (signage, sodium, and the token-level redesigns before them) are gone
-from the tree; the brand logos (`brand-logos.tsx`, its README) and the pure
+from the tree, and so are the picker, the `?variant=` switch, every prototype variant of the
+seventh pass (`components/swag`) and the old train page with its flight card; the brand logos (`brand-logos.tsx`, its README) and the pure
 presentation helpers survived them all. The station catalogue holds 2435 real stations
 with real `rfiPlaceId`s, 3 of them flagged `isMajor`; slugs are final (ADR-007).
 
@@ -177,6 +205,10 @@ is pure cache and can be flushed at any time. Favourites live in `localStorage`.
 
 Log every RFI response to `health:rfi` with status code and latency.
 
+The home reads up to **three** boards (`departures` or `arrivals`) per open, once and without
+polling (the followed trains' stations first, then nearest station, favourites/recents or
+majors): same cache, lock and ceiling as a board page, accounted for in ARCHITECTURE 7.2. More cards or polling on the home means revising that section first.
+
 ## API contract
 
 ```
@@ -184,7 +216,8 @@ GET /api/stations                     catalogue, long ETag
 GET /api/board/:slug?mode=departures  StationBoard JSON (polling + SSR)
 ```
 
-`/api/board/:slug` returns `StationBoard` under every condition where the station and mode
+`/api/board/:slug` returns `StationBoard` (its `notices` are `BoardNotice[]`, read on the server — ADR-013)
+under every condition where the station and mode
 are valid; only "RFI unreachable and no cache" yields 503. Missing/invalid `?mode=` is 400,
 unknown `:slug` is 404 — neither was in the original state table, both are `{ error: string
 }` like every other non-200 response here. There is no streaming endpoint.

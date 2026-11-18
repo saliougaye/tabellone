@@ -49,12 +49,13 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  // --surface in each theme, resolved to hex: the browser chrome has to match the page it
-  // sits above. These two and manifest.ts's pair are the only places in the app where a
-  // token is duplicated as a literal. Change one, change all three.
+  // --bg of the seventh pass's `.bt` block (the ground the tickets sit on), in each theme,
+  // resolved to hex: the browser chrome has to match the page it sits above. These two and
+  // manifest.ts's literal are the only places in the app where a token is duplicated.
+  // Change one, change all three.
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#131c18' },
+    { media: '(prefers-color-scheme: light)', color: '#eff1f4' },
+    { media: '(prefers-color-scheme: dark)', color: '#0d0d0f' },
   ],
 }
 

@@ -4,7 +4,7 @@
  */
 import type { BoardRow } from '@tabellone/core'
 import { describe, expect, it } from 'vitest'
-import { chipCategories, emptyFilter, filterRows, isFilterActive } from './board-filter'
+import { filterRows, matchedViaStop } from './board-filter'
 
 const row = (over: Partial<BoardRow> = {}): BoardRow => ({
   operator: 'TRENITALIA',
@@ -43,43 +43,42 @@ const rows = [
 
 describe('filterRows', () => {
   it('returns every row when nothing is asked', () => {
-    expect(filterRows(rows, emptyFilter)).toHaveLength(3)
-    expect(isFilterActive(emptyFilter)).toBe(false)
+    expect(filterRows(rows, '')).toHaveLength(3)
+    expect(filterRows(rows, '   ')).toHaveLength(3)
   })
 
   it('matches the headsign, the train number and the brand', () => {
-    expect(filterRows(rows, { ...emptyFilter, query: 'milano' })).toHaveLength(1)
-    expect(filterRows(rows, { ...emptyFilter, query: 'cb710' })[0]?.headsign).toBe('Forlì')
-    expect(filterRows(rows, { ...emptyFilter, query: 'frecciarossa' })).toHaveLength(1)
+    expect(filterRows(rows, 'milano')).toHaveLength(1)
+    expect(filterRows(rows, 'cb710')[0]?.headsign).toBe('Forlì')
+    expect(filterRows(rows, 'frecciarossa')).toHaveLength(1)
   })
 
   it('matches a stop the row prints in its ladder', () => {
-    expect(filterRows(rows, { ...emptyFilter, query: 'bologna' })[0]?.trainNumber).toBe('9612')
+    expect(filterRows(rows, 'bologna')[0]?.trainNumber).toBe('9612')
   })
 
   it('folds accents, so a phone keyboard finds Forlì', () => {
-    expect(filterRows(rows, { ...emptyFilter, query: 'forli' })).toHaveLength(1)
+    expect(filterRows(rows, 'forli')).toHaveLength(1)
   })
 
   it('requires every term, in any field and any order', () => {
-    expect(filterRows(rows, { ...emptyFilter, query: '96 fr' })).toHaveLength(1)
-    expect(filterRows(rows, { ...emptyFilter, query: 'milano bergamo' })).toHaveLength(0)
-  })
-
-  it('treats the categories as a union, and combines them with the query', () => {
-    expect(filterRows(rows, { query: '', categories: ['BUS', 'REGIONAL'] })).toHaveLength(2)
-    expect(filterRows(rows, { query: 'forli', categories: ['REGIONAL'] })).toHaveLength(0)
+    expect(filterRows(rows, '96 fr')).toHaveLength(1)
+    expect(filterRows(rows, 'milano bergamo')).toHaveLength(0)
   })
 })
 
-describe('chipCategories', () => {
-  it('offers only the categories on the board, fastest first', () => {
-    expect(chipCategories(rows, [])).toEqual(['HIGH_SPEED', 'REGIONAL', 'BUS'])
+describe('matchedViaStop', () => {
+  it('names the stop when only a stop explains the match', () => {
+    expect(matchedViaStop(row(), 'bologna')?.time).toBe('16:10')
   })
 
-  it('keeps a selected category drawn even once the board no longer has it', () => {
-    // The mode was switched and the arrivals board has no bus: the chip has to survive, or
-    // the reader is left with an empty board and no visible cause.
-    expect(chipCategories([row()], ['BUS'])).toEqual(['HIGH_SPEED', 'BUS'])
+  it('says nothing when the headsign or the number already explain it', () => {
+    expect(matchedViaStop(row(), 'milano')).toBeNull()
+    expect(matchedViaStop(row(), '9612')).toBeNull()
+  })
+
+  it('says nothing without a query or without a matching stop', () => {
+    expect(matchedViaStop(row(), '  ')).toBeNull()
+    expect(matchedViaStop(row(), 'napoli')).toBeNull()
   })
 })

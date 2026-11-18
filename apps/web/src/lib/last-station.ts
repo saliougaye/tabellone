@@ -58,3 +58,15 @@ export function consumeRedirect(): LastStation | null {
     return null
   }
 }
+
+/**
+ * The reader asked for the home on purpose (the board's back link): spend this session's
+ * redirect so `/` stays put even when the board was the first page of the session.
+ */
+export function skipHomeRedirect(): void {
+  try {
+    window.sessionStorage.setItem(REDIRECTED_KEY, '1')
+  } catch {
+    /* storage blocked: the redirect cannot fire either */
+  }
+}

@@ -1,6 +1,6 @@
 # The train detail page derives from the board, and is not indexed
 
-**Status:** accepted · extends ADR-011's route shape, does not reopen it
+**Status:** accepted · extends ADR-011's route shape, does not reopen it · amended November 2026 (the train page is the board with the train's sheet open)
 
 A traveller waiting for one train wants that train alone on the screen: the board answers
 "what is leaving", and once you know which train is yours the other nineteen rows are noise —
@@ -51,13 +51,38 @@ station board, which *is* the durable page, keeps all the ranking (ADR-011).
 
 The sitemap lists board URLs only, unchanged.
 
+## Amendment (November 2026): the train page *is* the board, with the sheet open
+
+The first version of this ADR drew a page of its own (a hero card and a stops ladder). The
+seventh design pass made that page redundant: a board row already opens a **ticket sheet** with
+the route, platform, state, countdown and stops — everything the page showed. Two screens for
+one train, with one of them a dead end that lost the reader's place in the list, was the wrong
+shape. So:
+
+- `/stazioni/:slug/partenze/:trainNumber` (and `/arrivi/:trainNumber`) renders **the board of
+  that station and mode with that train's ticket sheet open**. Same component, same React Query
+  entry, same poll; the URL, the SSR metadata, the `noindex, follow` robots rule and the
+  Open Graph image are unchanged.
+- **The open sheet lives in the URL.** Tapping a ticket *pushes* the train URL
+  (`history.pushState`), so the link is shareable and the browser's Back closes the sheet.
+  Closing from the sheet itself (X, drag, veil, Escape) goes `history.back()` when we pushed the
+  entry, and otherwise `replaceState`s to the board URL (a cold visit to a train URL has no board
+  entry behind it). Switching Partenze/Arrivi closes the sheet first, because the URL is per mode.
+  The state passed to `pushState` is `null` on purpose: Next's router recognises its own marker
+  in `history.state`, ignores the URL and rewrites it back on its next update.
+- "The train is no longer on this board" is now a small sheet over the board ("Non è più sul
+  tabellone") with a button back to the board, instead of a page.
+- The sheet's "open the train" action is gone — the sheet is the train page. "Condividi" copies
+  the current train URL.
+- The ladder and the hero card (`FlightCard`, `StopsRail`, `fl-*`, `sh-head`, `sh-rail`) were
+  deleted with the page. Everything above about **not having an endpoint of its own**, the
+  **non-unique train number** and **not being indexed** still holds, unchanged.
+
 ## Consequences
 
-- The page has a state the board does not: **the train is no longer on this board**. It is not
+- The sheet has a state a ticket does not: **the train is no longer on this board**. It is not
   an error and not an empty board (ARCHITECTURE 2.2) — it is a departure that happened — so it
   says that, names the station, and leads back to the board.
-- The route ladder on this page never folds: `LADDER_MAX_RUNGS` exists because a board row is
-  one of twenty, and this page is one train. `RouteLadder` takes a `startExpanded` prop for it.
 - `StationBoard.stationId` is the slug, and the page builds its own URLs from it. That was
   already true (`store.ts` writes `stationId: slug`); it is now depended on, and `types.ts`
   says so.
