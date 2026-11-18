@@ -2,8 +2,9 @@
  * Shared renderer for the three board OG images (bare, /partenze, /arrivi — same trio as
  * board-metadata.ts, ADR-011). Not itself a route: Next only picks up files literally named
  * `opengraph-image`, so each route's opengraph-image.tsx calls this with its fixed mode.
- * Layout mirrors the static apps/web/public/icons/og-image.png (same brand mark geometry
- * and colours), with the subtitle swapped for the station and mode.
+ * Same ground, mark and type as the static apps/web/public/icons/og-image.png (the "Paletta":
+ * the platform's split-flap tile carrying a T, ink on the seventh pass's grey, Figtree), with
+ * the tagline swapped for the station and mode.
  */
 
 import type { BoardMode } from '@tabellone/core'
@@ -38,16 +39,16 @@ export const contentType = 'image/png'
  * Satori can read, rather than trusting one of them to keep being served.
  */
 const NO_BROWSER_TOKEN_UA = 'Mozilla/5.0'
-const WEIGHTS = [400, 500, 600] as const
+const WEIGHTS = [600, 700, 800] as const
 
-async function loadSaira(): Promise<[ArrayBuffer, ArrayBuffer, ArrayBuffer]> {
+async function loadFigtree(): Promise<[ArrayBuffer, ArrayBuffer, ArrayBuffer]> {
   // force-cache on every hop: a released font file is immutable and an OG card is rendered
   // on demand, so without it each crawler hit would pay for four requests to Google.
   const sheet = await fetch(
-    `https://fonts.googleapis.com/css2?family=Saira:wght@${WEIGHTS.join(';')}`,
+    `https://fonts.googleapis.com/css2?family=Figtree:wght@${WEIGHTS.join(';')}`,
     { headers: { 'User-Agent': NO_BROWSER_TOKEN_UA }, cache: 'force-cache' },
   )
-  if (!sheet.ok) throw new Error(`Saira: css2 answered ${sheet.status}`)
+  if (!sheet.ok) throw new Error(`Figtree: css2 answered ${sheet.status}`)
   const css = await sheet.text()
 
   // Matched by the weight each block declares, not by the order the blocks arrive in: the
@@ -57,19 +58,19 @@ async function loadSaira(): Promise<[ArrayBuffer, ArrayBuffer, ArrayBuffer]> {
     src: /src:\s*url\((https:\/\/[^)]+)\)\s*format\('(?:truetype|woff)'\)/.exec(block)?.[1],
   }))
 
-  const [regular, medium, semiBold] = await Promise.all(
+  const [semiBold, bold, extraBold] = await Promise.all(
     WEIGHTS.map(async (weight) => {
       const src = blocks.find((block) => block.weight === weight)?.src
-      if (!src) throw new Error(`Saira ${weight}: no TrueType or WOFF src in the css2 response`)
+      if (!src) throw new Error(`Figtree ${weight}: no TrueType or WOFF src in the css2 response`)
       const file = await fetch(src, { cache: 'force-cache' })
-      if (!file.ok) throw new Error(`Saira ${weight}: font file answered ${file.status}`)
+      if (!file.ok) throw new Error(`Figtree ${weight}: font file answered ${file.status}`)
       return file.arrayBuffer()
     }),
   )
   // Named rather than spread: the return type is a three-tuple because ImageResponse wants
   // one buffer per declared weight, and `.map` over a tuple still widens to an array.
-  if (!regular || !medium || !semiBold) throw new Error('Saira: incomplete family')
-  return [regular, medium, semiBold]
+  if (!semiBold || !bold || !extraBold) throw new Error('Figtree: incomplete family')
+  return [semiBold, bold, extraBold]
 }
 
 /**
@@ -80,9 +81,9 @@ async function loadSaira(): Promise<[ArrayBuffer, ArrayBuffer, ArrayBuffer]> {
  */
 let faces: Promise<[ArrayBuffer, ArrayBuffer, ArrayBuffer]> | null = null
 
-function saira() {
+function figtree() {
   if (!faces) {
-    faces = loadSaira().catch((error) => {
+    faces = loadFigtree().catch((error) => {
       faces = null
       throw error
     })
@@ -90,11 +91,79 @@ function saira() {
   return faces
 }
 
+const GROUND = '#eff1f4'
+const INK = '#101012'
+const MUTED = '#6c6c72'
+
+/**
+ * The mark, from the icon's 512 grid (tile 240×288, r44) scaled to 132px tall: the tile, the
+ * T and the hinge cut — the gap across the middle and a notch on each side — in the ground.
+ */
+function Mark() {
+  const k = 132 / 288
+  const px = (n: number) => Math.round(n * k * 10) / 10
+  const cut = { position: 'absolute' as const, background: GROUND }
+  return (
+    <div
+      style={{
+        position: 'relative',
+        display: 'flex',
+        width: px(240),
+        height: px(288),
+        borderRadius: px(44),
+        background: INK,
+      }}
+    >
+      <div
+        style={{
+          ...cut,
+          left: px(52),
+          top: px(56),
+          width: px(136),
+          height: px(46),
+          borderRadius: px(8),
+        }}
+      />
+      <div
+        style={{
+          ...cut,
+          left: px(97),
+          top: px(56),
+          width: px(46),
+          height: px(178),
+          borderRadius: px(8),
+        }}
+      />
+      <div style={{ ...cut, left: -2, top: px(139.5), width: px(240) + 4, height: px(9) }} />
+      <div
+        style={{
+          ...cut,
+          left: px(-9.6),
+          top: px(129.6),
+          width: px(19.2),
+          height: px(28.8),
+          borderRadius: px(4.8),
+        }}
+      />
+      <div
+        style={{
+          ...cut,
+          left: px(230.4),
+          top: px(129.6),
+          width: px(19.2),
+          height: px(28.8),
+          borderRadius: px(4.8),
+        }}
+      />
+    </div>
+  )
+}
+
 export async function boardOgImage(slug: string, mode: BoardMode) {
   const stationName = findStationBySlug(slug)?.name ?? slug
   const subtitle = mode === 'arrivals' ? `Arrivi a ${stationName}` : `Partenze da ${stationName}`
 
-  const [regularData, mediumData, semiBoldData] = await saira()
+  const [semiBoldData, boldData, extraBoldData] = await figtree()
 
   return new ImageResponse(
     <div
@@ -103,25 +172,21 @@ export async function boardOgImage(slug: string, mode: BoardMode) {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        background: '#111418',
-        fontFamily: 'Saira',
+        padding: '96px 96px 0',
+        background: GROUND,
+        fontFamily: 'Figtree',
       }}
     >
-      <div
-        style={{ display: 'flex', alignItems: 'center', gap: 22, marginTop: 132, marginLeft: 96 }}
-      >
-        <div style={{ width: 112, height: 108, borderRadius: 20, background: '#df870a' }} />
-        <div style={{ width: 86, height: 36, borderRadius: 18, background: '#f2f3f5' }} />
-      </div>
+      <Mark />
       <div
         style={{
           display: 'flex',
-          marginTop: 24,
-          marginLeft: 96,
-          fontSize: 108,
-          fontWeight: 600,
-          letterSpacing: -3.78,
-          color: '#f2f3f5',
+          marginTop: 44,
+          fontSize: 118,
+          fontWeight: 800,
+          letterSpacing: -5,
+          lineHeight: 1,
+          color: INK,
         }}
       >
         Tabellone
@@ -129,15 +194,14 @@ export async function boardOgImage(slug: string, mode: BoardMode) {
       <div
         style={{
           display: 'flex',
-          marginTop: 8,
-          marginLeft: 96,
+          marginTop: 22,
           maxWidth: 1008,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          fontSize: 36,
-          fontWeight: 400,
-          color: '#a9adb1',
+          fontSize: 40,
+          fontWeight: 600,
+          color: MUTED,
         }}
       >
         {subtitle}
@@ -145,22 +209,11 @@ export async function boardOgImage(slug: string, mode: BoardMode) {
       <div
         style={{
           display: 'flex',
-          marginTop: 62,
-          marginLeft: 96,
-          width: 1008,
-          height: 1,
-          background: '#23252a',
-        }}
-      />
-      <div
-        style={{
-          display: 'flex',
-          marginTop: 46,
-          marginLeft: 96,
-          fontSize: 26,
-          fontWeight: 500,
-          letterSpacing: '0.02em',
-          color: '#a9adb1',
+          marginTop: 'auto',
+          marginBottom: 72,
+          fontSize: 24,
+          fontWeight: 700,
+          color: INK,
         }}
       >
         tabellone.bysali.com
@@ -170,9 +223,9 @@ export async function boardOgImage(slug: string, mode: BoardMode) {
       width: size.width,
       height: size.height,
       fonts: [
-        { name: 'Saira', data: regularData, weight: 400, style: 'normal' },
-        { name: 'Saira', data: mediumData, weight: 500, style: 'normal' },
-        { name: 'Saira', data: semiBoldData, weight: 600, style: 'normal' },
+        { name: 'Figtree', data: semiBoldData, weight: 600, style: 'normal' },
+        { name: 'Figtree', data: boldData, weight: 700, style: 'normal' },
+        { name: 'Figtree', data: extraBoldData, weight: 800, style: 'normal' },
       ],
     },
   )

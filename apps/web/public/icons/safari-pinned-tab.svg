@@ -1,4 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
-  <title>Tabellone</title>
-  <path d="M3.56 5.31h4.69a0.94 0.94 0 0 1 0.94 0.94v4.5a0.94 0.94 0 0 1-0.94 0.94H3.56a0.94 0.94 0 0 1-0.94-0.94v-4.5a0.94 0.94 0 0 1 0.94-0.94Z M10.25 7.13h2.5a0.88 0.88 0 0 1 0 1.75h-2.5a0.88 0.88 0 0 1 0-1.75Z" fill="#000"></path>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<mask id="m"><rect width="512" height="512" fill="#fff"/>
+<rect x="188" y="168" width="136" height="46" rx="8"/><rect x="233" y="168" width="46" height="178" rx="8"/>
+<rect x="134" y="251.5" width="244" height="9"/><rect x="126.4" y="241.6" width="19.2" height="28.8" rx="4.8"/><rect x="366.4" y="241.6" width="19.2" height="28.8" rx="4.8"/></mask>
+<rect x="136" y="112" width="240" height="288" rx="44" mask="url(#m)"/>
 </svg>

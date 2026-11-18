@@ -32,10 +32,10 @@ export const metadata: Metadata = {
       { url: '/icons/favicon.svg', type: 'image/svg+xml' },
     ],
     apple: '/icons/apple-touch-icon.png',
-    // The mark's sodium amber, sitting between the two halves of --brand-mark: Safari wants
-    // a plain hex here (a var cannot reach a manifest field, and a pinned tab has no theme),
+    // The mark is the platform's split-flap tile in ink (--fg of the `.bt` block, light):
+    // Safari wants a plain hex here (a var cannot reach it, and a pinned tab has no theme),
     // so it takes the one fixed value the committed icon assets are drawn in.
-    other: [{ rel: 'mask-icon', url: '/icons/safari-pinned-tab.svg', color: '#df870a' }],
+    other: [{ rel: 'mask-icon', url: '/icons/safari-pinned-tab.svg', color: '#101012' }],
   },
   openGraph: {
     type: 'website',
