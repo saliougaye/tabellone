@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Tabellone">
+<title>Tabellone</title>
 <mask id="m"><rect width="512" height="512" fill="#fff"/>
 <rect x="188" y="168" width="136" height="46" rx="8"/><rect x="233" y="168" width="46" height="178" rx="8"/>
 <rect x="134" y="251.5" width="244" height="9"/><rect x="126.4" y="241.6" width="19.2" height="28.8" rx="4.8"/><rect x="366.4" y="241.6" width="19.2" height="28.8" rx="4.8"/></mask>
